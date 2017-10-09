@@ -1,6 +1,11 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
+"""
+The CroCo Cross-Link Converter GUI
+
+Graphical interface to convert results from data analysis of chemical cross-linking /
+mass-epctrometry experiments.
 """
 
 from PyQt5.QtWidgets import QWidget, QToolTip, QPushButton, QApplication,\
@@ -60,6 +65,8 @@ class CroCo(QMainWindow):
         self.output_lbl = QLabel('Output file format', self)
         self.output_dropdown = QComboBox(self)
         self.output_dropdown.addItem("xTable")
+        self.output_dropdown.addItem("xVis")
+        self.output_dropdown.addItem("xiNet")
         self.output_dropdown.activated[str].connect(self.set_output_format)
 
         # Start button
@@ -225,7 +232,9 @@ class CroCo(QMainWindow):
                    'Kojak': xr.ReadKojak,
                    'xTable': pd.read_csv}
 
-        out_dict = {'xTable': xw.WriteXtable}
+        out_dict = {'xTable': xw.WriteXtable,
+                    'xVis': xw.WritexVis,
+                    'xiNet': xw.WritexiNET}
 
         was_error = False
 
