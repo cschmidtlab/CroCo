@@ -102,3 +102,4 @@ ENV/
 
 # local test-data
 testdata
+*.log
