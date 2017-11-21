@@ -1,6 +1,6 @@
 
 """
-Functions to read-in and write-out cross-link information from different sources.
+Functions to read-in cross-link information from different sources.
 
 === Definition of the xtable format ===
 
@@ -16,6 +16,9 @@ pepseq2 - Sequence of the shorter (beta) peptide
 
 xlink1 - Position of the cross-linker within the longer peptide
 xlink2 - Position of the cross-linker within the shorter peptide
+
+pos1 - Absolute postiton of the first AA of the first peptide
+pos2 - Absolute postiton of the first AA of the second peptide
 
 xpos1 - Absolute position of the cross-linker of the longer peptide
 xpos2 - Absolute position of the cross-linker of the shorter peptide (only if interlink)
@@ -133,7 +136,7 @@ def plinkpeptide2pandas(filepath):
     return pd.DataFrame.from_dict(data)
 
 
-def process_sequence(seq_string):
+def process_plink_sequence(seq_string):
     """
     Extract peptide sequences and cross-link positions from
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
@@ -150,7 +153,7 @@ def process_sequence(seq_string):
         print(e)
         return np.nan
 
-def process_spectrum(spec_string):
+def process_plink_spectrum(spec_string):
     """
     Extract rawfile name, precursor charge and scan no from pLink sequence
     string
@@ -165,7 +168,7 @@ def process_spectrum(spec_string):
     else:
         return np.nan
 
-def process_proteins(prot_string):
+def process_plink_proteins(prot_string):
     """
     Extract protein name and absolute cross-link position from
     pLink protein string e.g.
@@ -174,6 +177,19 @@ def process_proteins(prot_string):
     pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
     match = pattern.match(prot_string)
     return match.groups()
+
+def calc_pos_from_xpos(xpos, xlink):
+    """
+    Calculates the absolute position of the first AA of a peptide
+    sequence from the absolute position of the cross-link AA (xpos) its
+    position within the sequence (xlink)
+    
+    Returns: pos - Absolute position of AA in sequence
+    """
+    xpos = int(xpos)
+    xlink = int(xlink)
+    
+    return xpos - xlink + 1
 
 def process_kojak_peptide(peptide_string):
     """
@@ -211,6 +227,36 @@ def process_kojak_protein(protein_string):
         return match.groups()
     else:
         return np.nan, np.nan
+
+
+def process_xQuest_spectrum(spec_string):
+    """
+    Extract rawfile name, precursor charge and scan no from xQuest sequence
+    string
+    
+    :returns: list of rawfile, scanno, prec_ch
+    """
+    spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
+    if spectrum_pattern.match(spec_string):
+        match = spectrum_pattern.match(spec_string)
+        # rawfile, scanno, prec_ch
+        return match.groups()
+    else:
+        return np.nan
+
+def process_xQuest_Id(Id_string):
+    """
+    Extract peptide sequence of the alpha (longer) and the beta (shorter)
+    peptide as well as the relative positions of the cross-links within
+    these sequences from an xQuest Id-string
+    """
+    Id_pattern = re.compile('(\w+)-(\w+)-a(\d+)-b(\d+)')
+    if Id_pattern.match(Id_string):
+        match = Id_pattern.match(Id_string)
+        # pepseq1, pepseq2, xlink1, xlink2
+        return match.groups()
+    else:
+        return np.nan
 
 def ReadpLink(plinkdir):
     """
@@ -263,7 +309,7 @@ def ReadpLink(plinkdir):
     
 
     # init xtable with column containing lists of rawfile, scanno, prec_ch
-    xtable = pd.DataFrame(data['Spectrum'].apply(process_spectrum))
+    xtable = pd.DataFrame(data['Spectrum'].apply(process_plink_spectrum))
     # split column into three
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
         zip(*xtable['Spectrum'])
@@ -275,10 +321,10 @@ def ReadpLink(plinkdir):
     # Directly assign the re group matches into new columns
     xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
     xtable['xlink2'], xtable['xtype'] =\
-        zip(*data['Sequence'].apply(process_sequence))
+        zip(*data['Sequence'].apply(process_plink_sequence))
     
     xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*data['Proteins'].apply(process_proteins))
+            zip(*data['Proteins'].apply(process_plink_proteins))
 
     xtable['type'] = data['type']
     xtable['score'] = data['Score']
@@ -288,6 +334,14 @@ def ReadpLink(plinkdir):
         xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
             lambda x: '-'.join(x), axis=1)
 
+    # calculate absolute position of first AA of peptide
+    # ignoring errors avoids raising error in case on NaN -> returns NaN
+    # as pos
+    xtable['pos1'] = xtable['xpos1'].astype(int, errors='ignore') - \
+                     xtable['xlink1'].astype(int, errors='ignore') + 1
+    xtable['pos2'] = xtable['xpos2'].astype(int, errors='ignore') - \
+                     xtable['xlink2'].astype(int, errors='ignore') + 1
+    
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
     xtable['decoy'] = False
@@ -297,8 +351,11 @@ def ReadpLink(plinkdir):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
     
+    # save original score in columns
+    xtable['plink score'] = xtable['score']
+    
     # compute a minus log P score for better comparison with higher=better scores
-    xtable['-log score'] = -np.log(xtable['score'])
+    xtable['score'] = -np.log(xtable['score'])
 
 
     ### return xtable df
@@ -306,29 +363,23 @@ def ReadpLink(plinkdir):
     return xtable
 
 
-def ReadKojak(kojakpath, rawfile):
+def ReadKojak(kojak_file, rawfile):
     """
     reads pLink results file and returns an xtable data array.
     
-    :params: kojakpath: Kojak results file
+    :params: koajk_file: path to Kojak results file
     :params: rawfile: name of the corresponding rawfile
 
     :returns: xtable data table
-    :returns: xinfo meta-data object
-
     """
     
     ### Collect data and convert to pandas format
 
-    for e in os.listdir(kojakpath):
-        if '.kojak.txt' in e:
-            kojak_file = e
-    
     print('Reading Kojak-file: ' + kojak_file)
 
     # only called if inter_file is not None
     if kojak_file:
-        data = pd.read_csv(os.path.join(kojakpath, kojak_file),
+        data = pd.read_csv(kojak_file,
                            skiprows = 1, # skip the Kojak version
                            delimiter='\t')
     else:
@@ -383,6 +434,14 @@ def ReadKojak(kojakpath, rawfile):
         xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
             lambda x: '-'.join(x), axis=1)
 
+    # calculate absolute position of first AA of peptide
+    # ignoring errors avoids raising error in case on NaN -> returns NaN
+    # as pos
+    xtable['pos1'] = xtable['xpos1'].astype(int, errors='ignore') - \
+                     xtable['xlink1'].astype(int, errors='ignore') + 1
+    xtable['pos2'] = xtable['xpos2'].astype(int, errors='ignore') - \
+                     xtable['xlink2'].astype(int, errors='ignore') + 1
+
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every
     # non-numeric element
@@ -391,6 +450,72 @@ def ReadKojak(kojakpath, rawfile):
     ### return xtable df
     
     return xtable
+
+def ReadxQuest(xquest_file):
+    """
+    Read xQuest results file and return file in xTable format.
+    
+    :params: kojakpath: Kojak results file
+    :params: rawfile: name of the corresponding rawfile
+
+    :returns: xtable data table
+    """
+    
+    ### Collect data and convert to pandas format
+
+    print('Reading xQuest-file: ' + xquest_file)
+
+    # only called if inter_file is not None
+    try:
+        xquest = pd.read_csv(xquest_file,
+                             delimiter='\t')
+    except:
+        raise(FileNotFoundError('xQuest results file not found'))
+    
+    rename_dict = {'z':'prec_ch',
+                   'Protein1':'prot1',
+                   'Protein2': 'prot2',
+                   'AbsPos1': 'xpos1',
+                   'AbsPos2': 'xpos2',
+                   'Type': 'type',
+                   'ld-Score': 'score'}
+
+    # Copy and rename selected columns to new xquest df
+    try:
+        xtable = xquest.loc[:, list(rename_dict.keys())]
+        xtable.rename(index=str,
+                    columns=rename_dict,
+                    inplace=True)
+    except Exception as e:
+        raise Exception('Error during xQuest header renaming: %s' % e)
+    
+    
+    # Extract rawfile, scanno and precursor charge from the mgf header string
+    # used as Spectrum by xQuest
+    xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
+        zip(*xquest['Spectrum'].apply(process_xQuest_spectrum))
+        
+    # Extract peptide sequences and relative cross-link positions form the
+    # xQuest ID-string
+    xtable['pepseq1'], xtable['pepseq2'], xtable['xlink1'], xtable['xlink2'] =\
+        zip(*xquest['Id'].apply(process_xQuest_Id))
+            
+    # Modifications are not defined in xQuest
+    xtable['mod1'], xtable['mod2'] = "", ""
+    
+    # generate an ID for every crosslink position within the protein(s)
+    xtable['ID'] =\
+        xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
+            lambda x: '-'.join(x), axis=1)
+
+    # xQuest does not incorporate decoy entries in the resutls table
+    # but protein names can contain identifiers as reverse or decoy
+    xtable['decoy'] = xtable['ID'].str.contains('reverse') |\
+        xtable['ID'].str.contains('decoy')
+
+    ### Return df
+    return xtable
+   
 
 def ReadManual(filepath):
     """
@@ -455,13 +580,13 @@ def ReadManual(filepath):
     
     ann_data['pepseq1'], ann_data['xlink1'], ann_data['pepseq2'],\
     ann_data['xlink2'], ann_data['xtype'] =\
-        zip(*ann_data['Sequence'].apply(process_sequence))
+        zip(*ann_data['Sequence'].apply(process_plink_sequence))
     
     ann_data['prot1'], ann_data['xpos1'], ann_data['prot2'], ann_data['xpos2'] =\
-            zip(*ann_data['Proteins'].apply(process_proteins))
+            zip(*ann_data['Proteins'].apply(process_plink_proteins))
                 
     ann_data['rawfile'], ann_data['scanno'], ann_data['prec_ch'] =\
-        zip(*ann_data['Spectrum'].apply(process_spectrum))
+        zip(*ann_data['Spectrum'].apply(process_plink_spectrum))
 
     # generate an ID for every crosslink position within the protein(s)
     ann_data['ID'] =\
@@ -474,26 +599,3 @@ def ReadManual(filepath):
     ann_data = ann_data.apply(pd.to_numeric, errors = 'ignore')
 
     return ann_data
-
-def WritePercolator(xtable, outdir):
-    """
-    writes an xtable data structure to file (in Percolator format)
-    
-    :params: xtable: data table structure
-    :params: outdir: filepath to write Kojak-formatted file to
-    
-    :returns: True if successfull
-    """
-
-def WriteXtable(xtable, usecols, outdir):
-    """
-    writes an xtable data structure to file (in xtable format)
-    
-    :params: xtable: data table structure
-    :params: usecols: columns to use for export, leave empty for all
-    :params: outdir: filepath to write file to
-    
-    :returns: True if successfull
-    """
-    
-    

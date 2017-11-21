@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-The CroCo Cross-Link Converter GUI
-
-Graphical interface to convert results from data analysis of chemical cross-linking /
-mass-epctrometry experiments.
+Windows for the CroCo cross-link converter GUI programme
 """
 
 from PyQt5.QtWidgets import QWidget, QToolTip, QPushButton, QApplication,\
@@ -20,13 +17,12 @@ import os
 os.getcwd()
 
 import sys
-sys.path.append('./lib')
-import reader as xr
-import writer as xw
+import CroCo_reader as xr
+import CroCo_writer as xw
 
 import pandas as pd
 
-class CroCo(QMainWindow):
+class CroCo_MainWindow(QMainWindow):
 
     # initialise properties
     input_format = 'pLink'
@@ -49,7 +45,7 @@ class CroCo(QMainWindow):
         """
 
         self.setWindowTitle('The CroCo Crosslink Converter')
-        self.setWindowIcon(QIcon('./python-icon.png')) # icon in ubuntu is
+        self.setWindowIcon(QIcon('images/python-icon.png')) # icon in ubuntu is
                                                        # displayed on sidepanel
         QToolTip.setFont(QFont('SansSerif', 10))
 
@@ -247,7 +243,7 @@ class CroCo(QMainWindow):
 
             # if no user-defined output dir use current
             if self.output_dir == '':
-                self.output_dir = os.path.basename(f)
+                self.output_dir = os.path.dirname(f)
 
             # set filename for output file
             fname = os.path.splitext(os.path.split(f)[1])[0] + '_' + self.input_format +\
