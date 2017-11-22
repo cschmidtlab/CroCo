@@ -8,7 +8,7 @@ Windows for the CroCo cross-link converter GUI programme
 from PyQt5.QtWidgets import QWidget, QToolTip, QPushButton, QApplication,\
                             QMessageBox, QDesktopWidget, QGridLayout,\
                             QComboBox, QLabel, QFileDialog, QAction,\
-                            QMainWindow
+                            QMainWindow, QHBoxLayout, QTabWidget, QLineEdit
 from PyQt5.QtGui import QFont, QIcon
 
 import PyQt5.QtCore as QtCore
@@ -48,6 +48,10 @@ class CroCo_MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('images/python-icon.png')) # icon in ubuntu is
                                                        # displayed on sidepanel
         QToolTip.setFont(QFont('SansSerif', 10))
+
+        #############################################
+        # Crosslink Converter Part
+        #############################################
 
         # Define Dropdown Menu for Input
         self.input_lbl = QLabel('Input file format', self)
@@ -93,13 +97,51 @@ class CroCo_MainWindow(QMainWindow):
         self.outpath_title = QLabel('Writing to:')
         self.outpath_lbl = QLabel(self.output_dir)
 
+        #############################################
+        # Spectrum annotation
+        #############################################
+
+        # Open xlink file dialog
+        self.assign_lxlink_lbl = QLabel('Load xlinks:', self)
+        self.assign_lxlink = QPushButton('Load xlink file', self)
+
+        # Open mgf file dialog
+        self.assign_lmgf_lbl = QLabel('Load mgf', self)
+        self.assign_lmgf = QPushButton('Load file', self)
+
+        # Output files button
+        self.assign_obtn_lbl = QLabel('Output dir', self)
+        self.assign_obtn = QPushButton('Set output dir', self)
+
+        # Start button
+        self.assign_start = QPushButton('Start assignment', self)
+
+        # PSM annotation
+        self.assign_accept = QPushButton('Accept', self)
+        self.assign_unsure = QPushButton('Unsure', self)
+        self.assign_decline = QPushButton('Decline', self)
+
+        # Navigation
+        self.assign_spectrum_lbl = QLabel('Current Spectrum:', self)
+        self.assign_xlink_lbl = QLabel('Current xlink:', self)
+        self.assign_xlink_input = QLineEdit()
+        self.assign_goto = QPushButton('Go to', self)
+
+        self.assign_next = QPushButton('Next', self)
+        self.assign_prev = QPushButton('Previous', self)
+
+
+    #####################################
+    # Set Variables on self
+    #####################################
+
         # assign to variables
     def set_input_format(self, text):
         self.input_format = text
 
     def set_output_format(self, text):
         self.output_format = text
-        
+
         # open folder dialog for pLink (only one folder at once) or file
         # dialog for others (multiple files at once)
         # decorator explicitely defines method as slot!
@@ -120,12 +162,6 @@ class CroCo_MainWindow(QMainWindow):
         # update output label
         self.outpath_lbl.setText(os.path.basename(self.output_dir))
 
-    @QtCore.pyqtSlot()
-    def show_about(self):
-        QMessageBox.about(self,
-                          self.tr('About CroCo'),
-                          'Version 0.1 (Oct 2017) <br><br>Written by <a href="mailto:jub@halomem.de">Julian Bender</a> at Martin Luther University Halle Wittenberg, Germany')
-
     def createMenu(self):
         """
         Creates the application Menu
@@ -143,14 +179,14 @@ class CroCo_MainWindow(QMainWindow):
         self.actionClose.setStatusTip('About CroCo')
         self.actionAbout.triggered.connect(self.show_about)
 
-        
+
         menuFile = self.menuBar().addMenu(self.tr('File'))
         menuFile.addAction(self.actionClose)
 
-        
+
         menuAbout = self.menuBar().addMenu(self.tr('About'))
         menuAbout.addAction(self.actionAbout)
-        
+
 
     def createLayout(self):
         """
@@ -158,60 +194,98 @@ class CroCo_MainWindow(QMainWindow):
         widgets such as buttons
         """
 
-        # Define Layout as grid
-        grid = QGridLayout()
-        grid.setSpacing(10)
-        grid.setRowStretch(0, 1)
-        grid.setRowStretch(1,1)
-        grid.setRowStretch(2,1)
-        grid.setRowStretch(3,2)
-        grid.setRowStretch(4,1)
+        ###############################################
+        # Define Layout for converter page as grid
+        ###############################################
 
+        converter_layout = QGridLayout()
+        converter_layout.setSpacing(10)
+        converter_layout.setRowStretch(0, 1)
+        converter_layout.setRowStretch(1,1)
+        converter_layout.setRowStretch(2,1)
+        converter_layout.setRowStretch(3,2)
+        converter_layout.setRowStretch(4,1)
 
         # add the 1st line of elements to the grid
-        grid.addWidget(self.input_lbl, 0, 0)
-        grid.addWidget(self.input_dropdown, 0, 1)
-        grid.addWidget(self.output_lbl, 0, 2)
-        grid.addWidget(self.output_dropdown, 0, 3)
-
+        converter_layout.addWidget(self.input_lbl, 0, 0)
+        converter_layout.addWidget(self.input_dropdown, 0, 1)
+        converter_layout.addWidget(self.output_lbl, 0, 2)
+        converter_layout.addWidget(self.output_dropdown, 0, 3)
         # 2nd line
-        grid.addWidget(self.fbtn, 1, 1)
-        grid.addWidget(self.obtn, 1, 3)
-
+        converter_layout.addWidget(self.fbtn, 1, 1)
+        converter_layout.addWidget(self.obtn, 1, 3)
         #3rd and 4th line
-        grid.addWidget(self.inpath_title, 2, 0)
-        grid.addWidget(self.inpath_lbl, 3, 0)
-        grid.addWidget(self.outpath_title, 2, 2)
-        grid.addWidget(self.outpath_lbl, 3, 2)
-
+        converter_layout.addWidget(self.inpath_title, 2, 0)
+        converter_layout.addWidget(self.inpath_lbl, 3, 0)
+        converter_layout.addWidget(self.outpath_title, 2, 2)
+        converter_layout.addWidget(self.outpath_lbl, 3, 2)
         # 5th line
-        grid.addWidget(self.sbtn, 4, 0)
-        grid.addWidget(self.qbtn, 4, 3)
+        converter_layout.addWidget(self.sbtn, 4, 0)
+        converter_layout.addWidget(self.qbtn, 4, 3)
 
+        # generate widget for converter window
+        converter_widget = QWidget()
+        # apply layout
+        converter_widget.setLayout(converter_layout)
+
+        ###############################################
+        # Define Layout for spectrum assignment page
+        ###############################################
+
+        assign_layout = QGridLayout()
+
+        assign_layout.addWidget(self.assign_lxlink_lbl, 0, 0)
+        assign_layout.addWidget(self.assign_lmgf_lbl, 0, 2)
+        assign_layout.addWidget(self.assign_obtn_lbl, 0, 4)
+
+        assign_layout.addWidget(self.assign_lxlink, 1, 0)
+        assign_layout.addWidget(self.assign_lmgf, 1, 2)
+        assign_layout.addWidget(self.assign_obtn, 1, 4)
+
+        assign_layout.addWidget(self.assign_start, 2, 2)
+        assign_layout.addWidget(self.assign_xlink_lbl, 2, 0)
+        assign_layout.addWidget(self.assign_spectrum_lbl, 2, 3)
+
+        assign_layout.addWidget(self.assign_accept, 3, 2)
+
+        assign_layout.addWidget(self.assign_xlink_input, 4, 0)
+        assign_layout.addWidget(self.assign_goto, 4, 1)
+        assign_layout.addWidget(self.assign_unsure, 4, 2)
+
+        assign_layout.addWidget(self.assign_prev, 5, 0)
+        assign_layout.addWidget(self.assign_decline, 5, 2)
+        assign_layout.addWidget(self.assign_next, 5, 4)
+        # generate widget for assignment window
+        assign_widget = QWidget()
+        # apply layout
+        assign_widget.setLayout(assign_layout)
+
+        #############################################
+        # Tabbing
+        #############################################
+
+        self.tabWidget = QTabWidget()
+        self.tabWidget.addTab(converter_widget, 'Conversion')
+        self.tabWidget.addTab(assign_widget, 'Assignment')
+
+        ##############################
+        # Define main layout
+        ##############################
+        mainLayout = QHBoxLayout()
+        mainLayout.addWidget(self.tabWidget)
         # generate widget for main window
         mainWidget = QWidget()
         # apply layout
-        mainWidget.setLayout(grid)
+        mainWidget.setLayout(mainLayout)
         # assign widget to main window (i.e. self)
         self.setCentralWidget(mainWidget)
-        
+
         # set window size
         self.resize(250, 200)
         # center
         self.center()
         # show the window
         self.show()
-
-
-    def center(self):
-        """
-        Center the window by moving it into the middle of the screen
-        """
-
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
 
     @QtCore.pyqtSlot()
     def start_conversion(self):
@@ -267,10 +341,34 @@ class CroCo_MainWindow(QMainWindow):
                             'Success!',
                             'File(s) successfully written ' +
                             'to {}!'.format(outpath))
+    ##################################
+    # Dialogs
+    ##################################
+
+    @QtCore.pyqtSlot()
+    def show_about(self):
+        QMessageBox.about(self,
+                          self.tr('About CroCo'),
+                          'Version 0.1 (Oct 2017) <br><br>Written by <a href="mailto:jub@halomem.de">Julian Bender</a> at Martin Luther University Halle Wittenberg, Germany')
 
     def print_warning(self, error):
         QMessageBox.warning(self, "Error!",
                                 str(error))
+
+    ##################################
+    # Other
+    ##################################
+
+    def center(self):
+        """
+        Center the window by moving it into the middle of the screen
+        """
+
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
     # redefinition of the internal closing event
     def closeEvent(self, event):
 

@@ -315,14 +315,14 @@ def PlotHist(data, limits, ax=None):
 
 fig, ax = plt.subplots(2)
 
-ppm = [-15, 25]
+ppm = [-30, 30]
 
 assignment_error = []
 
-ions, desc =  IonsFromXlinkSequence('DQKLSELDDR', # peptid1
-                                    3, # xlink1
-                                    'VNVDKVLER', # peptide2
-                                    5, # xlink2
+ions, desc =  IonsFromXlinkSequence('YHPDKNPDNPEAADKFK', # peptid1
+                                    15, # xlink1
+                                    'KLALK', # peptide2
+                                    1, # xlink2
                                     138.068, #mass of xlinker
                                     ['a', 'b', 'y'], # ion types
                                     [1,2], # min, max charge
@@ -337,7 +337,7 @@ with open('peptides.log', 'w') as f:
 with open('../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf', 'r') as f:
     spectrum2offset = Reader.IndexMGF(f)
     
-    mz, intens = Reader.ReadSpectrum(34496, # spectrum
+    mz, intens = Reader.ReadSpectrum(17079, # spectrum
                               f, # file handle
                               spectrum2offset) # spectrum dict
 
