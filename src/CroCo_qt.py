@@ -332,7 +332,7 @@ class CroCo_MainWindow(QMainWindow):
                       'to {}!'.format(outpath))
             except Exception as e:
                 self.print_warning('Conversion of {} was '.format(f) +
-                                   'not successfull:'.format(str(e)))
+                                   'not successfull:{}'.format(str(e)))
                 was_error = True
                 break
 
