@@ -100,20 +100,24 @@ def YIonMass(peptide, aa_dict, charge, mods, peptide_type=None):
             peptide_type, mods]
     return mass, desc
 
-def ParentionMass(peptide, aa_dict, charge, mods):
+def ParentionMass(peptide, aa_dict, charge, mods, peptide_type=None):
+    ion_string = 'M+{}H'.format(charge)
     mass = 0
     for aa in peptide:
         mass += aa_dict[aa]
     mass += 18.01528 + charge * 1.00794 # M + nH+
     mass /= charge
-    desc = (peptide, '(M+{}H)'.format(charge), charge, mods)
+    desc = [peptide, ion_string, '', charge,
+            peptide_type, mods]
     return mass, desc
 
 def XParentionMass(pep1_mass, pep2_mass, peptide1, xlink1, peptide2,
-                    xlink2, charge, mods):
+                    xlink2, charge, mods, peptide_type=None):
+    ion_string = 'M+{}H'.format(charge)
     mass = sum((pep1_mass, pep2_mass))
     mass += charge * 1.00794 # M + nH+
     mass /= charge
-    desc = ['{}-{}-{}-{}'.format(peptide1, xlink1, peptide2, xlink2),\
-            '(M+{}H)'.format(charge), charge, mods]
+    peptide = '-'.join([str(x) for x in [peptide1, xlink1, peptide2, xlink2]])
+    desc = [peptide, ion_string, '', charge,
+            peptide_type, mods]
     return mass, desc

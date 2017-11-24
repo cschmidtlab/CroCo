@@ -82,4 +82,7 @@ def ReadSpectrum(scanno, mgf_file_handler, spectrum2offset):
         elif line.startswith('END IONS'):
             # leave loop if the current spectrum ends
             break
-    return mz_list, intens_list
+            
+    mz2intens = dict(zip(mz_list, intens_list))
+    
+    return mz2intens

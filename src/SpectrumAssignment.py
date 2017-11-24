@@ -230,54 +230,81 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
         if mass < max_mass:
             all_ions.append(mass)
             all_desc.append(desc)
-    return all_ions, all_desc
+            
+    ions2desc = dict(zip(all_ions, all_desc))
+            
+    return ions2desc
 
 
 #%%
 
-def AssignAndPlotPSM(spec_mz, spec_intens, theo_mz, theo_desc, ppm, ax=None):
+def AssignAndPlotPSM(mz2intens, ion2desc, ppm, ax=None):
     """
     Annotate a given spectrum with a given sequence of theoretical
     mz and descriptions
     
-    :params: spec_mz: list of mz values for the centroided spectrum
-    :params: spec_intens: list of corresponding intensities
-    :params: theo_mz: list of theoretical peaks to be ound in the spectrum
-    :params: the_desc: corresponding description-list
+    :params: mz2intens: dict mapping experimental mz to intensity
+    :params: ion2desc: dict mapping theoretical mz to description
     :params: ppm: error allowed during assign in parts-per-million
     :params: axis (optional): axis to plot the figure on, default currrent axis
     
     :return: assignment_error: list of relative errors in ppm for the assignment
     """
     
+    mz_list = sorted(mz2intens.keys())
+    ion_list = sorted(ions2desc.keys())
+    
     if ax is None:
         ax = plt.gca()
-    for idx, m in enumerate(mz):
+        
+    last = 0
+   
+    def ColorFromDesc(desc_list):
+        """
+        Return the plink color scheme for a given ion description
+        """
+        if desc_list[1] == 'A':
+            return 'yellow'
+        elif desc_list[1] == 'a':
+            return 'brown'
+        elif desc_list[1] == 'B':
+            return 'green'
+        elif desc_list[1] == 'b':
+            return 'orange'
+        elif desc_list[1] == 'Y':
+            return 'red'
+        elif desc_list[1] == 'y':
+            return 'purple'
+        elif 'M' in  desc_list[1]:
+            return 'cyan'
+        
+    for mz in mz_list:
         # store axis-object in variable for return
-        ax.plot([m, m], # x1, x2
-                    [0, intens[idx]], # y1, y2
-                    'k-', # style
-                    lw=1 # line width
-                    )
-        for jdx, n in enumerate(ions):
-            if n >= m * (1+ppm[0]/10**6):
-                if n <= m * (1+ppm[1]/10**6):
+        ax.plot([mz, mz], # x1, x2
+                [0, mz2intens[mz]], # y1, y2
+                'k-', # style
+                lw=1 # line width
+                )
+        for idx, ion in enumerate(ion_list[last:]):
+            if ion >= mz * (1+ppm[0]/10**6):
+                if ion <= mz * (1+ppm[1]/10**6):
                     # add the relative error of the assignments to the list
-                    assignment_error.append((n-m)/n * 10**6)
-                    ax.plot([n, n],
-                               [0, intens[idx]],
-                               'r-' if desc[jdx][4] == 'alpha' else 'b-',
+                    assignment_error.append((ion-mz)/ion * 10**6)
+                    ax.plot([ion, ion],
+                               [0, mz2intens[mz]],
+                               ColorFromDesc(ions2desc[ion]),
                                lw=2)
-                    ax.text(n,
-                              intens[idx]+1000,
-                              '${0}_{{{1}}}^{{{2}+}}$'.format(desc[jdx][1],
-                                                              desc[jdx][2],
-                                                              desc[jdx][3]),
+                    ax.text(ion,
+                              mz2intens[mz]+1000,
+                              '${0}_{{{1}}}^{{{2}+}}$'.format(ion2desc[ion][1],
+                                                              ion2desc[ion][2],
+                                                              ion2desc[ion][3]),
                               {'ha': 'left', 'va': 'bottom'},
                               rotation=90,
-                              color='r' if desc[jdx][4] == 'alpha' else 'b')
+                              color=ColorFromDesc(ions2desc[ion]))
+                    last += idx
             
-    ax.set_xlim(min(mz),max(mz))
+    ax.set_xlim(min(mz_list),max(mz_list))
     ax.set_xlabel('m/z')
     ax.set_ylabel('Intensity')
 
@@ -315,33 +342,33 @@ def PlotHist(data, limits, ax=None):
 
 fig, ax = plt.subplots(2)
 
-ppm = [-30, 30]
+ppm = [-50, 50]
 
 assignment_error = []
 
-ions, desc =  IonsFromXlinkSequence('YHPDKNPDNPEAADKFK', # peptid1
-                                    15, # xlink1
-                                    'KLALK', # peptide2
-                                    1, # xlink2
-                                    138.068, #mass of xlinker
-                                    ['a', 'b', 'y'], # ion types
-                                    [1,2], # min, max charge
-                                    'mono', # mass type
-                                    None, # modifications
-                                    2000) # max mass
+ions2desc =  IonsFromXlinkSequence('KAWGNNQDGVVASQPAR', # peptid1
+                                   1, # xlink1
+                                   'LKSSDAYK', # peptide2
+                                   2, # xlink2
+                                   138.068, #mass of xlinker
+                                   ['a', 'b', 'y'], # ion types
+                                   [1,2], # min, max charge
+                                   'mono', # mass type
+                                   None, # modifications
+                                   2000) # max mass
 
 with open('peptides.log', 'w') as f:
-    for idx, i in enumerate(ions):
-        f.write('{}\t{}\n'.format(i, '\t'.join([str(i) for i in desc[idx]])))
+    for idx, i in enumerate(ions2desc.keys()):
+        f.write('{}\t{}\n'.format(i, '\t'.join([str(i) for i in ions2desc[i]])))
                                     
 with open('../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf', 'r') as f:
     spectrum2offset = Reader.IndexMGF(f)
     
-    mz, intens = Reader.ReadSpectrum(17079, # spectrum
-                              f, # file handle
-                              spectrum2offset) # spectrum dict
+    mz2intens = Reader.ReadSpectrum(18452, # spectrum
+                                    f, # file handle
+                                    spectrum2offset) # spectrum dict
 
-    assignment_error = AssignAndPlotPSM(mz, intens, ions, desc, ppm, ax=ax[0])
+    assignment_error = AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=ax[0])
     
     PlotHist(assignment_error, ppm, ax[1])
     
