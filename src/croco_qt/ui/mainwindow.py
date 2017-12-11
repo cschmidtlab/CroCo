@@ -13,14 +13,13 @@ from PyQt5.QtGui import QFont, QIcon
 
 import PyQt5.QtCore as QtCore
 
-from ui_croco_qt import Ui_MainWindow
-
 import os
-os.getcwd()
+
+from croco_qt.ui.ui_mainwindow import Ui_MainWindow
 
 import sys
-import CroCo_reader as xr
-import CroCo_writer as xw
+import croco_qt.CroCo_reader as xr
+import croco_qt.CroCo_writer as xw
 
 import pandas as pd
 
@@ -39,21 +38,27 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.createConnects()
 
+    #####################################
+    # Connects
+    #####################################
+
     def createConnects(self):
         """
         Generates the logical wiring of the programme.
         Every input gets defined and assigned to an output
         """
 
-        #############################################
+        #-----------------------------------------
         # Crosslink Converter Part
-        #############################################
+        #-----------------------------------------
 
-        # Define Dropdown Menu for Input
-        self.convert_input_dropdown.activated[str].connect(self.set_input_format)
+        # Dropdown Menu for Input
+        self.convert_input_dropdown.activated[str].\
+            connect(self.set_conv_input_format)
 
         # Dropdown for output
-        self.convert_output_dropdown.activated[str].connect(self.set_output_format)
+        self.convert_output_dropdown.activated[str].\
+            connect(self.set_conv_output_format)
 
         # Start button
         self.convert_start.clicked.connect(self.start_conversion)
@@ -62,20 +67,23 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         self.convert_quit.clicked.connect(self.close)
 
         # Open file dialog
-        self.convert_load_btn.clicked.connect(self.set_input_files)
+        self.convert_load_btn.clicked.connect(self.set_conv_input_files)
 
         # Output files button
-        self.convert_output_btn.clicked.connect(self.set_output_dir)
+        self.convert_output_btn.clicked.connect(self.set_conv_outdir)
 
-        #############################################
+        #-----------------------------------------
         # Spectrum annotation
-        #############################################
+        #-----------------------------------------
 
         # Open xlink file dialog
+        self.assign_load_xlink_btn.clicked.connect(self.set_assign_xtable)
 
         # Open mgf file dialog
+        self.assign_load_mgf_btn.clicked.connect(self.set_assign_mgf)
 
         # Output files button
+        self.assign_output_btn.clicked.connect(self.set_assign_outdir)
         
         # Start button
 
@@ -83,9 +91,9 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
         # Navigation
 
-        #############################################
+        #-------------------------------------------
         # Menu
-        #############################################
+        #-------------------------------------------
         
         # Quit Button
         self.actionQuit.triggered.connect(self.close)
@@ -93,21 +101,21 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         self.actionAbout.triggered.connect(self.show_about)
         
     #####################################
-    # Set Variables on self
+    # Definitions for Conversion
     #####################################
 
         # assign to variables
-    def set_input_format(self, text):
+    def set_conv_input_format(self, text):
         self.input_format = text
 
-    def set_output_format(self, text):
+    def set_conv_output_format(self, text):
         self.output_format = text
 
-        # open folder dialog for pLink (only one folder at once) or file
-        # dialog for others (multiple files at once)
-        # decorator explicitely defines method as slot!
+    # open folder dialog for pLink (only one folder at once) or file
+    # dialog for others (multiple files at once)
+    # decorator explicitely defines method as slot!
     @QtCore.pyqtSlot()
-    def set_input_files(self):
+    def set_conv_input_files(self):
         if self.input_format == 'pLink':
             self.fnames = [QFileDialog.getExistingDirectory(self,\
                                                 'Select directory')]
@@ -118,11 +126,12 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         self.convert_input_lbl.setText(os.path.basename(self.fnames[0]))
         
     @QtCore.pyqtSlot()
-    def set_output_dir(self):
+    def set_conv_outdir(self):
         self.output_dir = QFileDialog.getExistingDirectory(self,\
                                                 'Select directory for output')
         # update output label
         self.convert_output_lbl.setText(os.path.basename(self.output_dir))
+
 
     @QtCore.pyqtSlot()
     def start_conversion(self):
@@ -178,6 +187,30 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                             'Success!',
                             'File(s) successfully written ' +
                             'to {}!'.format(outpath))
+
+    #####################################
+    # Definitions for Assignment
+    #####################################
+
+    @QtCore.pyqtSlot()
+    def set_assign_xtable(self):
+        self.assign_xtable = QFileDialog.getOpenFileName(self,
+                                                            'Open xTable file')[0]
+                                                            
+        # TODO: show label for input file
+        
+    @QtCore.pyqtSlot()        
+    def set_assign_mgf(self):
+        self.assign_mgf = QFileDialog.getOpenFileName(self,
+                                                            'Open MGF file')[0]
+        # TODO: show label for input file
+                                
+    @QtCore.pyqtSlot()
+    def set_assign_outdir(self):
+        self.assign_outdir = QFileDialog.getExistingDirectory(self,\
+                                                'Select directory for output')
+        # TODO: show label for input file
+
     ##################################
     # Dialogs
     ##################################
@@ -186,7 +219,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
     def show_about(self):
         QMessageBox.about(self,
                           self.tr('About CroCo'),
-                          'Version 0.1 (Oct 2017) <br><br>Written by <a href="mailto:jub@halomem.de">Julian Bender</a> at Martin Luther University Halle Wittenberg, Germany')
+                          'Version 0.1 (Dec 2017) <br><br>Written by <a href="mailto:jub@halomem.de">Julian Bender</a> at Martin Luther University Halle Wittenberg, Germany')
 
     def print_warning(self, error):
         QMessageBox.warning(self, "Error!",

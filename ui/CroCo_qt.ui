@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>788</width>
-    <height>347</height>
+    <width>442</width>
+    <height>207</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,17 +19,10 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QFormLayout" name="formLayout">
-    <item row="1" column="1">
-     <widget class="QProgressBar" name="progressBar">
-      <property name="value">
-       <number>24</number>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -117,13 +110,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1" colspan="2">
-         <widget class="QLabel" name="convert_input_lbl">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="3" colspan="2">
          <widget class="QLabel" name="label2">
           <property name="text">
@@ -131,21 +117,14 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="5">
-         <widget class="QLabel" name="convert_output_lbl">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="4" colspan="2">
+        <item row="4" column="4" colspan="2">
          <widget class="QPushButton" name="convert_quit">
           <property name="text">
            <string>Quit</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="QPushButton" name="convert_start">
           <property name="statusTip">
            <string>Start the conversion</string>
@@ -155,8 +134,21 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="0" colspan="3">
+         <widget class="QLabel" name="convert_input_lbl">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3" colspan="3">
+         <widget class="QLabel" name="convert_output_lbl">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
        </layout>
-       <zorder>convert_output_lbl</zorder>
        <zorder>label1</zorder>
        <zorder>convert_quit</zorder>
        <zorder>label4</zorder>
@@ -164,10 +156,11 @@
        <zorder>convert_output_btn</zorder>
        <zorder>label3</zorder>
        <zorder>label2</zorder>
-       <zorder>convert_input_lbl</zorder>
        <zorder>convert_input_dropdown</zorder>
        <zorder>convert_output_dropdown</zorder>
        <zorder>convert_start</zorder>
+       <zorder>convert_input_lbl</zorder>
+       <zorder>convert_output_lbl</zorder>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -186,79 +179,6 @@
         <property name="bottomMargin">
          <number>10</number>
         </property>
-        <item row="9" column="8">
-         <widget class="QPushButton" name="assign_next_btn">
-          <property name="text">
-           <string>Next</string>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="3">
-         <widget class="QPushButton" name="assign_score_decline_btn">
-          <property name="styleSheet">
-           <string notr="true">QPushButton {background-color: rgb(220,20,60)}
-QPushButton:pressed {background-color: rgb(250,128,114)}</string>
-          </property>
-          <property name="text">
-           <string>Decline [0]</string>
-          </property>
-          <property name="shortcut">
-           <string>0</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Current xlink:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="3">
-         <widget class="QPushButton" name="assign_score_unsure_btn">
-          <property name="styleSheet">
-           <string notr="true">QPushButton:pressed {background-color: rgb(255,215,0)}
-QPushButton {background-color: rgb(255,165,0)}</string>
-          </property>
-          <property name="text">
-           <string>Unsure [1]</string>
-          </property>
-          <property name="shortcut">
-           <string>1</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="3">
-         <widget class="QPushButton" name="assign_start_btn">
-          <property name="text">
-           <string>Start assignment</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QPushButton" name="assign_load_mgf_btn">
-          <property name="text">
-           <string>Load MGF</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="4">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Current Spectrum</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="6">
-         <widget class="QSpinBox" name="spinBox"/>
-        </item>
-        <item row="6" column="4">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>Precision (ppm)</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QPushButton" name="assign_load_xlink_btn">
           <property name="text">
@@ -266,130 +186,24 @@ QPushButton {background-color: rgb(255,165,0)}</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label">
+        <item row="1" column="1">
+         <widget class="QPushButton" name="assign_load_mgf_btn">
           <property name="text">
-           <string>Load xlinks:</string>
+           <string>Load MGF</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="0">
-         <widget class="QPushButton" name="assign_previous_btn">
-          <property name="text">
-           <string>Previous</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="3">
-         <widget class="QPushButton" name="assign_score_accept">
-          <property name="styleSheet">
-           <string notr="true">QPushButton:pressed {background-color: rgb(154,205,50)}
-QPushButton {background-color: rgb(107,142,35)}</string>
-          </property>
-          <property name="text">
-           <string>Accept [2]</string>
-          </property>
-          <property name="shortcut">
-           <string>2</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0" colspan="9">
-         <widget class="Line" name="line">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="3">
-         <widget class="QPushButton" name="assign_score_good_btn">
-          <property name="styleSheet">
-           <string notr="true">QPushButton:pressed {background-color: rgb(154,205,50)}
-QPushButton {background-color: rgb(124,252,0)}</string>
-          </property>
-          <property name="text">
-           <string>Very Good [3]</string>
-          </property>
-          <property name="shortcut">
-           <string>3</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QPushButton" name="assign_filter_btn">
-          <property name="text">
-           <string>Filter score</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
-         <widget class="QPushButton" name="assign_goto_btn">
-          <property name="text">
-           <string>GoTo</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="1">
-         <widget class="QLineEdit" name="assign_goto_edit"/>
-        </item>
-        <item row="6" column="5">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>-</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="1">
-         <widget class="QComboBox" name="assign_filter_dropdown">
-          <property name="currentText">
-           <string>Less than</string>
-          </property>
-          <property name="currentIndex">
-           <number>0</number>
-          </property>
-          <item>
-           <property name="text">
-            <string>Less than</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Greater than</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="6" column="7">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>+</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="2">
-         <widget class="QLineEdit" name="assign_filter_edit"/>
-        </item>
-        <item row="6" column="8">
-         <widget class="QSpinBox" name="spinBox_2"/>
-        </item>
-        <item row="0" column="3">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Load MGF:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="8">
+        <item row="1" column="2">
          <widget class="QPushButton" name="assign_output_btn">
           <property name="text">
            <string>Output Dir</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="8">
-         <widget class="QLabel" name="label_3">
+        <item row="3" column="1">
+         <widget class="QPushButton" name="assign_start_btn">
           <property name="text">
-           <string>Output Dir:</string>
+           <string>Start assignment</string>
           </property>
          </widget>
         </item>
@@ -407,7 +221,7 @@ QPushButton {background-color: rgb(124,252,0)}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>788</width>
+     <width>442</width>
      <height>19</height>
     </rect>
    </property>

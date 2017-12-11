@@ -42,7 +42,7 @@ def main(argv):
             data_dir = share_dir
             sys.stderr.write('Using resources from ' + data_dir + '\n')
 
-    from CroCo_qt import CroCo_MainWindow
+    from croco_qt.ui.mainwindow import CroCo_MainWindow
 
     # use relative paths from within data to simplify programme
     if os.path.exists(data_dir):
