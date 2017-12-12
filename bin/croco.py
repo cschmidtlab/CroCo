@@ -42,8 +42,6 @@ def main(argv):
             data_dir = share_dir
             sys.stderr.write('Using resources from ' + data_dir + '\n')
 
-    from croco_qt.ui.mainwindow import CroCo_MainWindow
-
     # use relative paths from within data to simplify programme
     if os.path.exists(data_dir):
         os.chdir(data_dir)
@@ -52,10 +50,14 @@ def main(argv):
     
     # Translation belongs here
     
-    mainwindow = CroCo_MainWindow()
+    import croco_qt.ui.mainwindow as mainwin
+    
+    mainwindow = mainwin.CroCo_MainWindow()
     mainwindow.show()
     
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+print(__name__)
+
+if __name__.endswith('__main__'):
     main(sys.argv)

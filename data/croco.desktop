@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CroCo Cross-Link Converter
+Comment=Conversion and assignment programme for structural proteomics
+Exec=croco
+Terminal=False
+Type=Application
+Categories=Utility;Science;Qt
+Encoding=UTF-8
+Version=0.1
