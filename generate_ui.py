@@ -14,7 +14,7 @@ import re
 from subprocess import call
 
 # needed to adjustt the import path in the ui-derived python-file
-package_name = 'croco_qt'
+package_name = 'croco.ui'
 
 # paths to bins
 if sys.platform == "win32":
@@ -26,14 +26,14 @@ uic_path = os.path.join(bindir, 'pyuic5.bat')
 rcc_path = os.path.join(bindir, 'pyrcc5.exe')
 
 # path of source files within the project
-ui_path = 'ui'
+ui_path = 'qt'
 rc_path = ""
 # paths to write the compiled files to
-ui_out_path = os.path.join('src', 'croco_qt', 'ui')
-rc_out_path = os.path.join('src', 'croco_qt')
+ui_out_path = os.path.join('src', 'croco', 'ui')
 # dict to set names for the conversion
 ui_files = { "CroCo_qt.ui": "ui_mainwindow.py",
-             "spectrum.ui": "ui_spectrum.py"}
+             "spectrum.ui": "ui_spectrum.py",
+             "spectrumOptions.ui": "ui_spectrumoptions.py"}
 rc_files = {"croco.qrc": "croco_rc.py"}
 
 for file in ui_files:
@@ -47,7 +47,7 @@ for file in ui_files:
     buffer = []
     with open(out_file_path, 'r') as i:
         # QDesigner generates an import command FILE_rc that has to be
-        # relative to the package i.e. croco_qt.FILE_rc
+        # relative to the package i.e. croco.FILE_rc
         pattern = re.compile(r'import (\w+)_rc$')
         for line in i:
             if pattern.match(line):
@@ -60,5 +60,5 @@ for file in ui_files:
 # do the same for the resources compiler
 for file in rc_files:
    file_path = os.path.join(rc_path, file)
-   out_file_path = os.path.join(rc_out_path, rc_files[file])
+   out_file_path = os.path.join(ui_out_path, rc_files[file])
    call([rcc_path, file_path, '-o', out_file_path])

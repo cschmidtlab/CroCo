@@ -81,7 +81,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     :params: xlinker_mod: Modification mass of the crosslinker
     :params: ion_types: list of which ions to return (a/b/y)
     :params: charge state of the returned ions
-    :params: mass_type: mono or average
+    :params: mass_type: monoisotopic or average
     :params: mods: modifications to consider
     :params: max_mass: maximum allowed mass (e.g. max m/z of quad)
     """
@@ -89,7 +89,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     # table contains amino acid masses - H2O for better calculation
     with open('../data/config/aa_masses.txt', mode='r') as infile:
         reader = csv.reader(infile, delimiter='\t')
-        if mass_type == 'mono':
+        if mass_type == 'monoisotopic':
             aa_dict = {rows[0]:float(rows[1]) for rows in reader}
         elif mass_type == 'average':
             aa_dict = {rows[0]:float(rows[2]) for rows in reader}
@@ -340,36 +340,38 @@ def PlotHist(data, limits, ax=None):
 
 #%%
 
-fig, ax = plt.subplots(2)
+if __name__ == __main__:
 
-ppm = [-50, 50]
-
-assignment_error = []
-
-ions2desc =  IonsFromXlinkSequence('KAWGNNQDGVVASQPAR', # peptid1
-                                   1, # xlink1
-                                   'LKSSDAYK', # peptide2
-                                   2, # xlink2
-                                   138.068, #mass of xlinker
-                                   ['a', 'b', 'y'], # ion types
-                                   [1,2], # min, max charge
-                                   'mono', # mass type
-                                   None, # modifications
-                                   2000) # max mass
-
-with open('peptides.log', 'w') as f:
-    for idx, i in enumerate(ions2desc.keys()):
-        f.write('{}\t{}\n'.format(i, '\t'.join([str(i) for i in ions2desc[i]])))
-                                    
-with open('../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf', 'r') as f:
-    spectrum2offset = Reader.IndexMGF(f)
+    fig, ax = plt.subplots(2)
     
-    mz2intens = Reader.ReadSpectrum(18452, # spectrum
-                                    f, # file handle
-                                    spectrum2offset) # spectrum dict
-
-    assignment_error = AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=ax[0])
+    ppm = [-50, 50]
     
-    PlotHist(assignment_error, ppm, ax[1])
+    assignment_error = []
     
-    plt.show()
+    ions2desc =  IonsFromXlinkSequence('KAWGNNQDGVVASQPAR', # peptid1
+                                    1, # xlink1
+                                    'LKSSDAYK', # peptide2
+                                    2, # xlink2
+                                    138.068, #mass of xlinker
+                                    ['a', 'b', 'y'], # ion types
+                                    [1,2], # min, max charge
+                                    'monoisotopic', # mass type
+                                    None, # modifications
+                                    2000) # max mass
+    
+    with open('peptides.log', 'w') as f:
+        for idx, i in enumerate(ions2desc.keys()):
+            f.write('{}\t{}\n'.format(i, '\t'.join([str(i) for i in ions2desc[i]])))
+                                        
+    with open('../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf', 'r') as f:
+        spectrum2offset = Reader.IndexMGF(f)
+        
+        mz2intens = Reader.ReadSpectrum(18452, # spectrum
+                                        f, # file handle
+                                        spectrum2offset) # spectrum dict
+    
+        assignment_error = AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=ax[0])
+        
+        PlotHist(assignment_error, ppm, ax[1])
+        
+        plt.show()

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SpectrumAssignmentOptions</class>
+ <widget class="QMainWindow" name="SpectrumAssignmentOptions">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>362</width>
+    <height>436</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Assignment Options</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="3" column="0">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Cross-linker</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Not implemented! :D</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_3">
+      <property name="title">
+       <string>Modifications</string>
+      </property>
+      <layout class="QFormLayout" name="formLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Not implemented, too!</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>General</string>
+      </property>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Mass of the ions</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QRadioButton" name="mass_mono">
+         <property name="text">
+          <string>monisotopic</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">options_ionmass</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="mass_av">
+         <property name="text">
+          <string>average</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">options_ionmass</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Ion types</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="options_aion">
+         <property name="text">
+          <string>a</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="options_xion">
+         <property name="text">
+          <string>x</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QCheckBox" name="options_yion">
+         <property name="text">
+          <string>y</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QCheckBox" name="options_cion">
+         <property name="text">
+          <string>c</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QCheckBox" name="options_zion">
+         <property name="text">
+          <string>z</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Max m/z to consider (depends on quad)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLineEdit" name="lineEdit_2">
+         <property name="text">
+          <string>2000</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="options_bion">
+         <property name="text">
+          <string>b</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>362</width>
+     <height>19</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="options_ionmass"/>
+ </buttongroups>
+</ui>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui\CroCo_qt.ui'
+# Form implementation generated from reading ui file 'qt\CroCo_qt.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(442, 207)
+        MainWindow.resize(442, 227)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/images/data/images/python-icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -97,7 +97,28 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.assign_output_btn, 1, 2, 1, 1)
         self.assign_start_btn = QtWidgets.QPushButton(self.tab_2)
         self.assign_start_btn.setObjectName("assign_start_btn")
-        self.gridLayout.addWidget(self.assign_start_btn, 3, 1, 1, 1)
+        self.gridLayout.addWidget(self.assign_start_btn, 4, 1, 1, 1)
+        self.label = QtWidgets.QLabel(self.tab_2)
+        self.label.setObjectName("label")
+        self.gridLayout.addWidget(self.label, 2, 0, 1, 1)
+        self.label_2 = QtWidgets.QLabel(self.tab_2)
+        self.label_2.setObjectName("label_2")
+        self.gridLayout.addWidget(self.label_2, 2, 1, 1, 1)
+        self.label_3 = QtWidgets.QLabel(self.tab_2)
+        self.label_3.setObjectName("label_3")
+        self.gridLayout.addWidget(self.label_3, 2, 2, 1, 1)
+        self.assign_xlink_lbl = QtWidgets.QLabel(self.tab_2)
+        self.assign_xlink_lbl.setText("")
+        self.assign_xlink_lbl.setObjectName("assign_xlink_lbl")
+        self.gridLayout.addWidget(self.assign_xlink_lbl, 3, 0, 1, 1)
+        self.assign_mgf_lbl = QtWidgets.QLabel(self.tab_2)
+        self.assign_mgf_lbl.setText("")
+        self.assign_mgf_lbl.setObjectName("assign_mgf_lbl")
+        self.gridLayout.addWidget(self.assign_mgf_lbl, 3, 1, 1, 1)
+        self.assign_outdir_lbl = QtWidgets.QLabel(self.tab_2)
+        self.assign_outdir_lbl.setText("")
+        self.assign_outdir_lbl.setObjectName("assign_outdir_lbl")
+        self.gridLayout.addWidget(self.assign_outdir_lbl, 3, 2, 1, 1)
         self.tabWidget.addTab(self.tab_2, "")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.tabWidget)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -125,7 +146,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -151,6 +172,9 @@ class Ui_MainWindow(object):
         self.assign_load_mgf_btn.setText(_translate("MainWindow", "Load MGF"))
         self.assign_output_btn.setText(_translate("MainWindow", "Output Dir"))
         self.assign_start_btn.setText(_translate("MainWindow", "Start assignment"))
+        self.label.setText(_translate("MainWindow", "xlink dir:"))
+        self.label_2.setText(_translate("MainWindow", "MGF dir:"))
+        self.label_3.setText(_translate("MainWindow", "output dir:"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Assignment"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuAbout.setTitle(_translate("MainWindow", "About"))
@@ -160,7 +184,7 @@ class Ui_MainWindow(object):
         self.actionAbout.setText(_translate("MainWindow", "About CroCo"))
         self.actionAbout.setStatusTip(_translate("MainWindow", "About CroCo"))
 
-import croco_qt.croco_rc
+import croco.ui.croco_rc
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)

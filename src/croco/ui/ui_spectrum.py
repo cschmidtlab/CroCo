@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui\spectrum.ui'
+# Form implementation generated from reading ui file 'qt\spectrum.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -8,24 +8,21 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_Spectrum(object):
-    def setupUi(self, Spectrum):
-        Spectrum.setObjectName("Spectrum")
-        Spectrum.resize(715, 397)
-        Spectrum.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/images/data/images/python-icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        Spectrum.setWindowIcon(icon)
-        self.verticalLayout = QtWidgets.QVBoxLayout(Spectrum)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.toolbar = QtWidgets.QWidget(Spectrum)
+class Ui_SpectrumAssignment(object):
+    def setupUi(self, SpectrumAssignment):
+        SpectrumAssignment.setObjectName("SpectrumAssignment")
+        SpectrumAssignment.resize(768, 499)
+        self.centralwidget = QtWidgets.QWidget(SpectrumAssignment)
+        self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName("gridLayout")
+        self.toolbar = QtWidgets.QWidget(self.centralwidget)
         self.toolbar.setObjectName("toolbar")
-        self.verticalLayout.addWidget(self.toolbar)
-        self.canvas = QtWidgets.QWidget(Spectrum)
-        self.canvas.setBaseSize(QtCore.QSize(0, 0))
+        self.gridLayout.addWidget(self.toolbar, 0, 0, 1, 1)
+        self.canvas = QtWidgets.QWidget(self.centralwidget)
         self.canvas.setObjectName("canvas")
-        self.verticalLayout.addWidget(self.canvas)
-        self.navigation = QtWidgets.QGroupBox(Spectrum)
+        self.gridLayout.addWidget(self.canvas, 1, 0, 1, 1)
+        self.navigation = QtWidgets.QGroupBox(self.centralwidget)
         self.navigation.setObjectName("navigation")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.navigation)
         self.gridLayout_2.setObjectName("gridLayout_2")
@@ -93,44 +90,65 @@ class Ui_Spectrum(object):
         self.assign_next_btn = QtWidgets.QPushButton(self.navigation)
         self.assign_next_btn.setObjectName("assign_next_btn")
         self.gridLayout_2.addWidget(self.assign_next_btn, 4, 8, 1, 1)
-        self.verticalLayout.addWidget(self.navigation)
+        self.gridLayout.addWidget(self.navigation, 2, 0, 1, 1)
+        SpectrumAssignment.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(SpectrumAssignment)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 768, 19))
+        self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
+        SpectrumAssignment.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(SpectrumAssignment)
+        self.statusbar.setObjectName("statusbar")
+        SpectrumAssignment.setStatusBar(self.statusbar)
+        self.actionQuit = QtWidgets.QAction(SpectrumAssignment)
+        self.actionQuit.setObjectName("actionQuit")
+        self.assign_options = QtWidgets.QAction(SpectrumAssignment)
+        self.assign_options.setObjectName("assign_options")
+        self.menuFile.addAction(self.assign_options)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionQuit)
+        self.menubar.addAction(self.menuFile.menuAction())
 
-        self.retranslateUi(Spectrum)
+        self.retranslateUi(SpectrumAssignment)
         self.assign_filter_dropdown.setCurrentIndex(0)
-        QtCore.QMetaObject.connectSlotsByName(Spectrum)
+        QtCore.QMetaObject.connectSlotsByName(SpectrumAssignment)
 
-    def retranslateUi(self, Spectrum):
+    def retranslateUi(self, SpectrumAssignment):
         _translate = QtCore.QCoreApplication.translate
-        Spectrum.setWindowTitle(_translate("Spectrum", "Spectrum Assignment"))
-        self.navigation.setTitle(_translate("Spectrum", "Navigation"))
-        self.label_5.setText(_translate("Spectrum", "Current xlink:"))
-        self.label_4.setText(_translate("Spectrum", "Current Spectrum"))
-        self.assign_goto_btn.setText(_translate("Spectrum", "GoTo"))
-        self.assign_score_good_btn.setText(_translate("Spectrum", "Very Good [3]"))
-        self.assign_score_good_btn.setShortcut(_translate("Spectrum", "G"))
-        self.assign_filter_btn.setText(_translate("Spectrum", "Filter score"))
-        self.assign_filter_dropdown.setCurrentText(_translate("Spectrum", "Less than"))
-        self.assign_filter_dropdown.setItemText(0, _translate("Spectrum", "Less than"))
-        self.assign_filter_dropdown.setItemText(1, _translate("Spectrum", "Greater than"))
-        self.assign_score_accept.setText(_translate("Spectrum", "Accept [2]"))
-        self.assign_score_accept.setShortcut(_translate("Spectrum", "2"))
-        self.label_6.setText(_translate("Spectrum", "Precision (ppm)"))
-        self.label_7.setText(_translate("Spectrum", "-"))
-        self.label_8.setText(_translate("Spectrum", "+"))
-        self.assign_score_unsure_btn.setText(_translate("Spectrum", "Unsure [1]"))
-        self.assign_score_unsure_btn.setShortcut(_translate("Spectrum", "1"))
-        self.assign_previous_btn.setText(_translate("Spectrum", "Previous"))
-        self.assign_score_decline_btn.setText(_translate("Spectrum", "Decline [0]"))
-        self.assign_score_decline_btn.setShortcut(_translate("Spectrum", "0"))
-        self.assign_next_btn.setText(_translate("Spectrum", "Next"))
+        SpectrumAssignment.setWindowTitle(_translate("SpectrumAssignment", "Spectrum Assignment"))
+        self.navigation.setTitle(_translate("SpectrumAssignment", "Navigation"))
+        self.label_5.setText(_translate("SpectrumAssignment", "Current xlink:"))
+        self.label_4.setText(_translate("SpectrumAssignment", "Current Spectrum"))
+        self.assign_goto_btn.setText(_translate("SpectrumAssignment", "GoTo"))
+        self.assign_score_good_btn.setText(_translate("SpectrumAssignment", "Very Good [3]"))
+        self.assign_score_good_btn.setShortcut(_translate("SpectrumAssignment", "3"))
+        self.assign_filter_btn.setText(_translate("SpectrumAssignment", "Filter score"))
+        self.assign_filter_dropdown.setCurrentText(_translate("SpectrumAssignment", "Less than"))
+        self.assign_filter_dropdown.setItemText(0, _translate("SpectrumAssignment", "Less than"))
+        self.assign_filter_dropdown.setItemText(1, _translate("SpectrumAssignment", "Greater than"))
+        self.assign_score_accept.setText(_translate("SpectrumAssignment", "Accept [2]"))
+        self.assign_score_accept.setShortcut(_translate("SpectrumAssignment", "2"))
+        self.label_6.setText(_translate("SpectrumAssignment", "Precision (ppm)"))
+        self.label_7.setText(_translate("SpectrumAssignment", "-"))
+        self.label_8.setText(_translate("SpectrumAssignment", "+"))
+        self.assign_score_unsure_btn.setText(_translate("SpectrumAssignment", "Unsure [1]"))
+        self.assign_score_unsure_btn.setShortcut(_translate("SpectrumAssignment", "1"))
+        self.assign_previous_btn.setText(_translate("SpectrumAssignment", "Previous"))
+        self.assign_score_decline_btn.setText(_translate("SpectrumAssignment", "Decline [0]"))
+        self.assign_score_decline_btn.setShortcut(_translate("SpectrumAssignment", "0"))
+        self.assign_next_btn.setText(_translate("SpectrumAssignment", "Next"))
+        self.menuFile.setTitle(_translate("SpectrumAssignment", "File"))
+        self.actionQuit.setText(_translate("SpectrumAssignment", "Quit"))
+        self.assign_options.setText(_translate("SpectrumAssignment", "Options"))
 
-import croco_qt.croco_rc
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    Spectrum = QtWidgets.QWidget()
-    ui = Ui_Spectrum()
-    ui.setupUi(Spectrum)
-    Spectrum.show()
+    SpectrumAssignment = QtWidgets.QMainWindow()
+    ui = Ui_SpectrumAssignment()
+    ui.setupUi(SpectrumAssignment)
+    SpectrumAssignment.show()
     sys.exit(app.exec_())
 

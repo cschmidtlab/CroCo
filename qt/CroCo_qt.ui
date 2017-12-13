@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>207</height>
+    <height>227</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -200,10 +200,52 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
+        <item row="4" column="1">
          <widget class="QPushButton" name="assign_start_btn">
           <property name="text">
            <string>Start assignment</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>xlink dir:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>MGF dir:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>output dir:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="assign_xlink_lbl">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="assign_mgf_lbl">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLabel" name="assign_outdir_lbl">
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>

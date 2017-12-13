@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SpectrumAssignment</class>
+ <widget class="QMainWindow" name="SpectrumAssignment">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>768</width>
+    <height>499</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Spectrum Assignment</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QWidget" name="toolbar" native="true"/>
+    </item>
+    <item row="1" column="0">
+     <widget class="QWidget" name="canvas" native="true"/>
+    </item>
+    <item row="2" column="0">
+     <widget class="QGroupBox" name="navigation">
+      <property name="title">
+       <string>Navigation</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Current xlink:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Current Spectrum</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="assign_goto_btn">
+         <property name="text">
+          <string>GoTo</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="assign_goto_edit"/>
+       </item>
+       <item row="1" column="3">
+        <widget class="QPushButton" name="assign_score_good_btn">
+         <property name="styleSheet">
+          <string notr="true">QPushButton:pressed {background-color: rgb(154,205,50)}
+QPushButton {background-color: rgb(124,252,0)}</string>
+         </property>
+         <property name="text">
+          <string>Very Good [3]</string>
+         </property>
+         <property name="shortcut">
+          <string>3</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="assign_filter_btn">
+         <property name="text">
+          <string>Filter score</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="assign_filter_dropdown">
+         <property name="currentText">
+          <string>Less than</string>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>Less than</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Greater than</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLineEdit" name="assign_filter_edit"/>
+       </item>
+       <item row="2" column="3">
+        <widget class="QPushButton" name="assign_score_accept">
+         <property name="styleSheet">
+          <string notr="true">QPushButton:pressed {background-color: rgb(154,205,50)}
+QPushButton {background-color: rgb(107,142,35)}</string>
+         </property>
+         <property name="text">
+          <string>Accept [2]</string>
+         </property>
+         <property name="shortcut">
+          <string>2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Precision (ppm)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="5">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="6">
+        <widget class="QSpinBox" name="spinBox"/>
+       </item>
+       <item row="2" column="7">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>+</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="8">
+        <widget class="QSpinBox" name="spinBox_2"/>
+       </item>
+       <item row="3" column="3">
+        <widget class="QPushButton" name="assign_score_unsure_btn">
+         <property name="styleSheet">
+          <string notr="true">QPushButton:pressed {background-color: rgb(255,215,0)}
+QPushButton {background-color: rgb(255,165,0)}</string>
+         </property>
+         <property name="text">
+          <string>Unsure [1]</string>
+         </property>
+         <property name="shortcut">
+          <string>1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="assign_previous_btn">
+         <property name="text">
+          <string>Previous</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3">
+        <widget class="QPushButton" name="assign_score_decline_btn">
+         <property name="styleSheet">
+          <string notr="true">QPushButton {background-color: rgb(220,20,60)}
+QPushButton:pressed {background-color: rgb(250,128,114)}</string>
+         </property>
+         <property name="text">
+          <string>Decline [0]</string>
+         </property>
+         <property name="shortcut">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="8">
+        <widget class="QPushButton" name="assign_next_btn">
+         <property name="text">
+          <string>Next</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>768</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="assign_options"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="assign_options">
+   <property name="text">
+    <string>Options</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
