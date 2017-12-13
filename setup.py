@@ -1,25 +1,7 @@
 # -*- coding:utf-8 -*-
 
-import sys, os
-from cx_Freeze import setup, Executable
+from distutils import setup
 
-paths = sys.path
-paths.append('src')  # path to look for modules (plus sys.path)
-
-buildOptions = {'build_exe':
-                    {'includes' : [],
-                     'path' : paths,
-                     'includes' : ['croco_qt', 'codecs'],
-                     'excludes': [],
-                     'include_files': []
-                    }
-                }
-
-# GUI applications require a different base on Windows (the default is for a
-# console application).
-base = None
-#if sys.platform == "win32":
-#    base = "Win32GUI"
 
 # set proper paths to tcl and tk libraries
 PYTHON_INSTALL_DIR = os.path.dirname(os.path.dirname(os.__file__))
@@ -36,6 +18,7 @@ setup(
     long_description = """ The CroCo cross-link conversion engine aims to 
     simplify the integration of XL-MS data from different cross-link annotation
     programmes.""",
-    options = buildOptions,
-    executables = [Executable("bin/croco.py", base=base)]
-    )  
+    package_dir = { "" : 'src'},
+    packages = ['croco_qt']
+    scripts = ['bin/croco']
+    )
