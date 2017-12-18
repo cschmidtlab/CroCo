@@ -19,6 +19,7 @@ from matplotlib.figure import Figure
 
 import sys, os
 import pandas as pd
+import numpy as np
 import itertools as it
 
 from croco.ui.ui_mainwindow import Ui_MainWindow
@@ -227,7 +228,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                 print('{}: Table successfully written '.format(f) +
                       'to {}!'.format(outpath))
             except Exception as e:
-                self.print_warning(self, 'Conversion of {} was '.format(f) +
+                print_warning(self, 'Conversion of {} was '.format(f) +
                                    'not successfull:{}'.format(str(e)))
                 was_error = True
                 break
@@ -343,9 +344,15 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         """
         self.assign_options.triggered.connect(self.showAssignmentOptions)
         
-        self.assign_next_btn.clicked.connect(lambda: self.loadSpectrum(self))
-        self.assign_previous_btn.clicked.connect(lambda: self.loadSpectrum(self,
-                                                                           directtion='prev'))
+        self.assign_next_btn.clicked.connect(lambda: self.loadSpectrum())
+        self.assign_previous_btn.clicked.connect(lambda: self.loadSpectrum(direction='prev'))
+        
+        self.assign_score_decline_btn.clicked.connect(lambda: self.rateSpectrum(score=0))
+        self.assign_score_unsure_btn.clicked.connect(lambda: self.rateSpectrum(score=1))
+        self.assign_score_accept_btn.clicked.connect(lambda: self.rateSpectrum(score=2))
+        self.assign_score_good_btn.clicked.connect(lambda: self.rateSpectrum(score=3))
+
+        self.assign_save_btn.clicked.connect(lambda: self.saveTable())
 
     def createFigure(self):
         """
@@ -365,7 +372,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
     #####################################
     # Definitions for Assignment
     #####################################
-
+    @QtCore.pyqtSlot()
     def openMGF(self):
         """
         Opens MGF and calls the MGF-Indexer with an open as_filehandle
@@ -373,7 +380,6 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
 
         # call indexer
         self.spectrum2offset = assignr.IndexMGF(Options['as_filehandle'])
-
 
     def iterFromxTable(self):
         """
@@ -390,8 +396,8 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
             def __init__(self, list):
                 self.list = list
                 self.lenlist = len(list) - 1
-                self.index = 0
-            
+                self.index = -1
+                            
             def next(self):
                 """
                 returns the next element of a list and the first if the last
@@ -402,6 +408,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
                     self.index = 0
                 else:
                     self.index += 1
+                
                 return self.list[self.index]
                 
             def prev(self):
@@ -413,19 +420,38 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
                 else:
                     self.index -= 1
                 return self.list[self.index]
+                
+            def setCurrentScore(self, score):
+                """
+                Method to access the last element of the
+                list of lists i.e. the score from outside
+                the class
+                """
+                self.list[self.index][-1] = score
         
-        xlinks = Options['as_xtable']
+        self.xtable = Options['as_xtable']
+        
+        # create a column "Manual score" if not already present
+        if not 'Manual score' in self.xtable.columns:
+            self.xtable['Manual score'] = np.nan
          
-        xlinks = xlinks[['pepseq1',
-                         'xlink1',
-                         'pepseq2',
-                         'xlink2',
-                         'xtype',
-                         'scanno',
-                         'prec_ch']].values
+        xlinks = self.xtable[['pepseq1',
+                              'xlink1',
+                              'pepseq2',
+                              'xlink2',
+                              'xtype',
+                              'scanno',
+                              'prec_ch',
+                              'Manual score']].values
+
+        indices = self.xtable.index.values
+        
+        # concatenate 1d array indices with 2d array xlinks
+        xlinks = np.hstack((indices[:, None], xlinks))
 
         self.xlink_iter = xiter(xlinks)
         
+    @QtCore.pyqtSlot()
     def loadSpectrum(self, direction='next'):
         """
         Generates a matplotlib figure object from a mgf file and a cross-link
@@ -438,21 +464,25 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         ax.clear() 
       
         if direction == 'next':
-            [pepseq1,
+            [self.idx,
+             pepseq1,
              xlink1,
              pepseq2,
              xlink2,
              xtype,
              scanno,
-             prec_ch] = self.xlink_iter.next()
+             prec_ch,
+             man_score] = self.xlink_iter.next()
         else:
-            [pepseq1,
+            [self.idx,
+             pepseq1,
              xlink1,
              pepseq2,
              xlink2,
              xtype,
              scanno,
-             prec_ch] = self.xlink_iter.prev()  
+             prec_ch,
+             man_score] = self.xlink_iter.prev()  
 
         mz2intens = assignr.ReadSpectrum(scanno, # spectrum
                                          Options['as_filehandle'], # file handle
@@ -478,6 +508,29 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
 
         # refresh canvas
         self.canvas.draw()
+
+    def rateSpectrum(self, score=1):
+        """
+        Take the user input, assign the respective score value to a
+        pd-DataFrame, and call the next spectrum
+        """
+        self.xtable.set_value(self.idx, 'Manual score', score)
+        self.xlink_iter.setCurrentScore(score)
+        
+        print('You rated this spectrum with score {}'.format(score))
+        
+        self.loadSpectrum()
+
+    def saveTable(self):
+        """
+        Saves the xtable on self with its input filename
+        """
+        try:
+            self.xtable.to_excel(Options['as_xtable_path'])
+            print('Table saved')
+        except Exception as e:
+            print_warning(self, 'There was an error saving your xTable file: {}'.\
+                format(e))
 
     @QtCore.pyqtSlot()
     def showAssignmentOptions(self):
