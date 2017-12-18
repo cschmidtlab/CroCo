@@ -20,17 +20,38 @@ from croco.ui.ui_mainwindow import Ui_MainWindow
 from croco.ui.ui_spectrum import Ui_SpectrumAssignment
 from croco.ui.ui_spectrumoptions import Ui_SpectrumAssignmentOptions
 import croco.reader as xr
-import croco.writer as x
+import croco.writer as xw
 
+import croco.SpectrumAssignment as assign
+import croco.SpectrumReader as assignr
+
+
+"""
+Dict that contains all variables, options and settings that should be
+passed within the programme
+"""
+Options = {'cv_input_format': 'pLink',
+           'cv_output_format': 'xTable',
+           'cv_output_dir': '',
+           'cv_fnames': [],
+           
+           'as_input_format': 'pLink',
+           'as_output_format': 'xTable',
+          'as_output_dir': '',
+           'as_fnames': [],
+           
+           'as_xtable_path': None,
+           'as_mgf_path': None,
+           'as_outdir': None,
+           
+           'as_filehandle': None,
+           'as_xtable': None,
+       
+           'ionmass': 'monoisotopic',
+           'iontypes': ['a', 'b', 'y'],
+           'max_mz': 2000
+            }
 class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
-
-    #####################################
-    # Options preset
-    #####################################
-    input_format = 'pLink'
-    output_format = 'xTable'
-    output_dir = ''
-    fnames = []
 
     def __init__(self):
         # initialise the parent classe
@@ -38,7 +59,15 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         # initial itself
         self.setupUi(self)
         self.createConnects()
-
+        # read Options
+        global Options
+        
+        # set starting positions of dropdown menus
+        self.cv_input_format = Options['cv_input_format']
+        self.cv_output_format = Options['cv_output_format']
+        self.cv_output_dir = Options['cv_output_dir']
+        self.cv_fnames = Options['cv_fnames']
+        
     #####################################
     # Connects
     #####################################
@@ -78,13 +107,13 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         #-----------------------------------------
 
         # Open xlink file dialog
-        self.assign_load_xlink_btn.clicked.connect(self.set_assign_xtable)
+        self.assign_load_xlink_btn.clicked.connect(self.set_as_xtable_path)
 
         # Open mgf file dialog
-        self.assign_load_mgf_btn.clicked.connect(self.set_assign_mgf)
+        self.assign_load_mgf_btn.clicked.connect(self.set_as_mgf_path)
 
         # Output files button
-        self.assign_output_btn.clicked.connect(self.set_assign_outdir)
+        self.assign_output_btn.clicked.connect(self.set_as_outdir)
         
         # Start button
         self.assign_start_btn.clicked.connect(self.start_assignment)
@@ -108,35 +137,36 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
         # assign to variables
     def set_conv_input_format(self, text):
-        self.input_format = text
+        print(text)
+        self.cv_input_format = text
 
     def set_conv_output_format(self, text):
-        self.output_format = text
+        self.cv_output_format = text
 
     # open folder dialog for pLink (only one folder at once) or file
     # dialog for others (multiple files at once)
     # decorator explicitely defines method as slot!
     @QtCore.pyqtSlot()
     def set_conv_input_files(self):
-        if self.input_format == 'pLink':
-            self.fnames = [QFileDialog.getExistingDirectory(self,\
+        if self.cv_input_format == 'pLink':
+            self.cv_fnames = [QFileDialog.getExistingDirectory(self,\
                                                 'Select directory')]
         else:
-            self.fnames = QFileDialog.getOpenFileNames(self, 'Open file',\
+            self.cv_fnames = QFileDialog.getOpenFileNames(self, 'Open file',\
                                                        '/home')[:-1][0]
 
-        # avoid incorrect indexing if fnames is empty (i.e. if user pressed cancel)
-        if self.fnames != '':
+        # avoid incorrect indexing if as_fnames is empty (i.e. if user pressed cancel)
+        if self.cv_fnames != '':
             # update input label
-            self.convert_input_lbl.setText(os.path.basename(self.fnames[0]))
-        
+            self.convert_input_lbl.setText(os.path.basename(self.cv_fnames[0]))
+
     @QtCore.pyqtSlot()
     def set_conv_outdir(self):
-        self.output_dir = QFileDialog.getExistingDirectory(self,\
+        self.cv_output_dir = QFileDialog.getExistingDirectory(self,\
                                                 'Select directory for output')
         # update output label
-        self.convert_output_lbl.setText(os.path.basename(self.output_dir))
-
+        self.convert_output_lbl.setText(os.path.basename(self.cv_output_dir))
+        
 
     @QtCore.pyqtSlot()
     def start_conversion(self):
@@ -145,9 +175,9 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         conversion by calling the actual conversion script
         """
 
-        print('Going to convert {} from {} '.format(', '.join(self.fnames),
-                                                   self.input_format) +
-               'format to {} format'.format(self.output_format))
+        print('Going to convert {} from {} '.format(', '.join(self.cv_fnames),
+                                                   self.cv_input_format) +
+               'format to {} format'.format(self.cv_output_format))
 
         in_dict = {'pLink': xr.ReadpLink,
                    'Kojak': xr.ReadKojak,
@@ -159,30 +189,30 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
         was_error = False
 
-        for f in self.fnames:
+        for f in self.cv_fnames:
             try:
-                xtable = in_dict[self.input_format](f)
+                xtable = in_dict[self.cv_input_format](f)
                 print('{}: Table succesfully read!'.format(f))
             except Exception as e:
-                self.print_warning(e)
+                self.print_warning(self, e)
 
             # if no user-defined output dir use current
-            if self.output_dir == '':
-                self.output_dir = os.path.dirname(f)
+            if self.cv_output_dir == '':
+                self.cv_output_dir = os.path.dirname(f)
 
             # set filename for output file
-            fname = os.path.splitext(os.path.split(f)[1])[0] + '_' + self.input_format +\
-                    '_to_' + self.output_format
+            fname = os.path.splitext(os.path.split(f)[1])[0] + '_' + self.cv_input_format +\
+                    '_to_' + self.cv_output_format
 
             # generate output path w/o extension
-            outpath = os.path.join(self.output_dir, fname)
+            outpath = os.path.join(self.cv_output_dir, fname)
 
             try:
-                out_dict[self.output_format](xtable, outpath)
+                out_dict[self.cv_output_format](xtable, outpath)
                 print('{}: Table successfully written '.format(f) +
                       'to {}!'.format(outpath))
             except Exception as e:
-                self.print_warning('Conversion of {} was '.format(f) +
+                self.print_warning(self, 'Conversion of {} was '.format(f) +
                                    'not successfull:{}'.format(str(e)))
                 was_error = True
                 break
@@ -198,30 +228,55 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
     #####################################
 
     @QtCore.pyqtSlot()
-    def set_assign_xtable(self):
-        self.assign_xtable = QFileDialog.getOpenFileName(self,
+    def set_as_xtable_path(self):
+        self.as_xtable_path = QFileDialog.getOpenFileName(self,
                                                             'Open xTable file')[0]
                                                             
-        self.assign_xlink_lbl.setText(os.path.basename(self.assign_xtable))
+        self.assign_xlink_lbl.setText(os.path.basename(self.as_xtable_path))
+        
+        Options['as_xtable_path'] = self.as_xtable_path
         
     @QtCore.pyqtSlot()        
-    def set_assign_mgf(self):
-        self.assign_mgf = QFileDialog.getOpenFileName(self,
+    def set_as_mgf_path(self):
+        self.as_mgf_path = QFileDialog.getOpenFileName(self,
                                                             'Open MGF file')[0]
-        self.assign_mgf_lbl.setText(os.path.basename(self.assign_mgf))
+        self.assign_mgf_lbl.setText(os.path.basename(self.as_mgf_path))
+        
+        Options['as_mgf_path'] = self.as_mgf_path
                                 
     @QtCore.pyqtSlot()
-    def set_assign_outdir(self):
-        self.assign_outdir = QFileDialog.getExistingDirectory(self,\
+    def set_as_outdir(self):
+        self.as_outdir = QFileDialog.getExistingDirectory(self,\
                                                 'Select directory for output')
-        self.assign_outdir_lbl.setText(os.path.basename(self.assign_outdir))
+        self.assign_outdir_lbl.setText(os.path.basename(self.as_outdir))
+
+        Options['as_outdir'] = self.as_outdir
 
     @QtCore.pyqtSlot()
     def start_assignment(self):
-        self.assignwin = AssignmentWindow() # calls init
-        self.assignwin.show() # shows windows
-        # TODO Load first spectrum
+        
+        ready = True
+        warnings = []
+        
+        # check if all necessary files are present
+        try:
+            Options['as_filehandle'] =  open(self.as_mgf_path, 'r')
+        except Exception as e:
+            warnings.append('Please provide a valid MGF input file!')
+            ready = False
+        
+        try:
+            Options['as_xtable'] =  pd.read_excel(self.as_xtable_path)
 
+        except Exception as e:
+            warnings.append('Please provide a valid xTable input file!')
+            ready = False
+        
+        if ready:
+            self.assignwin = AssignmentWindow() # calls init
+            self.assignwin.show() # shows windows
+        else:
+            print_warning(self, '\n\n'.join(warnings))
 
     ##################################
     # Dialogs
@@ -233,21 +288,35 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                           self.tr('About CroCo'),
                           'Version 0.1 (Dec 2017) <br><br>Written by <a href="mailto:jub@halomem.de">Julian Bender</a> at Martin Luther University Halle Wittenberg, Germany')
 
+    # redefinition of the internal closing event
+    def closeEvent(self, event):
+    
+        reply = QMessageBox.question(self, 'Message',
+            "Are you sure to quit?", QMessageBox.Yes |
+            QMessageBox.No, QMessageBox.No)
+    
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
 class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
     
     ##################################
     # Options presets
     ################################## 
-    ionmass = 'monoisotopic'
-    iontypes = ['a', 'b', 'y']
-    maxmass = 2000
-    
+
     def __init__(self):
         # initialise the parent classe
         super().__init__()
         # initial itself
         self.setupUi(self)
+        print(self.assign_options)
         self.createConnects()
+        self.openMGF()
+        # read options
+        global Options
+        # TODO Load first spectrum
 
     #####################################
     # Connects
@@ -260,39 +329,54 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         """
         self.assign_options.triggered.connect(self.showAssignmentOptions)
 
+
     #####################################
     # Definitions for Assignment
     #####################################
-    
+
+    def openMGF(self):
+        """
+        Opens MGF and calls the MGF-Indexer with an open as_filehandle
+        """
+
+        # call indexer
+        self.spectrum2offset = assignr.IndexMGF(Options['as_filehandle'])
+
+
     def iterFromxTable(self):
         """
         Reads xTable input file and converts data to an itertools cycle
         with all relevant information for spectrum assignment
         """
         
-        try:
-            self.xtable = pd.read_excel(self.assign_xtable)
-        except:
-            print_warning('Please provide a valid xTable input file')
-        
-        xlinks = data['pepseq1',
-                      'xlink1',
-                      'pepseq2',
-                      'xlink2',
-                      'xtype',
-                      'scanno',
-                      'prec_ch'].tolist()
+        xlinks = CroCo_MainWindow.as_xtable['pepseq1',
+                                            'xlink1',
+                                            'pepseq2',
+                                            'xlink2',
+                                            'xtype',
+                                            'scanno',
+                                            'prec_ch'].tolist()
 
         self.xlink_iter = it.cycle(xlinks)
-    
+
     @QtCore.pyqtSlot()
     def showAssignmentOptions(self):
         """
         Opens the window with the options for spectrum assignment
         """
-        self.assignoptions = AssignmentOptionsWindow() # calls init
-        self.assignoptions.show() # shows window
+        self.assign_optionswin = AssignmentOptionsWindow() # calls init
+        self.assign_optionswin.show() # shows window
 
+    # redefinition of the internal closing event
+    def closeEvent(self, event):
+        try:
+            # close the file when closing the window
+            self.as_filehandle.close()
+            event.accept()
+        except:
+            event.ignore()
+
+            
 class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
     def __init__(self):
         # initialise the parent class
@@ -308,16 +392,16 @@ class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
         """
         
         # Set the properties in the AssignmentWindow class explicitely
-        AssignmentWindow.ionmass = self.options_ionmass.checkedButton().text()
+        self.ionmass = self.options_ionmass.checkedButton().text()
 
         def set_options_ions(iontype):
             """
             Modifies the iontype list containing all ions that should be searched
             """
             if iontype not in AssignmentWindow.iontypes:
-                AssignmentWindow.iontypes.append(iontype)
+                self.iontypes.append(iontype)
             else:
-                AssignmentWindow.iontypes.remove(iontype)
+                self.iontypes.remove(iontype)
 
         # set the connections for all ion-types
         # use the lambda operator as connects expects a callable funtion
@@ -333,15 +417,3 @@ class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
 def print_warning(self, error):
     QMessageBox.warning(self, "Error!",
                             str(error))
-
-# redefinition of the internal closing event
-def closeEvent(self, event):
-
-    reply = QMessageBox.question(self, 'Message',
-        "Are you sure to quit?", QMessageBox.Yes |
-        QMessageBox.No, QMessageBox.No)
-
-    if reply == QMessageBox.Yes:
-        event.accept()
-    else:
-        event.ignore()

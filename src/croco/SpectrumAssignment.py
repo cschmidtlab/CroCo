@@ -13,8 +13,8 @@ import matplotlib.mlab as mlab
 import csv
 import numpy as np
 
-import SpectrumCalculations as Calc
-import SpectrumReader as Reader
+import croco.SpectrumCalculations as Calc
+import croco.SpectrumReader as Reader
 
 #%% Start of IonsFromSequence
 def IonsFromSequence(sequence, ion_types, charge, mass_type, mods):
@@ -340,7 +340,7 @@ def PlotHist(data, limits, ax=None):
 
 #%%
 
-if __name__ == __main__:
+if __name__ == '__main__':
 
     fig, ax = plt.subplots(2)
     
