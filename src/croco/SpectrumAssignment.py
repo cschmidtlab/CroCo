@@ -238,7 +238,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
 
 #%%
 
-def AssignAndPlotPSM(mz2intens, ion2desc, ppm, ax=None):
+def AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=None):
     """
     Annotate a given spectrum with a given sequence of theoretical
     mz and descriptions
@@ -277,7 +277,9 @@ def AssignAndPlotPSM(mz2intens, ion2desc, ppm, ax=None):
             return 'purple'
         elif 'M' in  desc_list[1]:
             return 'cyan'
-        
+    
+    assignment_error = []
+    
     for mz in mz_list:
         # store axis-object in variable for return
         ax.plot([mz, mz], # x1, x2
@@ -296,9 +298,9 @@ def AssignAndPlotPSM(mz2intens, ion2desc, ppm, ax=None):
                                lw=2)
                     ax.text(ion,
                               mz2intens[mz]+1000,
-                              '${0}_{{{1}}}^{{{2}+}}$'.format(ion2desc[ion][1],
-                                                              ion2desc[ion][2],
-                                                              ion2desc[ion][3]),
+                              '${0}_{{{1}}}^{{{2}+}}$'.format(ions2desc[ion][1],
+                                                              ions2desc[ion][2],
+                                                              ions2desc[ion][3]),
                               {'ha': 'left', 'va': 'bottom'},
                               rotation=90,
                               color=ColorFromDesc(ions2desc[ion]))

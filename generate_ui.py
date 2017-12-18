@@ -49,10 +49,18 @@ for file in ui_files:
         # QDesigner generates an import command FILE_rc that has to be
         # relative to the package i.e. croco.FILE_rc
         pattern = re.compile(r'import (\w+)_rc$')
+        # the assignment to self.canvas and self.toolbar has to be
+        # removed to assign it to a matplotlib object later
+        pattern_canvas = re.compile(r'\s*self\.canvas =')
+        pattern_toolbar = re.compile(r'\s*self\.toolbar =')
         for line in i:
             if pattern.match(line):
                 group = pattern.match(line)
                 line = 'import {}.{}_rc'.format(package_name, group[1])
+            if pattern_canvas.match(line) or pattern_toolbar.match(line):
+                # avoid the line if its the one declaring self.canvas and 
+                # self.toolbar
+                continue
             buffer.append(line)
     with open (out_file_path, 'w') as o:
         o.writelines(buffer)

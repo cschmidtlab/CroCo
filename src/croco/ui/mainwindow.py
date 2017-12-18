@@ -12,6 +12,11 @@ from PyQt5.QtWidgets import QWidget, QToolTip, QPushButton, QApplication,\
 from PyQt5.QtGui import QFont, QIcon
 import PyQt5.QtCore as QtCore
 
+# pyQt for matplotlib
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+
 import sys, os
 import pandas as pd
 import itertools as it
@@ -19,6 +24,7 @@ import itertools as it
 from croco.ui.ui_mainwindow import Ui_MainWindow
 from croco.ui.ui_spectrum import Ui_SpectrumAssignment
 from croco.ui.ui_spectrumoptions import Ui_SpectrumAssignmentOptions
+
 import croco.reader as xr
 import croco.writer as xw
 
@@ -37,7 +43,7 @@ Options = {'cv_input_format': 'pLink',
            
            'as_input_format': 'pLink',
            'as_output_format': 'xTable',
-          'as_output_dir': '',
+           'as_output_dir': '',
            'as_fnames': [],
            
            'as_xtable_path': None,
@@ -47,10 +53,19 @@ Options = {'cv_input_format': 'pLink',
            'as_filehandle': None,
            'as_xtable': None,
        
+           'xlink_mass': 138.068,
+       
+           'min_charge': 1,
+           'max_charge': 2,
            'ionmass': 'monoisotopic',
            'iontypes': ['a', 'b', 'y'],
-           'max_mz': 2000
+           'max_mz': 2000,
+           'min_ppm': -50,
+           'max_ppm': 50,
+           
+           'modifications': None
             }
+
 class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
@@ -302,21 +317,20 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
 class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
     
-    ##################################
-    # Options presets
-    ################################## 
-
     def __init__(self):
         # initialise the parent classe
         super().__init__()
+        # create Widgets that are then used in setupUI
+        self.createFigure()
         # initial itself
         self.setupUi(self)
-        print(self.assign_options)
-        self.createConnects()
-        self.openMGF()
         # read options
         global Options
-        # TODO Load first spectrum
+        
+        self.createConnects()
+        self.openMGF()
+        self.iterFromxTable()
+        self.loadSpectrum()
 
     #####################################
     # Connects
@@ -328,7 +342,25 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         Every input gets defined and assigned to an output
         """
         self.assign_options.triggered.connect(self.showAssignmentOptions)
+        
+        self.assign_next_btn.clicked.connect(lambda: self.loadSpectrum(self))
+        self.assign_previous_btn.clicked.connect(lambda: self.loadSpectrum(self,
+                                                                           directtion='prev'))
 
+    def createFigure(self):
+        """
+        Define all widgets necessary to plot the spectrum
+        """
+        # a figure instance to plot on
+        self.figure = Figure()
+        
+        # this is the Canvas Widget that displays the `figure`
+        # it takes the `figure` instance as a parameter to __init__
+        self.canvas = FigureCanvas(self.figure)
+
+        # this is the Navigation widget
+        # it takes the Canvas widget and a parent
+        self.toolbar = NavigationToolbar(self.canvas, self)
 
     #####################################
     # Definitions for Assignment
@@ -349,15 +381,103 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         with all relevant information for spectrum assignment
         """
         
-        xlinks = CroCo_MainWindow.as_xtable['pepseq1',
-                                            'xlink1',
-                                            'pepseq2',
-                                            'xlink2',
-                                            'xtype',
-                                            'scanno',
-                                            'prec_ch'].tolist()
+        class xiter(list):
+            """
+            Iterator class to cycle over all xlinks read from an xTable
+            document. Allows reverse iteration for going back to the
+            previous spectrum
+            """
+            def __init__(self, list):
+                self.list = list
+                self.lenlist = len(list) - 1
+                self.index = 0
+            
+            def next(self):
+                """
+                returns the next element of a list and the first if the last
+                was already reached
+                """
+                if self.index == self.lenlist:
+                    # reset index in case the full list has passes
+                    self.index = 0
+                else:
+                    self.index += 1
+                return self.list[self.index]
+                
+            def prev(self):
+                """
+                inverse of next
+                """
+                if self.index == 0:
+                    self.index = self.lenlist
+                else:
+                    self.index -= 1
+                return self.list[self.index]
+        
+        xlinks = Options['as_xtable']
+         
+        xlinks = xlinks[['pepseq1',
+                         'xlink1',
+                         'pepseq2',
+                         'xlink2',
+                         'xtype',
+                         'scanno',
+                         'prec_ch']].values
 
-        self.xlink_iter = it.cycle(xlinks)
+        self.xlink_iter = xiter(xlinks)
+        
+    def loadSpectrum(self, direction='next'):
+        """
+        Generates a matplotlib figure object from a mgf file and a cross-link
+        sequence
+        """
+        # create an axis
+        ax = self.figure.add_subplot(111)
+
+        # discards the old graph
+        ax.clear() 
+      
+        if direction == 'next':
+            [pepseq1,
+             xlink1,
+             pepseq2,
+             xlink2,
+             xtype,
+             scanno,
+             prec_ch] = self.xlink_iter.next()
+        else:
+            [pepseq1,
+             xlink1,
+             pepseq2,
+             xlink2,
+             xtype,
+             scanno,
+             prec_ch] = self.xlink_iter.prev()  
+
+        mz2intens = assignr.ReadSpectrum(scanno, # spectrum
+                                         Options['as_filehandle'], # file handle
+                                         self.spectrum2offset) # spectrum dict
+
+        ions2desc =  assign.IonsFromXlinkSequence(pepseq1,
+                                                  xlink1,
+                                                  pepseq2,
+                                                  xlink2,
+                                                  Options['xlink_mass'],
+                                                  Options['iontypes'],
+                                                  [Options['min_charge'],
+                                                   Options['max_charge']],
+                                                  Options['ionmass'],
+                                                  Options['modifications'],
+                                                  Options['max_mz'])
+                
+        assignment_error = assign.AssignAndPlotPSM(mz2intens,
+                                                   ions2desc,
+                                                   [Options['min_ppm'],
+                                                    Options['max_ppm']],
+                                                   ax=ax)
+
+        # refresh canvas
+        self.canvas.draw()
 
     @QtCore.pyqtSlot()
     def showAssignmentOptions(self):
@@ -371,7 +491,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
     def closeEvent(self, event):
         try:
             # close the file when closing the window
-            self.as_filehandle.close()
+            Options['as_filehandle'].close()
             event.accept()
         except:
             event.ignore()
@@ -381,9 +501,13 @@ class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
     def __init__(self):
         # initialise the parent class
         super().__init__()
-        # initial itself
+        # read Options
+        global Options
+        
+        # initiate itself
         self.setupUi(self)
         self.createConnects()
+
 
     def createConnects(self):
         """
@@ -394,11 +518,13 @@ class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
         # Set the properties in the AssignmentWindow class explicitely
         self.ionmass = self.options_ionmass.checkedButton().text()
 
+        self.iontypes = Options['iontypes']
+
         def set_options_ions(iontype):
             """
             Modifies the iontype list containing all ions that should be searched
             """
-            if iontype not in AssignmentWindow.iontypes:
+            if iontype not in self.iontypes:
                 self.iontypes.append(iontype)
             else:
                 self.iontypes.remove(iontype)
@@ -412,6 +538,12 @@ class AssignmentOptionsWindow(QMainWindow, Ui_SpectrumAssignmentOptions):
         self.options_xion.stateChanged.connect(lambda: set_options_ions('x'))
         self.options_yion.stateChanged.connect(lambda: set_options_ions('y'))
         self.options_zion.stateChanged.connect(lambda: set_options_ions('z'))
+
+    def saveOptions(self):
+        pass
+        
+    def cancelOptions(self):
+        pass
 
 
 def print_warning(self, error):
