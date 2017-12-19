@@ -64,6 +64,9 @@ Options = {'cv_input_format': 'pLink',
            'min_ppm': -50,
            'max_ppm': 50,
            
+           'score_threshold': None,
+           'score_threshold_direction': 'Less than',
+           
            'modifications': None
             }
 
@@ -354,6 +357,8 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
 
         self.assign_save_btn.clicked.connect(lambda: self.saveTable())
 
+        self.assign_filter_btn.clicked.connect(self.filterByScore)
+
     def createFigure(self):
         """
         Define all widgets necessary to plot the spectrum
@@ -395,36 +400,71 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
             """
             def __init__(self, list):
                 self.list = list
-                self.lenlist = len(list) - 1
+                self.end = len(list) - 1
                 self.index = -1
-                            
+
+                global Options
+                self.toShow()
+                
             def next(self):
                 """
                 returns the next element of a list and the first if the last
                 was already reached
                 """
-                if self.index == self.lenlist:
+                if self.index == self.end:
                     # reset index in case the full list has passes
                     self.index = 0
                 else:
                     self.index += 1
                 
-                return self.list[self.index]
+                # only return the next spectrum if it is not filtered out
+                if self.toShow():
+                    return self.list[self.index]
+                else:
+                    print('Skipping Spectrum:' + str(self.list[self.index][0]))
+                    return self.next()
+                    
                 
             def prev(self):
                 """
                 inverse of next
                 """
                 if self.index == 0:
-                    self.index = self.lenlist
+                    self.index = self.end
                 else:
                     self.index -= 1
-                return self.list[self.index]
+
+                if self.toShow():
+                    return self.list[self.index]
+                else:
+                    print('Skipping Spectrum:' + str(self.list[self.index][0]))
+                    return self.prev()
+
+            def toShow(self):
+                """
+                Checks if a potential next spectrum fulufills all requirements
+                i.e. score and not yet annotated
+                """
                 
+                # only check for scores if max score is set
+                if Options['score_threshold']:
+                    if Options['score_threshold_direction'] == 'Less than':
+                        if self.list[self.index][-2] < Options['score_threshold']:
+                            return True
+                        else:
+                            return False
+                    elif Options['score_threshold_direction'] == 'Greater than':
+                        if self.list[self.index][-2] > Options['score_threshold']:
+                            return True
+                        else:
+                            return False
+                else:
+                    return True
+
             def setCurrentScore(self, score):
                 """
                 Method to access the last element of the
-                list of lists i.e. the score from outside
+                list of lists i.e. the manual score from outside
                 the class
                 """
                 self.list[self.index][-1] = score
@@ -442,6 +482,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
                               'xtype',
                               'scanno',
                               'prec_ch',
+                              'score',
                               'Manual score']].values
 
         indices = self.xtable.index.values
@@ -472,6 +513,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
              xtype,
              scanno,
              prec_ch,
+             score,
              man_score] = self.xlink_iter.next()
         else:
             [self.idx,
@@ -482,6 +524,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
              xtype,
              scanno,
              prec_ch,
+             score,
              man_score] = self.xlink_iter.prev()  
 
         mz2intens = assignr.ReadSpectrum(scanno, # spectrum
@@ -506,9 +549,26 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
                                                     Options['max_ppm']],
                                                    ax=ax)
 
+        print('Current score: {}'.format(score))
+
         # refresh canvas
         self.canvas.draw()
 
+    @QtCore.pyqtSlot()
+    def filterByScore(self):
+        """
+        Read min or max score from GUI and store the respective string in
+        the Options dict. Filtering is then performed by the iterator class
+        """
+        
+        try:
+            score = self.assign_filter_edit.text()
+            Options['score_threshold'] = float(score)
+            Options['score_threshold_direction'] = str(self.assign_filter_dropdown.currentText())
+        except:
+            print_warning('Please provde a proper number for score: {}'.format(score))
+
+    @QtCore.pyqtSlot()
     def rateSpectrum(self, score=1):
         """
         Take the user input, assign the respective score value to a
@@ -521,6 +581,7 @@ class AssignmentWindow(QMainWindow, Ui_SpectrumAssignment):
         
         self.loadSpectrum()
 
+    @QtCore.pyqtSlot()
     def saveTable(self):
         """
         Saves the xtable on self with its input filename
