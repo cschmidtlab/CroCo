@@ -14,7 +14,7 @@
    <string>The CroCo Cross-Link Converter</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="../croco.qrc">
     <normaloff>:/images/data/images/python-icon.png</normaloff>:/images/data/images/python-icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -60,6 +60,16 @@
           </item>
           <item>
            <property name="text">
+            <string>xWalk</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>DynamXL</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>Kojak</string>
            </property>
           </item>
@@ -85,6 +95,26 @@
           <item>
            <property name="text">
             <string>xTable</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>xVis</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>xiNet</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>DynamXL</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>xWalk</string>
            </property>
           </item>
          </widget>

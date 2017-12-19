@@ -174,7 +174,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
             self.cv_fnames = QFileDialog.getOpenFileNames(self, 'Open file',\
                                                        '/home')[:-1][0]
 
-        # avoid incorrect indexing if as_fnames is empty (i.e. if user pressed cancel)
+        # avoid incorrect indexing if cv_fnames is empty (i.e. if user pressed cancel)
         if self.cv_fnames != '':
             # update input label
             self.convert_input_lbl.setText(os.path.basename(self.cv_fnames[0]))
@@ -204,7 +204,9 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
 
         out_dict = {'xTable': xw.WriteXtable,
                     'xVis': xw.WritexVis,
-                    'xiNet': xw.WritexiNET}
+                    'xiNet': xw.WritexiNET,
+                    'DynamXL': xw.WriteDynamXL,
+                    'xWalk': xw.WritexWalk}
 
         was_error = False
 
