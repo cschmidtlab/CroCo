@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>442</width>
+    <width>456</width>
     <height>227</height>
    </rect>
   </property>
@@ -21,8 +21,11 @@
    <layout class="QFormLayout" name="formLayout">
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="statusTip">
+       <string/>
+      </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -121,6 +124,9 @@
         </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="convert_load_btn">
+          <property name="statusTip">
+           <string>Load input files</string>
+          </property>
           <property name="text">
            <string>Load file(s)</string>
           </property>
@@ -128,6 +134,9 @@
         </item>
         <item row="1" column="4" colspan="2">
          <widget class="QPushButton" name="convert_output_btn">
+          <property name="statusTip">
+           <string>Select the output directory</string>
+          </property>
           <property name="text">
            <string>Output Dir</string>
           </property>
@@ -149,6 +158,9 @@
         </item>
         <item row="4" column="4" colspan="2">
          <widget class="QPushButton" name="convert_quit">
+          <property name="statusTip">
+           <string>Quit the programme</string>
+          </property>
           <property name="text">
            <string>Quit</string>
           </property>
@@ -211,6 +223,9 @@
         </property>
         <item row="1" column="0">
          <widget class="QPushButton" name="assign_load_xlink_btn">
+          <property name="statusTip">
+           <string>Load xTable file</string>
+          </property>
           <property name="text">
            <string>Load xlink</string>
           </property>
@@ -218,6 +233,9 @@
         </item>
         <item row="1" column="1">
          <widget class="QPushButton" name="assign_load_mgf_btn">
+          <property name="statusTip">
+           <string>Load corresponding MGF file</string>
+          </property>
           <property name="text">
            <string>Load MGF</string>
           </property>
@@ -232,6 +250,9 @@
         </item>
         <item row="4" column="1">
          <widget class="QPushButton" name="assign_start_btn">
+          <property name="statusTip">
+           <string>Start the assignment (New window)</string>
+          </property>
           <property name="text">
            <string>Start assignment</string>
           </property>
@@ -293,7 +314,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>442</width>
+     <width>456</width>
      <height>19</height>
     </rect>
    </property>

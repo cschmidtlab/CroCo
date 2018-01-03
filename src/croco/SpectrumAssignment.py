@@ -6,6 +6,7 @@ Created on Fri Oct 13 12:59:06 2017
 @author: aretaon
 
 """
+import os
 
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -13,22 +14,31 @@ import matplotlib.mlab as mlab
 import csv
 import numpy as np
 
-import croco.SpectrumCalculations as Calc
-import croco.SpectrumReader as Reader
+if __name__ == '__main__':
+    import SpectrumCalculations as Calc
+    import SpectrumReader as Reader
+    # set the start for relative paths if script run in standalone
+    binPath = '../../bin'
+
+else:
+    import croco.SpectrumCalculations as Calc
+    import croco.SpectrumReader as Reader
+    # current path is bin-path if called from bin -folder
+    binPath = '.'
 
 #%% Start of IonsFromSequence
 def IonsFromSequence(sequence, ion_types, charge, mass_type, mods):
     """
     Calculates theoretical ions for an amino acid
     sequence with modifications.
-    
+
     :params: sequence: Peptide sequence
     :params: ion_types: list of which ions to return (a/b/y)
     :params: charge state of the returned ions
     :params: mass_type: mono or average
     :params: mods: modifications to consider
     """
-    
+
     # table contains amino acid masses - H2O for better calculation
     with open('../data/config/aa_masses.txt', mode='r') as infile:
         reader = csv.reader(infile, delimiter='\t')
@@ -73,7 +83,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     """
     Calculates theoretical ions for an amino acid
     sequence with modifications.
-    
+
     :params: peptide1: Peptide1 sequence
     :params: xlink1: Relative cross-link position in peptide1
     :params: peptde2: Peptide2 sequence
@@ -82,12 +92,13 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     :params: ion_types: list of which ions to return (a/b/y)
     :params: charge state of the returned ions
     :params: mass_type: monoisotopic or average
-    :params: mods: modifications to consider
+    :params: mods: variable modifications to consider
     :params: max_mass: maximum allowed mass (e.g. max m/z of quad)
     """
- 
+
     # table contains amino acid masses - H2O for better calculation
-    with open('../data/config/aa_masses.txt', mode='r') as infile:
+    aaPath = os.path.join(binPath, '../data/config/aa_masses.txt')
+    with open(aaPath, mode='r') as infile:
         reader = csv.reader(infile, delimiter='\t')
         if mass_type == 'monoisotopic':
             aa_dict = {rows[0]:float(rows[1]) for rows in reader}
@@ -124,6 +135,63 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     ######################################################
     def CalcABions(peptides, peptide_type, ion_types, charge, aa_dict,
                    moddesc, modmass, mods):
+        """
+        Calculate theoretical masses and corresponding descriptions
+        for set of peptides sequences.
+        
+        :params: peptides: List of peptide sequences
+        :params: peptide_type: string "alpha" or "beta" (first or last peptide truncated respectively)
+        :params: ion_types: list of ion types to consider (e.g. ['b', 'y'])
+        :params: charge: list of [min_charge, max_charge]
+        :params: aa_dict: dict linking one-character ID to mass
+        :params: moddesc: description to add to the xlinked peptides
+        :params: modmass: mass of the cross-linker
+        :params: mods: list of other modifications e.g. [[156.18, 'K'],]
+        
+        """
+        
+#        for pep in peptides:
+#            for c in range(charge[0], charge[-1]+1):
+#                for v in var_mods:
+#                    if v == None:
+#                        if 'a' in ion_types:
+#                            ion_string = 'A' if peptide_type == 'alpha' else 'a'
+#                            mass = Calc.AIonMass(pep, aa_dict, c,
+#                                                       None, peptide_type)
+#
+#                            desc = [pep, ion_string, len(pep), charge,
+#                                    peptide_type, None]
+#                            
+#                        if 'b' in ion_types:
+#                            ion_string = 'B' if peptide_type == 'alpha' else 'b'
+#                            mass = Calc.BIonMass(pep, aa_dict, c,
+#                                                       None, peptide_type)
+#                            
+#                            desc = [pep, ion_string, len(pep), charge,
+#                                    peptide_type, None]
+#                    else:
+#                        v_mass, v_AAs = v
+#                        for aa in v_AAs:
+#                            # every variable modification might occur multiple
+#                            # times in a single peptide
+#                            for occurence in range(1, pep.count(aa)+1):
+#                                if 'a' in ion_types:
+#                                    ion_string = 'A' if peptide_type == 'alpha' else 'a'
+#                                    mass = Calc.AIonMass(pep,
+#                                                         aa_dict,c,
+#                                                         occurence * v_mass,
+#                                                         peptide_type)
+#                                    
+#                                    desc = [pep, ion_string, len(pep), charge,
+#                                            peptide_type, mods]
+#                                    
+#                                if 'b' in ion_types:
+#                                    ion_string = 'B' if peptide_type == 'alpha' else 'b'
+#                                    mass = Calc.BIonMass(pep, aa_dict, c,
+#                                                         occurence * v_mass,
+#                                                         peptide_type)
+                
+        
         for pep in peptides:
             if 'a' in ion_types:
                 for c in range(charge[0], charge[-1]+1):
@@ -133,7 +201,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
                         all_ions.append(mass + modmass/c) # treat second peptide as constant adduct
                         desc[0] += moddesc
                         all_desc.append(desc)
-                        
+
             if 'b' in ion_types:
                 for c in range(charge[0], charge[-1]+1):
                     mass, desc = Calc.BIonMass(pep, aa_dict, c,
@@ -142,7 +210,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
                         all_ions.append(mass + modmass/c) # treat second peptide as constant adduct
                         desc[0] += moddesc
                         all_desc.append(desc)
-                        
+
     CalcABions(nterm_unmod1, 'alpha', ion_types, charge, aa_dict,
                '', # moddesc
                0, # modmass
@@ -155,7 +223,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     ######################################################
     # Nterminal xlinked peptides
     ######################################################
-    
+
     # calculate mass of modification with peptide2 and xlinker
     pep2_mass = sum([aa_dict[aa] for aa in peptide2]) + 18.01528
     modmass1 = xlinker_mod + pep2_mass
@@ -173,7 +241,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
                moddesc1, # moddesc
                modmass1, # modmass
                mods)
-    
+
     CalcABions(nterm_mod2, 'beta', ion_types, charge, aa_dict,
                moddesc2, # moddesc
                modmass2, # modmass
@@ -194,34 +262,34 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
                         all_ions.append(mass + modmass/c)
                         desc[0] += moddesc
                         all_desc.append(desc)
-    
+
     CalcYions(cterm_unmod1, 'alpha', ion_types, charge, aa_dict,
                '', # moddesc
                0, # modmass
-               mods)    
-        
+               mods)
+
     CalcYions(cterm_unmod2, 'beta', ion_types, charge, aa_dict,
                '', # moddesc
                0, # modmass
-               mods) 
+               mods)
 
     ######################################################
     # Cterminal xlinked peptides
-    ######################################################      
+    ######################################################
 
     CalcYions(cterm_mod1, 'alpha', ion_types, charge, aa_dict,
                moddesc1, # moddesc
                modmass1, # modmass
-               mods)  
+               mods)
 
     CalcYions(cterm_mod2, 'beta', ion_types, charge, aa_dict,
                moddesc2, # moddesc
                modmass2, # modmass
-               mods)  
+               mods)
 
     ######################################################
     # Parent ions
-    ######################################################   
+    ######################################################
 
     for c in range(charge[0], charge[1]+1):
         mass, desc = Calc.XParentionMass(pep1_mass, pep2_mass,
@@ -230,9 +298,9 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
         if mass < max_mass:
             all_ions.append(mass)
             all_desc.append(desc)
-            
+
     ions2desc = dict(zip(all_ions, all_desc))
-            
+
     return ions2desc
 
 
@@ -242,23 +310,23 @@ def AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=None):
     """
     Annotate a given spectrum with a given sequence of theoretical
     mz and descriptions
-    
+
     :params: mz2intens: dict mapping experimental mz to intensity
     :params: ion2desc: dict mapping theoretical mz to description
     :params: ppm: error allowed during assign in parts-per-million
     :params: axis (optional): axis to plot the figure on, default currrent axis
-    
+
     :return: assignment_error: list of relative errors in ppm for the assignment
     """
-    
+
     mz_list = sorted(mz2intens.keys())
     ion_list = sorted(ions2desc.keys())
-    
+
     if ax is None:
         ax = plt.gca()
-        
+
     last = 0
-   
+
     def ColorFromDesc(desc_list):
         """
         Return the plink color scheme for a given ion description
@@ -277,9 +345,9 @@ def AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=None):
             return 'purple'
         elif 'M' in  desc_list[1]:
             return 'cyan'
-    
+
     assignment_error = []
-    
+
     for mz in mz_list:
         # store axis-object in variable for return
         ax.plot([mz, mz], # x1, x2
@@ -305,7 +373,7 @@ def AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=None):
                               rotation=90,
                               color=ColorFromDesc(ions2desc[ion]))
                     last += idx
-            
+
     ax.set_xlim(min(mz_list),max(mz_list))
     ax.set_xlabel('m/z')
     ax.set_ylabel('Intensity')
@@ -316,7 +384,7 @@ def PlotHist(data, limits, ax=None):
     """
     Plots a histogram with a fitted gaussion distribution over a set
     of data on a given axis
-    
+
     :params: data: a list of values to plot a histogram from
     :params: limits: range of the plot as list [lower, upper]
     :params: ax: axis to plot the data on
@@ -330,7 +398,7 @@ def PlotHist(data, limits, ax=None):
     mean = np.mean(assignment_error)
     variance = np.var(assignment_error)
     sigma = np.sqrt(variance)
-    
+
     # add a 'best fit' line
     y = mlab.normpdf(bins, mean, sigma)
     ax.plot(bins, y, 'r--', linewidth=1)
@@ -345,11 +413,11 @@ def PlotHist(data, limits, ax=None):
 if __name__ == '__main__':
 
     fig, ax = plt.subplots(2)
-    
+
     ppm = [-50, 50]
-    
+
     assignment_error = []
-    
+
     ions2desc =  IonsFromXlinkSequence('KAWGNNQDGVVASQPAR', # peptid1
                                     1, # xlink1
                                     'LKSSDAYK', # peptide2
@@ -358,22 +426,26 @@ if __name__ == '__main__':
                                     ['a', 'b', 'y'], # ion types
                                     [1,2], # min, max charge
                                     'monoisotopic', # mass type
-                                    None, # modifications
+                                    #None,
+                                    [[156.18, 'K'],], # modifications
                                     2000) # max mass
-    
+
     with open('peptides.log', 'w') as f:
+        f.write('\t'.join(['Mass', 'Peptide', 'IonType', 'Length', 'Charge', 'PepType', 'Mods']) + '\n')
         for idx, i in enumerate(ions2desc.keys()):
             f.write('{}\t{}\n'.format(i, '\t'.join([str(i) for i in ions2desc[i]])))
-                                        
-    with open('../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf', 'r') as f:
+
+    mgfPath = os.path.join(binPath,
+                           '../testdata/SV_plink/2017_08_04_SVs_BS3_16.mgf')
+    with open(mgfPath, 'r') as f:
         spectrum2offset = Reader.IndexMGF(f)
-        
+
         mz2intens = Reader.ReadSpectrum(18452, # spectrum
                                         f, # file handle
                                         spectrum2offset) # spectrum dict
-    
+
         assignment_error = AssignAndPlotPSM(mz2intens, ions2desc, ppm, ax=ax[0])
-        
+
         PlotHist(assignment_error, ppm, ax[1])
-        
+
         plt.show()

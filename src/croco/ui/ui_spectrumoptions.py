@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_SpectrumAssignmentOptions(object):
     def setupUi(self, SpectrumAssignmentOptions):
         SpectrumAssignmentOptions.setObjectName("SpectrumAssignmentOptions")
-        SpectrumAssignmentOptions.resize(362, 436)
+        SpectrumAssignmentOptions.resize(362, 429)
         self.centralwidget = QtWidgets.QWidget(SpectrumAssignmentOptions)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -99,7 +99,9 @@ class Ui_SpectrumAssignmentOptions(object):
     def retranslateUi(self, SpectrumAssignmentOptions):
         _translate = QtCore.QCoreApplication.translate
         SpectrumAssignmentOptions.setWindowTitle(_translate("SpectrumAssignmentOptions", "Assignment Options"))
+        self.pushButton.setStatusTip(_translate("SpectrumAssignmentOptions", "Save Options"))
         self.pushButton.setText(_translate("SpectrumAssignmentOptions", "Save"))
+        self.pushButton_2.setStatusTip(_translate("SpectrumAssignmentOptions", "Cancel this window"))
         self.pushButton_2.setText(_translate("SpectrumAssignmentOptions", "Cancel"))
         self.groupBox_2.setTitle(_translate("SpectrumAssignmentOptions", "Cross-linker"))
         self.label.setText(_translate("SpectrumAssignmentOptions", "Not implemented! :D"))
@@ -107,16 +109,25 @@ class Ui_SpectrumAssignmentOptions(object):
         self.label_5.setText(_translate("SpectrumAssignmentOptions", "Not implemented, too!"))
         self.groupBox.setTitle(_translate("SpectrumAssignmentOptions", "General"))
         self.label_2.setText(_translate("SpectrumAssignmentOptions", "Mass of the ions"))
+        self.mass_mono.setStatusTip(_translate("SpectrumAssignmentOptions", "Use monoidotopic mass"))
         self.mass_mono.setText(_translate("SpectrumAssignmentOptions", "monisotopic"))
+        self.mass_av.setStatusTip(_translate("SpectrumAssignmentOptions", "Use average mass"))
         self.mass_av.setText(_translate("SpectrumAssignmentOptions", "average"))
         self.label_4.setText(_translate("SpectrumAssignmentOptions", "Ion types"))
+        self.options_aion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider a-ions"))
         self.options_aion.setText(_translate("SpectrumAssignmentOptions", "a"))
+        self.options_xion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider x-ions"))
         self.options_xion.setText(_translate("SpectrumAssignmentOptions", "x"))
+        self.options_yion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider y-ions"))
         self.options_yion.setText(_translate("SpectrumAssignmentOptions", "y"))
+        self.options_cion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider c-ions"))
         self.options_cion.setText(_translate("SpectrumAssignmentOptions", "c"))
+        self.options_zion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider z-ions"))
         self.options_zion.setText(_translate("SpectrumAssignmentOptions", "z"))
         self.label_3.setText(_translate("SpectrumAssignmentOptions", "Max m/z to consider (depends on quad)"))
+        self.lineEdit_2.setStatusTip(_translate("SpectrumAssignmentOptions", "Cut all ions with m/z larger than that"))
         self.lineEdit_2.setText(_translate("SpectrumAssignmentOptions", "2000"))
+        self.options_bion.setStatusTip(_translate("SpectrumAssignmentOptions", "Consider b-ions"))
         self.options_bion.setText(_translate("SpectrumAssignmentOptions", "b"))
 
 

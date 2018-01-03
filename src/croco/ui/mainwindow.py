@@ -215,7 +215,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                 xtable = in_dict[self.cv_input_format](f)
                 print('{}: Table succesfully read!'.format(f))
             except Exception as e:
-                self.print_warning(self, e)
+                print_warning(self, e)
 
             # if no user-defined output dir use current
             if self.cv_output_dir == '':

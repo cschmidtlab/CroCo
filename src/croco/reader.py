@@ -23,10 +23,10 @@ pos2 - Absolute postiton of the first AA of the second peptide
 xpos1 - Absolute position of the cross-linker of the longer peptide
 xpos2 - Absolute position of the cross-linker of the shorter peptide (only if interlink)
 
-# modpos1 - relative position of a modification within peptide 1
-# modpos2 - same for peptide 2
-mod1 - type of modification 1
-mod2 - type of modification 2
+mod1 - relative position of a modification within peptide 1
+mod2 - same for peptide 2
+modtype1 - type of modification 1
+modtype2 - type of modification 2
 
 ID - Identifier for the position of a cross-link between two proteins
 decoy - true or false
@@ -47,6 +47,13 @@ import pandas as pd
 
 import os
 import re
+
+# defines the column headers required for xtable output
+col_order = [ 'rawfile', 'scanno', 'prec_ch',
+              'pepseq1', 'xlink1',
+              'pepseq2', 'xlink2', 'xtype', 'modtype1', 'mod1', 'modtype2', 'mod2',
+              'prot1', 'xpos1', 'prot2',
+              'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
 def plinkspectra2pandas(filepath):
     """
@@ -286,7 +293,11 @@ def process_kojak_protein(protein_string):
     pattern = re.compile('([^ ]+) .+?(?:\((\d+)\))?;')
     if pattern.match(protein_string):
         match = pattern.match(protein_string)
-        return match.groups()
+        prot, xpos = match.groups()
+        if xpos == None: # re.match returns None (not NaN) if a substring doesnt match
+            return prot, np.nan
+        else:
+            return prot, xpos
     else:
         return np.nan, np.nan
 
@@ -430,12 +441,65 @@ def ReadpLink(plinkdir):
     # compute a minus log P score for better comparison with higher=better scores
     xtable['score'] = -np.log(xtable['score'])
 
-    # reorder columns
-    col_order = [ 'Order', 'rawfile', 'scanno', 'PSM image', 'prec_ch',
-                 'pepseq1', 'xlink1',
-                 'pepseq2', 'xlink2', 'xtype', 'prot1', 'xpos1', 'prot2',
-                 'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy',
-                 'plink score']
+
+    # extract modification information
+    pattern = re.compile(r'(\d+),.*\((.*)\)')
+      
+    pepseq1 = xtable['pepseq1'].tolist()
+    Modification = data['Modification'].tolist()
+   
+    if len(pepseq1) == len(Modification):
+        print('Len of pepseq1 and Modification match!')
+    else:
+        print('Len of pepseq1 and Modification dont match!')
+    
+    modtype1 = []
+    mod1 = []
+    modtype2 = []
+    mod2 = []
+    
+    for idx, modstr in enumerate(Modification):
+        
+        this_modtype1 = []
+        this_mod1 = []
+        this_modtype2 = []
+        this_mod2 = []
+        
+        for mod in modstr.split(';'):
+                    
+            if pattern.match(mod):
+                match = pattern.match(mod)
+                modpos, mod = match.groups()
+                seqlen1 = len(pepseq1[idx]) + 1
+                if int(modpos) > seqlen1:
+                    this_mod2.append(int(modpos) - seqlen1)
+                    this_modtype2.append(mod)
+                else:
+                    this_mod1.append(int(modpos))
+                    this_modtype1.append(mod)
+            
+        if this_mod1 == []:
+            this_modtype1 = np.nan
+            this_mod1 = np.nan
+        
+        if this_mod2 == []:
+            this_modtype2 = np.nan
+            this_mod2 = np.nan
+
+        modtype1.append(this_modtype1)
+        mod1.append(this_mod1)
+        modtype2.append(this_modtype2)
+        mod2.append(this_mod2)
+    
+    xtable['modtype1'] = modtype1
+    xtable['mod1'] = mod1
+    xtable['modtype2'] = modtype2
+    xtable['mod2'] = mod2
+
+    # reorder columns  
+    # append pLink specific columns
+    ['Order'] + col_order # append to front
+    col_order.extend(['PSM image', 'plink score'])  
     xtable = xtable[col_order]
 
     ### return xtable df
@@ -443,7 +507,7 @@ def ReadpLink(plinkdir):
     return xtable
 
 
-def ReadKojak(kojak_file, rawfile):
+def ReadKojak(kojak_file, rawfile=None):
     """
     reads pLink results file and returns an xtable data array.
     
@@ -473,7 +537,7 @@ def ReadKojak(kojak_file, rawfile):
 
     # transfer scan no from read data to xtable
     xtable = pd.DataFrame(data['Scan Number'])
-
+    
     # rename column
     xtable.columns = ['scanno']
     
@@ -488,7 +552,10 @@ def ReadKojak(kojak_file, rawfile):
     
     xtable['xlink1'] = data['Link #1']
     xtable['xlink2'] = data['Link #2']
-        
+
+    # transform unset xlinks to np.nan
+    xtable.replace('-1', np.nan, inplace=True)
+
     xtable['prot1'], xtable['xpos1'] =\
             zip(*data['Protein #1'].apply(process_kojak_protein))
             
@@ -517,15 +584,24 @@ def ReadKojak(kojak_file, rawfile):
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
     # as pos
-    xtable['pos1'] = xtable['xpos1'].astype(int, errors='ignore') - \
-                     xtable['xlink1'].astype(int, errors='ignore') + 1
-    xtable['pos2'] = xtable['xpos2'].astype(int, errors='ignore') - \
-                     xtable['xlink2'].astype(int, errors='ignore') + 1
+    # Must be calculated as float as NaN is not implemented in int
+    xtable['pos1'] = xtable['xpos1'].astype(float, errors='ignore') - \
+                     xtable['xlink1'].astype(float, errors='ignore') + 1
+    xtable['pos2'] = xtable['xpos2'].astype(float, errors='ignore') - \
+                     xtable['xlink2'].astype(float, errors='ignore') + 1
+
+    # set the rawfile name for xtable (None if not provided by call)
+    xtable['rawfile'] = rawfile
+
+    xtable['xtype'] = np.nan
 
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+
+    # reorder columns
+    xtable = xtable[col_order]
 
     ### return xtable df
     
