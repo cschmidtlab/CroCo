@@ -25,7 +25,7 @@
        <string/>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -59,16 +59,6 @@
           <item>
            <property name="text">
             <string>pLink</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>xWalk</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>DynamXL</string>
            </property>
           </item>
           <item>

@@ -36,7 +36,7 @@ def IonsFromSequence(sequence, ion_types, charge, mass_type, mods):
     :params: ion_types: list of which ions to return (a/b/y)
     :params: charge state of the returned ions
     :params: mass_type: mono or average
-    :params: mods: modifications to consider
+    :params: mods: modifications to consider (of type [[[mas1s_pep1, pos1_pep1], [mass2_pep1, pos2_pep1]], [[mass_pep2, pos_pep2]]])
     """
 
     # table contains amino acid masses - H2O for better calculation
@@ -86,7 +86,7 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
 
     :params: peptide1: Peptide1 sequence
     :params: xlink1: Relative cross-link position in peptide1
-    :params: peptde2: Peptide2 sequence
+    :params: peptide2: Peptide2 sequence
     :params: xlink2: Relative cross-link possition peptide 2
     :params: xlinker_mod: Modification mass of the crosslinker
     :params: ion_types: list of which ions to return (a/b/y)
@@ -96,49 +96,13 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
     :params: max_mass: maximum allowed mass (e.g. max m/z of quad)
     """
 
-    # table contains amino acid masses - H2O for better calculation
-    aaPath = os.path.join(binPath, '../data/config/aa_masses.txt')
-    with open(aaPath, mode='r') as infile:
-        reader = csv.reader(infile, delimiter='\t')
-        if mass_type == 'monoisotopic':
-            aa_dict = {rows[0]:float(rows[1]) for rows in reader}
-        elif mass_type == 'average':
-            aa_dict = {rows[0]:float(rows[2]) for rows in reader}
-        else:
-            print('No ro wrong mass_type specified, assuming monoisotopic masses')
-
-    all_ions = []
-    all_desc = []
-
-    # collect sequences from modified and unmodified peptides (n-term of CID)
-    nterm_unmod1, nterm_mod1, nterm_unmod2, nterm_mod2 =\
-        Calc.NTermXPeptides(peptide1, xlink1, peptide2, xlink2)
-    # C-terminal of CID break
-    cterm_unmod1, cterm_mod1, cterm_unmod2, cterm_mod2 =\
-        Calc.CTermXPeptides(peptide1, xlink1, peptide2, xlink2)
-
-    print('Unmodified nterm peptides: {}'.format((', '.join(nterm_unmod1 +
-                                                            nterm_unmod2))))
-
-    print('Unmodified cterm peptides: {}'.format((', '.join(cterm_unmod1 +
-                                                            cterm_unmod2))))
-
-    print('Modified nterm peptides: {}'.format((', '.join(nterm_mod1 +
-                                                            nterm_mod2))))
-
-    print('Modified cterm peptides: {}'.format((', '.join(cterm_mod1 +
-                                                            cterm_mod2))))
-
-
-    ######################################################
-    # Nterminal non xlinked peptides
-    ######################################################
+    #%% CalcABIons
     def CalcABions(peptides, peptide_type, ion_types, charge, aa_dict,
                    moddesc, modmass, mods):
         """
         Calculate theoretical masses and corresponding descriptions
         for set of peptides sequences.
-        
+
         :params: peptides: List of peptide sequences
         :params: peptide_type: string "alpha" or "beta" (first or last peptide truncated respectively)
         :params: ion_types: list of ion types to consider (e.g. ['b', 'y'])
@@ -146,52 +110,8 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
         :params: aa_dict: dict linking one-character ID to mass
         :params: moddesc: description to add to the xlinked peptides
         :params: modmass: mass of the cross-linker
-        :params: mods: list of other modifications e.g. [[156.18, 'K'],]
-        
+        :params: mods: [[[mass1_1, mass2_1], [pos1_1, pos2_1]], [[mass2_1,], [pos2_1]]]
         """
-        
-#        for pep in peptides:
-#            for c in range(charge[0], charge[-1]+1):
-#                for v in var_mods:
-#                    if v == None:
-#                        if 'a' in ion_types:
-#                            ion_string = 'A' if peptide_type == 'alpha' else 'a'
-#                            mass = Calc.AIonMass(pep, aa_dict, c,
-#                                                       None, peptide_type)
-#
-#                            desc = [pep, ion_string, len(pep), charge,
-#                                    peptide_type, None]
-#                            
-#                        if 'b' in ion_types:
-#                            ion_string = 'B' if peptide_type == 'alpha' else 'b'
-#                            mass = Calc.BIonMass(pep, aa_dict, c,
-#                                                       None, peptide_type)
-#                            
-#                            desc = [pep, ion_string, len(pep), charge,
-#                                    peptide_type, None]
-#                    else:
-#                        v_mass, v_AAs = v
-#                        for aa in v_AAs:
-#                            # every variable modification might occur multiple
-#                            # times in a single peptide
-#                            for occurence in range(1, pep.count(aa)+1):
-#                                if 'a' in ion_types:
-#                                    ion_string = 'A' if peptide_type == 'alpha' else 'a'
-#                                    mass = Calc.AIonMass(pep,
-#                                                         aa_dict,c,
-#                                                         occurence * v_mass,
-#                                                         peptide_type)
-#                                    
-#                                    desc = [pep, ion_string, len(pep), charge,
-#                                            peptide_type, mods]
-#                                    
-#                                if 'b' in ion_types:
-#                                    ion_string = 'B' if peptide_type == 'alpha' else 'b'
-#                                    mass = Calc.BIonMass(pep, aa_dict, c,
-#                                                         occurence * v_mass,
-#                                                         peptide_type)
-                
-        
         for pep in peptides:
             if 'a' in ion_types:
                 for c in range(charge[0], charge[-1]+1):
@@ -211,6 +131,62 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
                         desc[0] += moddesc
                         all_desc.append(desc)
 
+
+    #%% CalcYions
+    def CalcYions(peptides, peptide_type, ion_types, charge, aa_dict,
+                   moddesc, modmass, mods):
+        for pep in peptides:
+            if 'y' in ion_types:
+                for c in range(charge[0], charge[-1]+1):
+                    mass, desc = Calc.YIonMass(pep, aa_dict, c,
+                                                mods, peptide_type)
+                    if mass < max_mass:
+                        all_ions.append(mass + modmass/c)
+                        desc[0] += moddesc
+                        all_desc.append(desc)
+
+    #%% Continue IonsFromXlinkSequence
+
+    # table contains amino acid masses - H2O for better calculation
+    aaPath = os.path.join(binPath, '../data/config/aa_masses.txt')
+    with open(aaPath, mode='r') as infile:
+        reader = csv.reader(infile, delimiter='\t')
+        if mass_type == 'monoisotopic':
+            aa_dict = {rows[0]:float(rows[1]) for rows in reader}
+        elif mass_type == 'average':
+            aa_dict = {rows[0]:float(rows[2]) for rows in reader}
+        else:
+            print('No or wrong mass_type specified, assuming monoisotopic masses')
+
+    all_ions = []
+    all_desc = []
+
+    # collect sequences from modified and unmodified peptides (n-term of CID)
+    nterm_unmod1, nterm_mod1, nterm_unmod2, nterm_mod2, nterm_positions=\
+        Calc.XPeptides(peptide1, xlink1, peptide2, xlink2, CTerm=False)
+    # C-terminal of CID break
+    cterm_unmod1, cterm_mod1, cterm_unmod2, cterm_mod2, cterm_positions =\
+        Calc.XPeptides(peptide1, xlink1, peptide2, xlink2, CTerm=True)
+
+    print('Unmodified nterm peptides: {}'.format((', '.join(nterm_unmod1 +
+                                                            nterm_unmod2))))
+
+    print('Unmodified cterm peptides: {}'.format((', '.join(cterm_unmod1 +
+                                                            cterm_unmod2))))
+
+    print('Modified nterm peptides: {}'.format((', '.join(nterm_mod1 +
+                                                            nterm_mod2))))
+
+    print('Modified cterm peptides: {}'.format((', '.join(cterm_mod1 +
+                                                            cterm_mod2))))
+
+    ######################################################
+    # Nterminal non xlinked peptides
+    ######################################################
+
+    nterm_unmod1 = Calc.NTermPeptides(peptide1, end=xlink1)
+    nterm_unmod2 = Calc.NTermPeptides(peptide2, end=xlink2)
+
     CalcABions(nterm_unmod1, 'alpha', ion_types, charge, aa_dict,
                '', # moddesc
                0, # modmass
@@ -226,12 +202,12 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
 
     # calculate mass of modification with peptide2 and xlinker
     pep2_mass = sum([aa_dict[aa] for aa in peptide2]) + 18.01528
-    modmass1 = xlinker_mod + pep2_mass
-    print('Mass of modification for peptide 1: {}'.format(modmass1))
+    xpepmass1 = xlinker_mod + pep2_mass
+    print('Mass of modification for peptide 1: {}'.format(xpepmass1))
     # same with peptide1
     pep1_mass = sum([aa_dict[aa] for aa in peptide1]) + 18.01528
-    modmass2 = xlinker_mod + pep1_mass
-    print('Mass of modification for peptide 2: {}'.format(modmass2))
+    xpepmass2 = xlinker_mod + pep1_mass
+    print('Mass of modification for peptide 2: {}'.format(xpepmass2))
     # define descriptions for peptide2 bound to (truncated) peptide1
     moddesc1 = '-{}-{}-{}'.format(xlink1, peptide2, xlink2)
     # same for peptide1 bound to (truncated) peptide2
@@ -239,29 +215,17 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
 
     CalcABions(nterm_mod1, 'alpha', ion_types, charge, aa_dict,
                moddesc1, # moddesc
-               modmass1, # modmass
+               xpepmass1, # modmass
                mods)
 
     CalcABions(nterm_mod2, 'beta', ion_types, charge, aa_dict,
                moddesc2, # moddesc
-               modmass2, # modmass
+               xpepmass2, # modmass
                mods)
 
     ######################################################
     # Cterminal non-xlinked peptides
     ######################################################
-
-    def CalcYions(peptides, peptide_type, ion_types, charge, aa_dict,
-                   moddesc, modmass, mods):
-        for pep in peptides:
-            if 'y' in ion_types:
-                for c in range(charge[0], charge[-1]+1):
-                    mass, desc = Calc.YIonMass(pep, aa_dict, c,
-                                                mods, peptide_type)
-                    if mass < max_mass:
-                        all_ions.append(mass + modmass/c)
-                        desc[0] += moddesc
-                        all_desc.append(desc)
 
     CalcYions(cterm_unmod1, 'alpha', ion_types, charge, aa_dict,
                '', # moddesc
@@ -279,12 +243,12 @@ def IonsFromXlinkSequence(peptide1, xlink1, peptide2, xlink2, xlinker_mod,
 
     CalcYions(cterm_mod1, 'alpha', ion_types, charge, aa_dict,
                moddesc1, # moddesc
-               modmass1, # modmass
+               xpepmass1, # modmass
                mods)
 
     CalcYions(cterm_mod2, 'beta', ion_types, charge, aa_dict,
                moddesc2, # moddesc
-               modmass2, # modmass
+               xpepmass2, # modmass
                mods)
 
     ######################################################
@@ -418,16 +382,27 @@ if __name__ == '__main__':
 
     assignment_error = []
 
+#    ions2desc =  IonsFromXlinkSequence('DQKLSELDDR', # peptid1
+#                                    3, # xlink1
+#                                    'KICEGFR', # peptide2
+#                                    1, # xlink2
+#                                    138.068, #mass of xlinker
+#                                    ['a', 'b', 'y'], # ion types
+#                                    [1,2], # min, max charge
+#                                    'monoisotopic', # mass type
+#                                    [[[], []], [[57.021464,], [2,]]], # modifications (on pep1 and pep2)
+#                                    2000) # max mass
+
+
     ions2desc =  IonsFromXlinkSequence('KAWGNNQDGVVASQPAR', # peptid1
                                     1, # xlink1
                                     'LKSSDAYK', # peptide2
                                     2, # xlink2
                                     138.068, #mass of xlinker
                                     ['a', 'b', 'y'], # ion types
-                                    [1,2], # min, max charge
+                                    [1,3], # min, max charge
                                     'monoisotopic', # mass type
-                                    #None,
-                                    [[156.18, 'K'],], # modifications
+                                    None, # modifications
                                     2000) # max mass
 
     with open('peptides.log', 'w') as f:

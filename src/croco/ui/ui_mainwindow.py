@@ -35,8 +35,6 @@ class Ui_MainWindow(object):
         self.convert_input_dropdown.addItem("")
         self.convert_input_dropdown.addItem("")
         self.convert_input_dropdown.addItem("")
-        self.convert_input_dropdown.addItem("")
-        self.convert_input_dropdown.addItem("")
         self.gridLayout_2.addWidget(self.convert_input_dropdown, 0, 2, 1, 1)
         self.label4 = QtWidgets.QLabel(self.tab)
         self.label4.setObjectName("label4")
@@ -153,7 +151,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -162,10 +160,8 @@ class Ui_MainWindow(object):
         self.label3.setText(_translate("MainWindow", "Input file format:"))
         self.convert_input_dropdown.setStatusTip(_translate("MainWindow", "Format for file input"))
         self.convert_input_dropdown.setItemText(0, _translate("MainWindow", "pLink"))
-        self.convert_input_dropdown.setItemText(1, _translate("MainWindow", "xWalk"))
-        self.convert_input_dropdown.setItemText(2, _translate("MainWindow", "DynamXL"))
-        self.convert_input_dropdown.setItemText(3, _translate("MainWindow", "Kojak"))
-        self.convert_input_dropdown.setItemText(4, _translate("MainWindow", "xTable"))
+        self.convert_input_dropdown.setItemText(1, _translate("MainWindow", "Kojak"))
+        self.convert_input_dropdown.setItemText(2, _translate("MainWindow", "xTable"))
         self.label4.setText(_translate("MainWindow", "Output File Format"))
         self.convert_output_dropdown.setStatusTip(_translate("MainWindow", "Format to convert file to"))
         self.convert_output_dropdown.setItemText(0, _translate("MainWindow", "xTable"))

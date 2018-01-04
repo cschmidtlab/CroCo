@@ -20,45 +20,70 @@ def NTermPeptides(parent, start=1, end=None):
 
     nterm = [parent[0:j] for j in range(start, end)]
     return nterm
- 
-def NTermXPeptides(peptide1, xlink1, peptide2, xlink2):
-    """
-    Return all n-terminal peptides from a cross-linked sequence
-    """
-    # truncation of peptide1
-    nterm_unmod1 = NTermPeptides(peptide1, end=xlink1)
-    nterm_mod1 = NTermPeptides(peptide1, start=xlink1)
-    
-    # truncation fo peptide2
-    nterm_unmod2 = NTermPeptides(peptide2, end=xlink2)
-    nterm_mod2 = NTermPeptides(peptide2, start=xlink2)
-    
-    return nterm_unmod1, nterm_mod1, nterm_unmod2, nterm_mod2
- 
+
 
 def CTermPeptides(parent, start=1, end=None):
     """
-    return all c-terminal peptides from start (including)
-    to end (non-including)
+    return all c-terminal peptides from start (non-including)
+    to end (including)
     """
     if end == None:
         end = len(parent) 
     cterm = [parent[i:len(parent)] for i in range(start, end)]
     return cterm
 
-def CTermXPeptides(peptide1, xlink1, peptide2, xlink2):
+def XPeptides(peptide1, xlink1, peptide2, xlink2, CTerm=False):
     """
-    Return all c-terminal peptides from a cross-linked sequence
-    """
-    # truncation of peptide 1
-    cterm_unmod1 = CTermPeptides(peptide1, start=xlink1)
-    cterm_mod1 = CTermPeptides(peptide1, end=xlink1)
+    Calculate all fragmentation ion sequences for a cross-link peptide
+    and return them sorted by whether they contain the cross-link or not
     
-    # truncation of peptide2
-    cterm_unmod2 = CTermPeptides(peptide2, start=xlink2)
-    cterm_mod2 = CTermPeptides(peptide2, end=xlink2)
+    :params: peptide1: sequence of the alpha peptide of the cross-link
+    :params: xlink1: relative position of the cross-link within peptide1
+    :params: peptide2: sequence of the beta peptide of the cross-link ion
+    :params: xlink2:  relative position of the cross-link within peptide2
+    :params: CTerm: Calc Cterminal peptides if true, else Nterminal
+    """
+    if CTerm:
+        """
+        Return all c-terminal peptides from a cross-linked sequence
+        """
+        # truncation of peptide 1
+        unmod1 = CTermPeptides(peptide1, start=xlink1)
+        mod1 = CTermPeptides(peptide1, end=xlink1)
+        # return the indices of the beginning and the end of the substrings
+        unmod1_pos = [xlink1+1, len(peptide1)]
+        mod1_pos = [2, len(peptide1)]
+        
+        # truncation of peptide2
+        unmod2 = CTermPeptides(peptide2, start=xlink2)
+        mod2 = CTermPeptides(peptide2, end=xlink2)
+        unmod2_pos = [xlink1+1, len(peptide2)]
+        mod2_pos = [2, len(peptide2)]
 
-    return cterm_unmod1, cterm_mod1, cterm_unmod2, cterm_mod2
+    else:
+        """
+        Return all n-terminal peptides from a cross-linked sequence
+        """
+        # truncation of peptide1
+        unmod1 = NTermPeptides(peptide1, end=xlink1)
+        mod1 = NTermPeptides(peptide1, start=xlink1)
+        # return the indices of the beginning and the end of the substrings
+        unmod1_pos = [1, xlink1-1]
+        mod1_pos = [1, len(peptide1)-1]
+        
+        # truncation of peptide2
+        unmod2 = NTermPeptides(peptide2, end=xlink2)
+        mod2 = NTermPeptides(peptide2, start=xlink2)
+        unmod2_pos = [1, xlink2-1]
+        mod2_pos = [xlink2, len(peptide2)]
+        
+    # return positions as single list of lists
+    positions = [unmod1_pos,
+                 mod1_pos,
+                 unmod2_pos,
+                 mod2_pos]
+    
+    return unmod1, mod1, unmod2, mod2, positions
 
 ############################################
 # Calculation of masses of sequences

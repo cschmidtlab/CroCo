@@ -23,7 +23,7 @@ def IndexMGF(mgf_file_handler):
     indexpath = os.path.splitext(mgf_file_handler.name)[0] + '.idx'
     try:
         with open(indexpath, 'rb') as f:
-            print('Reading existing indexfile at {}...'.format(indexpath))
+            print('Reading existing indexfile at {}...'.format(os.path.abspath(indexpath)))
             return pickle.load(f)
     # if the indexfile was not present, generate a new index
     except:

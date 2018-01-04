@@ -23,10 +23,10 @@ pos2 - Absolute postiton of the first AA of the second peptide
 xpos1 - Absolute position of the cross-linker of the longer peptide
 xpos2 - Absolute position of the cross-linker of the shorter peptide (only if interlink)
 
-mod1 - relative position of a modification within peptide 1
+mod1 - relative position of a modification within peptide 1 (;-delimited string)
 mod2 - same for peptide 2
-modtype1 - type of modification 1
-modtype2 - type of modification 2
+modmass1 - mass of modification 1 (;-delimited string)
+modmass2 - mass of modification 2
 
 ID - Identifier for the position of a cross-link between two proteins
 decoy - true or false
@@ -51,19 +51,19 @@ import re
 # defines the column headers required for xtable output
 col_order = [ 'rawfile', 'scanno', 'prec_ch',
               'pepseq1', 'xlink1',
-              'pepseq2', 'xlink2', 'xtype', 'modtype1', 'mod1', 'modtype2', 'mod2',
+              'pepseq2', 'xlink2', 'xtype', 'modmass1', 'mod1', 'modmass2', 'mod2',
               'prot1', 'xpos1', 'prot2',
               'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
 def plinkspectra2pandas(filepath):
     """
     Read a pLink spectra results file and return a pandas dictionary
-    
+
     :params: filepath: Path to a pLink results file e.g. _inter_combine.spectrum.xls
-    
+
     :returns: pandas dataframe
     """
-    
+
     with open(filepath, 'r') as fh:
 
         # read the first header-line into list
@@ -72,7 +72,7 @@ def plinkspectra2pandas(filepath):
         # avoid the first entry as it is only the line-indicator
         headers2 = fh.readline().strip().split('\t')[1:]
         headers2 = [x if x != 'Score' else 'Score2' for x in headers2 ]
-        
+
         data = {} # init of data dict for pandas
         for h in headers1 + headers2:
             data[h] = []
@@ -80,7 +80,7 @@ def plinkspectra2pandas(filepath):
         # read the first line
         line = fh.readline()
         while line:
-                    
+
             if line.startswith('*'): # indicates a headers2 line
                 line_data = line.strip().split('\t')[1:] # remove the first element
                 for i in range(len(line_data)):
@@ -91,21 +91,21 @@ def plinkspectra2pandas(filepath):
                 line_data = line.strip().split('\t')
                 for i in range(len(line_data)):
                     data[headers1[i]].append(line_data[i])
-    
+
             # read the next line
             line=fh.readline()
-        
+
     return pd.DataFrame.from_dict(data)
 
 def plinkpeptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
-    
+
     :params: filepath: Path to a pLink results file e.g. _inter_combine.peptide.xls
-    
+
     :returns: pandas dataframe
     """
-    
+
     with open(filepath, 'r') as fh:
 
         # read the first header-line into list
@@ -114,7 +114,7 @@ def plinkpeptide2pandas(filepath):
         # avoid the first entry as it is only the line-indicator
         headers2 = fh.readline().strip().split('\t')
         headers2 = [x if x != 'Order' else 'Order2' for x in headers2 ]
-        
+
         data = {} # init of data dict for pandas
         for h in headers1 + headers2:
             data[h] = []
@@ -122,7 +122,7 @@ def plinkpeptide2pandas(filepath):
         # read the first line
         line = fh.readline()
         while line:
-                    
+
             if line[0].isdigit(): # indicates a headers1 line
                 # save the line and use it when printing all following lines
                 # corresponding to that title-line
@@ -136,29 +136,29 @@ def plinkpeptide2pandas(filepath):
                     data[headers1[i]].append(line1_data[i])
                 for i in range(len(line2_data)):
                     data[headers2[i]].append(line2_data[i])
-    
+
             # read the next line
             line=fh.readline()
-        
+
     return pd.DataFrame.from_dict(data)
 
 def plinkprotein2pandas(filepath):
     """
     Read a pLink protein results file and return a pandas dictionary
-    
+
     :params: filepath: Path to a pLink results file e.g. _inter_combine.protein.xls
-    
+
     :returns: pandas dataframe
     """
     with open(filepath, 'r') as fh:
-  
+
         data = {} # init of data dict for pandas
-        
+
         # initialise the protein_header line
         header1 = ''
         # initialise the peptide header-line
         header2 = ''
-        
+
         # protein level header starts with Order tag
         header1_exp = re.compile(r'^Order\s.*')
         # protein level entry starts with the order entry
@@ -167,9 +167,9 @@ def plinkprotein2pandas(filepath):
         header2_exp = re.compile(r'^\s+Order.*')
         # peptide entry starts with whitespace foloowed by order entry
         entry2_exp = re.compile(r'^\s+\d+.*')
-        
+
         for line in fh.readlines():
-            
+
             # beginning of a protein-block
             if header1_exp.match(line):
                 # only read the header-line on its first occurence
@@ -178,8 +178,8 @@ def plinkprotein2pandas(filepath):
                     header1 = line.strip().split('\t')
                     # set the column names for the dict
                     for h in header1:
-                        data[h] = [] 
-                    
+                        data[h] = []
+
             # body of a protein-block
             elif entry1_exp.match(line):
                 # Read and store header1 data to write with every case of header2
@@ -192,7 +192,7 @@ def plinkprotein2pandas(filepath):
                     header2 = [x if x != 'Order' else 'Order2' for x in header2 ]
                     for h in header2:
                         data[h] = []
-            
+
             # beginning of a peptide entry
             elif entry2_exp.match(line):
                 entry2_data = line.strip().split('\t')
@@ -203,13 +203,34 @@ def plinkprotein2pandas(filepath):
                     data[header2[idx]].append(d)
 
     return pd.DataFrame.from_dict(data)
-          
+
+def read_plink_modifications(filepath):
+    """
+    Open a pLink modification.ini file and extract all modifications with
+    their names as dict.
+    
+    :params: filepath: Path to modifications.ini
+    
+    :returns: mod_dict: Dict mapping names to masses
+    """
+    
+    pattern = re.compile(r'^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+')
+    mod_dict = {}
+    
+    with open(filepath, 'r') as f:
+        for line in f:
+            if pattern.match(line):
+                match = pattern.match(line)
+                name, mass = match.groups()
+                mod_dict[name] = mass
+
+    return mod_dict
 
 def process_plink_sequence(seq_string):
     """
     Extract peptide sequences and cross-link positions from
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
-    
+
     :returns: list of pepseq1, pepseq2, xpos1, xpos2, xtype
     """
     pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
@@ -217,7 +238,7 @@ def process_plink_sequence(seq_string):
         match = pattern.match(seq_string)
         # pepseq1, xpos1, pepseq2, xpos2, xtype
         return match.groups()
-        
+
     except Exception as e:
         print(e)
         return np.nan
@@ -226,7 +247,7 @@ def process_plink_spectrum(spec_string):
     """
     Extract rawfile name, precursor charge and scan no from pLink sequence
     string
-    
+
     :returns: list of rawfile, scanno, prec_ch
     """
     pextract_pattern = re.compile('(.+)\.(\d+)\.\d+\.(\d+)\.dta')
@@ -252,12 +273,12 @@ def calc_pos_from_xpos(xpos, xlink):
     Calculates the absolute position of the first AA of a peptide
     sequence from the absolute position of the cross-link AA (xpos) its
     position within the sequence (xlink)
-    
+
     Returns: pos - Absolute position of AA in sequence
     """
     xpos = int(xpos)
     xlink = int(xlink)
-    
+
     return xpos - xlink + 1
 
 def process_kojak_peptide(peptide_string):
@@ -265,7 +286,7 @@ def process_kojak_peptide(peptide_string):
     Return Modifications and the peptide sequence
     from a Kojak sequence string such as M[15.99]TDSKYFTTNK
     """
-    
+
     pattern = re.compile('\[(.*?)\]')
     mods = re.findall(pattern, peptide_string)
     # mod_pos = []
@@ -281,7 +302,7 @@ def process_kojak_peptide(peptide_string):
     if mods == []:
         mods = np.nan
     #     mod_pos = np.nan
-    
+
     return mods, sequence
 
 def process_kojak_protein(protein_string):
@@ -306,7 +327,7 @@ def process_xQuest_spectrum(spec_string):
     """
     Extract rawfile name, precursor charge and scan no from xQuest sequence
     string
-    
+
     :returns: list of rawfile, scanno, prec_ch
     """
     spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
@@ -334,15 +355,15 @@ def process_xQuest_Id(Id_string):
 def ReadpLink(plinkdir):
     """
     reads pLink report dir and returns an xtabel data array.
-    
+
     :params: plinkdir: plink report subdir (e.g. sample1)
-    
+
     :returns: xtable data table
     :returns: xinfo meta-data object
     """
-    
+
     ### Collect data, convert to pandas format and merge
-    
+
     # Initialise file names as None to use implicit booleaness
     inter_file = None
     loop_file = None
@@ -351,13 +372,13 @@ def ReadpLink(plinkdir):
     for e in os.listdir(plinkdir):
         if '_inter_combine.protein.xls' in e:
             inter_file = e
-            
+
         if '_loop_combine.protein.xls' in e:
             loop_file = e
-        
+
         if '_mono_combine.protein.xls' in e:
             mono_file = e
-    
+
     frames = []
     # only called if inter_file is not None
     if inter_file:
@@ -371,15 +392,15 @@ def ReadpLink(plinkdir):
         loop_df['type'] = 'loop'
         frames.append(loop_df)
     if mono_file:
-        print('Reading pLink mono-file: ' + mono_file)  
+        print('Reading pLink mono-file: ' + mono_file)
         mono_df =  plinkprotein2pandas(os.path.join(plinkdir, mono_file))
         mono_df['type'] = 'mono'
         frames.append(mono_df)
-    
+
     data = pd.concat(frames)
-    
+
     ### Convert data inside pandas df
-    
+
 
     # init xtable with column containing lists of rawfile, scanno, prec_ch
     xtable = pd.DataFrame(data['Spectrum'].apply(process_plink_spectrum))
@@ -395,13 +416,13 @@ def ReadpLink(plinkdir):
     xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
     xtable['xlink2'], xtable['xtype'] =\
         zip(*data['Sequence'].apply(process_plink_sequence))
-    
+
     xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
             zip(*data['Proteins'].apply(process_plink_proteins))
 
     xtable['type'] = data['type']
     xtable['score'] = data['Score']
-    
+
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
         xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
@@ -434,89 +455,94 @@ def ReadpLink(plinkdir):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-    
+
     # save original score in columns
     xtable['plink score'] = xtable['score']
-    
+
     # compute a minus log P score for better comparison with higher=better scores
     xtable['score'] = -np.log(xtable['score'])
 
+    # generate the mod_dict linking pLink modification names to masses
+    mod_dict = read_plink_modifications('../data/config/pLink/modification.ini')
 
     # extract modification information
     pattern = re.compile(r'(\d+),.*\((.*)\)')
-      
+
     pepseq1 = xtable['pepseq1'].tolist()
     Modification = data['Modification'].tolist()
-   
+
     if len(pepseq1) == len(Modification):
         print('Len of pepseq1 and Modification match!')
     else:
         print('Len of pepseq1 and Modification dont match!')
-    
-    modtype1 = []
+
+    modmass1 = []
     mod1 = []
-    modtype2 = []
+    modmass2 = []
     mod2 = []
-    
+
+    # iterate over all lines in the input file
     for idx, modstr in enumerate(Modification):
-        
-        this_modtype1 = []
+
+        this_modmass1 = []
         this_mod1 = []
-        this_modtype2 = []
+        this_modmass2 = []
         this_mod2 = []
-        
+
+        # Extract annotations from every item in the modstring
         for mod in modstr.split(';'):
-                    
+
             if pattern.match(mod):
                 match = pattern.match(mod)
                 modpos, mod = match.groups()
+
+                # transform modification names to masses
+                try:
+                    mass = mod_dict[mod]
+                except:
+                    # use the input string if no subsitution found
+                    mass = mod
+                
                 seqlen1 = len(pepseq1[idx]) + 1
                 if int(modpos) > seqlen1:
-                    this_mod2.append(int(modpos) - seqlen1)
-                    this_modtype2.append(mod)
+                    this_mod2.append(str(int(modpos) - seqlen1))
+                    this_modmass2.append(mass)
                 else:
-                    this_mod1.append(int(modpos))
-                    this_modtype1.append(mod)
-            
-        if this_mod1 == []:
-            this_modtype1 = np.nan
-            this_mod1 = np.nan
-        
-        if this_mod2 == []:
-            this_modtype2 = np.nan
-            this_mod2 = np.nan
+                    this_mod1.append(modpos)
+                    this_modmass1.append(mass)
 
-        modtype1.append(this_modtype1)
-        mod1.append(this_mod1)
-        modtype2.append(this_modtype2)
-        mod2.append(this_mod2)
-    
-    xtable['modtype1'] = modtype1
+        # multiple modifications of one peptide are stored as ;-delimited strings
+        modmass1.append(';'.join(this_modmass1))
+        mod1.append(';'.join(this_mod1))
+        modmass2.append(';'.join(this_modmass2))
+        mod2.append(';'.join(this_mod2))
+
+    xtable['modmass1'] = modmass1
     xtable['mod1'] = mod1
-    xtable['modtype2'] = modtype2
+    xtable['modmass2'] = modmass2
     xtable['mod2'] = mod2
 
-    # reorder columns  
+    # reorder columns
     # append pLink specific columns
     ['Order'] + col_order # append to front
-    col_order.extend(['PSM image', 'plink score'])  
+    col_order.extend(['PSM image', 'plink score'])
     xtable = xtable[col_order]
 
     ### return xtable df
-    
+
     return xtable
 
 
 def ReadKojak(kojak_file, rawfile=None):
     """
     reads pLink results file and returns an xtable data array.
-    
+
     :params: koajk_file: path to Kojak results file
     :params: rawfile: name of the corresponding rawfile
 
     :returns: xtable data table
     """
-    
+
     ### Collect data and convert to pandas format
 
     print('Reading Kojak-file: ' + kojak_file)
@@ -528,7 +554,7 @@ def ReadKojak(kojak_file, rawfile=None):
                            delimiter='\t')
     else:
         return FileNotFoundError('Kojak txt file not found')
-    
+
     ### Convert data inside pandas df
 
     # remove lines containing non-identified PSMs (marked with '-' in both
@@ -537,19 +563,19 @@ def ReadKojak(kojak_file, rawfile=None):
 
     # transfer scan no from read data to xtable
     xtable = pd.DataFrame(data['Scan Number'])
-    
+
     # rename column
     xtable.columns = ['scanno']
-    
+
     xtable['prec_ch'] = data['Charge']
-    
+
     # apply the function and assign the result to multiple new columns
     xtable['mod1'], xtable['pepseq1'] =\
            zip(*data['Peptide #1'].apply(process_kojak_peptide))
 
     xtable['mod2'], xtable['pepseq2'] =\
            zip(*data['Peptide #2'].apply(process_kojak_peptide))
-    
+
     xtable['xlink1'] = data['Link #1']
     xtable['xlink2'] = data['Link #2']
 
@@ -558,12 +584,12 @@ def ReadKojak(kojak_file, rawfile=None):
 
     xtable['prot1'], xtable['xpos1'] =\
             zip(*data['Protein #1'].apply(process_kojak_protein))
-            
+
     xtable['prot2'], xtable['xpos2'] =\
             zip(*data['Protein #2'].apply(process_kojak_protein))
-    
+
     xtable['score'] = data['Score']
-    
+
     # set a decoy indicator where at least one protein is reversed
     xtable['decoy'] = np.where(xtable['prot1'].str.contains('REVERSE') |\
                                  xtable['prot2'].str.contains('REVERSE'),
@@ -604,19 +630,19 @@ def ReadKojak(kojak_file, rawfile=None):
     xtable = xtable[col_order]
 
     ### return xtable df
-    
+
     return xtable
 
 def ReadxQuest(xquest_file):
     """
     Read xQuest results file and return file in xTable format.
-    
+
     :params: kojakpath: Kojak results file
     :params: rawfile: name of the corresponding rawfile
 
     :returns: xtable data table
     """
-    
+
     ### Collect data and convert to pandas format
 
     print('Reading xQuest-file: ' + xquest_file)
@@ -627,7 +653,7 @@ def ReadxQuest(xquest_file):
                              delimiter='\t')
     except:
         raise(FileNotFoundError('xQuest results file not found'))
-    
+
     rename_dict = {'z':'prec_ch',
                    'Protein1':'prot1',
                    'Protein2': 'prot2',
@@ -644,21 +670,20 @@ def ReadxQuest(xquest_file):
                     inplace=True)
     except Exception as e:
         raise Exception('Error during xQuest header renaming: %s' % e)
-    
-    
+
     # Extract rawfile, scanno and precursor charge from the mgf header string
     # used as Spectrum by xQuest
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
         zip(*xquest['Spectrum'].apply(process_xQuest_spectrum))
-        
+
     # Extract peptide sequences and relative cross-link positions form the
     # xQuest ID-string
     xtable['pepseq1'], xtable['pepseq2'], xtable['xlink1'], xtable['xlink2'] =\
         zip(*xquest['Id'].apply(process_xQuest_Id))
-            
+
     # Modifications are not defined in xQuest
     xtable['mod1'], xtable['mod2'] = "", ""
-    
+
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
         xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
@@ -671,13 +696,13 @@ def ReadxQuest(xquest_file):
 
     ### Return df
     return xtable
-   
+
 
 def ReadManual(filepath):
     """
     Read Excel file with hand-curated results
     """
-    
+
     cols = ['order1',
             'order2',
             'Spectrum',
@@ -694,53 +719,53 @@ def ReadManual(filepath):
             'MissCleaveNum',
             'Rank',
             'Proteins']
-            
-    
+
+
     true_hits = pd.read_excel(filepath,
                             sheetname='yes',
                             header=None,
                             names=cols)
-                            
+
     true_hits.dropna(axis=0,
                 how='all',
                 inplace=True)
-                
+
     true_hits['score'] = 1 # set true hits to a score of 1 and maybes to 0.5
-                            
+
     maybe_hits = pd.read_excel(filepath,
                             sheetname='naja',
                             header=None,
                             names=cols)
-    
+
     maybe_hits.dropna(axis=0,
                 how='all',
                 inplace=True)
-                
+
     maybe_hits['score'] = 0.5
-    
+
     no_hits = pd.read_excel(filepath,
                             sheetname='no',
                             header=None,
                             names=cols)
-    
+
     no_hits.dropna(axis=0,
                 how='all',
                 inplace=True)
-                
+
     no_hits['score'] = 0.0
-    
-    
-    ann_data = pd.concat((true_hits, maybe_hits, no_hits))   
-    
+
+
+    ann_data = pd.concat((true_hits, maybe_hits, no_hits))
+
     ann_data.reset_index(drop=True, inplace=True)
-    
+
     ann_data['pepseq1'], ann_data['xlink1'], ann_data['pepseq2'],\
     ann_data['xlink2'], ann_data['xtype'] =\
         zip(*ann_data['Sequence'].apply(process_plink_sequence))
-    
+
     ann_data['prot1'], ann_data['xpos1'], ann_data['prot2'], ann_data['xpos2'] =\
             zip(*ann_data['Proteins'].apply(process_plink_proteins))
-                
+
     ann_data['rawfile'], ann_data['scanno'], ann_data['prec_ch'] =\
         zip(*ann_data['Spectrum'].apply(process_plink_spectrum))
 
