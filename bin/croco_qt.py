@@ -22,16 +22,14 @@ def main(argv):
     # dir is the directory above the bin-dir
     croco_dir = os.path.join(os.path.dirname(croco_script), '..')
     # resolve relative path
-    prefix = os.path.abspath(os.path.normpath(croco_dir))
+    croco_dir = os.path.abspath(os.path.normpath(croco_dir))
     
-    src_dir = os.path.join(prefix, 'src')
-    data_dir = os.path.join(prefix, 'data')
-    share_dir = os.path.join(prefix, 'share', 'croco')
+    data_dir = os.path.join(croco_dir, 'data')
     
-    if os.path.exists(src_dir):
+    if os.path.exists(croco_dir):
         # started from local directory, not installed
-        sys.stderr.write('Using modules from ' + src_dir + '\n')
-        sys.path.append(src_dir)
+        sys.stderr.write('Using modules from ' + croco_dir + '\n')
+        sys.path.append(croco_dir)
     else:
         if os.name == 'nt':
             # installed on windows
@@ -48,9 +46,9 @@ def main(argv):
     
     # Translation belongs here
     
-    import croco.ui.mainwindow as mainwin
+    import croco.qt
     
-    mainwindow = mainwin.CroCo_MainWindow()
+    mainwindow = croco.qt.CroCo_MainWindow()
     mainwindow.show()
     
     sys.exit(app.exec_())

@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="images">
-    <file>data/images/python-icon.png</file>
+    <file>data/images/logo.png</file>
   </qresource>
   <qresource prefix="config">
     <file>data/config/aa_masses.txt</file>

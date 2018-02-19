@@ -1,0 +1,623 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.lib package &#8212; croco  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="croco-lib-package">
+<h1>croco.lib package<a class="headerlink" href="#croco-lib-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-croco.lib.DynamXL">
+<span id="croco-lib-dynamxl-module"></span><h2>croco.lib.DynamXL module<a class="headerlink" href="#module-croco.lib.DynamXL" title="Permalink to this headline">¶</a></h2>
+<p>Functions to write DynamXL data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.DynamXL.Write">
+<code class="descclassname">croco.lib.DynamXL.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/DynamXL.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.DynamXL.Write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts xTable data into cross-link information
+file for the dynamXL analysis software:</p>
+<p>K189 NZ K192 NZ 18
+K189 NZ K196 NZ 5
+K200 NZ K192 NZ 1
+K236 NZ K189 NZ 3</p>
+<p>dynamxl.chem.ox.ac.uk</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">xtable data table structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body"><a href="#id1"><span class="problematic" id="id2">outpath_</span></a> path to write file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.Kojak">
+<span id="croco-lib-kojak-module"></span><h2>croco.lib.Kojak module<a class="headerlink" href="#module-croco.lib.Kojak" title="Permalink to this headline">¶</a></h2>
+<p>Functions to read Kojak data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.Kojak.Read">
+<code class="descclassname">croco.lib.Kojak.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>kojak_file</em>, <em>rawfile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Kojak.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Kojak.Read" title="Permalink to this definition">¶</a></dt>
+<dd><p>reads pLink results file and returns an xtable data array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">koajk_file: path to Kojak results file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">rawfile: name of the corresponding rawfile</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">xtable data table</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Kojak.calc_pos_from_xpos">
+<code class="descclassname">croco.lib.Kojak.</code><code class="descname">calc_pos_from_xpos</code><span class="sig-paren">(</span><em>xpos</em>, <em>xlink</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Kojak.html#calc_pos_from_xpos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Kojak.calc_pos_from_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the absolute position of the first AA of a peptide
+sequence from the absolute position of the cross-link AA (xpos) its
+position within the sequence (xlink)</p>
+<p>Returns: pos - Absolute position of AA in sequence</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Kojak.init">
+<code class="descclassname">croco.lib.Kojak.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Kojak.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Kojak.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set required variables for conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Kojak.process_kojak_peptide">
+<code class="descclassname">croco.lib.Kojak.</code><code class="descname">process_kojak_peptide</code><span class="sig-paren">(</span><em>peptide_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Kojak.html#process_kojak_peptide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Kojak.process_kojak_peptide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Modifications and the peptide sequence
+from a Kojak sequence string such as M[15.99]TDSKYFTTNK</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Kojak.process_kojak_protein">
+<code class="descclassname">croco.lib.Kojak.</code><code class="descname">process_kojak_protein</code><span class="sig-paren">(</span><em>protein_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Kojak.html#process_kojak_protein"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Kojak.process_kojak_protein" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return protein name and absolute cross-link position from
+a kojak string such as
+sp|P07340|AT1B1_RAT Sodium/potassium-transporting ATPase subunit beta-1 OS=Rattus norvegicus GN=Atp1(13);</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.Manual">
+<span id="croco-lib-manual-module"></span><h2>croco.lib.Manual module<a class="headerlink" href="#module-croco.lib.Manual" title="Permalink to this headline">¶</a></h2>
+<p>Functions to read Kojak data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.Manual.ReadManual">
+<code class="descclassname">croco.lib.Manual.</code><code class="descname">ReadManual</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Manual.html#ReadManual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Manual.ReadManual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Excel file with hand-curated results</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Manual.init">
+<code class="descclassname">croco.lib.Manual.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Manual.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Manual.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set required variables for conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Manual.process_plink_proteins">
+<code class="descclassname">croco.lib.Manual.</code><code class="descname">process_plink_proteins</code><span class="sig-paren">(</span><em>prot_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Manual.html#process_plink_proteins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Manual.process_plink_proteins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract protein name and absolute cross-link position from
+pLink protein string e.g.
+sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Manual.process_plink_sequence">
+<code class="descclassname">croco.lib.Manual.</code><code class="descname">process_plink_sequence</code><span class="sig-paren">(</span><em>seq_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Manual.html#process_plink_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Manual.process_plink_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract peptide sequences and cross-link positions from
+pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of pepseq1, pepseq2, xpos1, xpos2, xtype</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.Manual.process_plink_spectrum">
+<code class="descclassname">croco.lib.Manual.</code><code class="descname">process_plink_spectrum</code><span class="sig-paren">(</span><em>spec_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/Manual.html#process_plink_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.Manual.process_plink_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract rawfile name, precursor charge and scan no from pLink sequence
+string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of rawfile, scanno, prec_chManual.init()</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.pLink1">
+<span id="croco-lib-plink1-module"></span><h2>croco.lib.pLink1 module<a class="headerlink" href="#module-croco.lib.pLink1" title="Permalink to this headline">¶</a></h2>
+<p>Functions to read pLink1 data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.pLink1.Read">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.Read" title="Permalink to this definition">¶</a></dt>
+<dd><p>reads pLink report dir and returns an xtabel data array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">plinkdir: plink report subdir (e.g. sample1)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">xtable data table</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">xinfo meta-data object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.init">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set required variables for conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.plinkpeptide2pandas">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">plinkpeptide2pandas</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#plinkpeptide2pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.plinkpeptide2pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a pLink peptide results file and return a pandas dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">filepath: Path to a pLink results file e.g. _inter_combine.peptide.xls</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">pandas dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.plinkprotein2pandas">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">plinkprotein2pandas</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#plinkprotein2pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.plinkprotein2pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a pLink protein results file and return a pandas dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">filepath: Path to a pLink results file e.g. _inter_combine.protein.xls</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">pandas dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.plinkspectra2pandas">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">plinkspectra2pandas</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#plinkspectra2pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.plinkspectra2pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a pLink spectra results file and return a pandas dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">filepath: Path to a pLink results file e.g. _inter_combine.spectrum.xls</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">pandas dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.process_plink_proteins">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">process_plink_proteins</code><span class="sig-paren">(</span><em>prot_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#process_plink_proteins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.process_plink_proteins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract protein name and absolute cross-link position from
+pLink protein string e.g.
+sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.process_plink_sequence">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">process_plink_sequence</code><span class="sig-paren">(</span><em>seq_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#process_plink_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.process_plink_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract peptide sequences and cross-link positions from
+pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of pepseq1, pepseq2, xpos1, xpos2, xtype</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.process_plink_spectrum">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">process_plink_spectrum</code><span class="sig-paren">(</span><em>spec_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#process_plink_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.process_plink_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract rawfile name, precursor charge and scan no from pLink sequence
+string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of rawfile, scanno, prec_ch</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink1.read_plink_modifications">
+<code class="descclassname">croco.lib.pLink1.</code><code class="descname">read_plink_modifications</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink1.html#read_plink_modifications"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink1.read_plink_modifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a pLink modification.ini file and extract all modifications with
+their names as dict.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">filepath: Path to modifications.ini</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">mod_dict: Dict mapping names to masses</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.pLink2">
+<span id="croco-lib-plink2-module"></span><h2>croco.lib.pLink2 module<a class="headerlink" href="#module-croco.lib.pLink2" title="Permalink to this headline">¶</a></h2>
+<p>Read pLink2 files
+&#64;author: aretaon</p>
+<dl class="function">
+<dt id="croco.lib.pLink2.Read">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.Read" title="Permalink to this definition">¶</a></dt>
+<dd><p>reads pLink2 report dir and returns an xtabel data array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plinkdir</strong> – plink2 reports subdir (reports)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">xtable data table</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">xinfo meta-data object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.calculate_abs_pos">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">calculate_abs_pos</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#calculate_abs_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.calculate_abs_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the absolute position of the first AA of both peptides.
+If only one peptide present (mono-link) return NaN for the second position</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.init">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set required variables for conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.plink2peptide2pandas">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">plink2peptide2pandas</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#plink2peptide2pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.plink2peptide2pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a pLink peptide results file and return a pandas dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filepath</strong> – Path to a pLink results file e.g. _inter_combine.peptide.xls</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">pandas dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.process_plink2_proteins">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">process_plink2_proteins</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#process_plink2_proteins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.process_plink2_proteins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract protein name and absolute cross-link position from
+pLink protein string e.g.
+sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.process_plink2_sequence">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">process_plink2_sequence</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#process_plink2_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.process_plink2_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract peptide sequences and cross-link positions from
+pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
+Can differentiate between mono, loop and cross-link information</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> – a row of a dataframe with headers ‘Peptide’ and ‘type’</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of pepseq1, pepseq2, xpos1, xpos2, xtype</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.process_plink2_title">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">process_plink2_title</code><span class="sig-paren">(</span><em>spec_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#process_plink2_title"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.process_plink2_title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract rawfile name, precursor charge and scan no from pLink sequence
+string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of rawfile, scanno, prec_ch</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.pLink2.read_plink_modifications">
+<code class="descclassname">croco.lib.pLink2.</code><code class="descname">read_plink_modifications</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/pLink2.html#read_plink_modifications"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.pLink2.read_plink_modifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a pLink modification.ini file and extract all modifications with
+their names as dict.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">filepath: Path to modifications.ini</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">mod_dict: Dict mapping names to masses</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.xQuest">
+<span id="croco-lib-xquest-module"></span><h2>croco.lib.xQuest module<a class="headerlink" href="#module-croco.lib.xQuest" title="Permalink to this headline">¶</a></h2>
+<p>Functions to read Kojak data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.xQuest.Read">
+<code class="descclassname">croco.lib.xQuest.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xquest_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xQuest.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xQuest.Read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read xQuest results file and return file in xTable format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">kojakpath: Kojak results file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">rawfile: name of the corresponding rawfile</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">xtable data table</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.xQuest.init">
+<code class="descclassname">croco.lib.xQuest.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xQuest.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xQuest.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set required variables for conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.xQuest.process_xQuest_Id">
+<code class="descclassname">croco.lib.xQuest.</code><code class="descname">process_xQuest_Id</code><span class="sig-paren">(</span><em>Id_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xQuest.html#process_xQuest_Id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xQuest.process_xQuest_Id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract peptide sequence of the alpha (longer) and the beta (shorter)
+peptide as well as the relative positions of the cross-links within
+these sequences from an xQuest Id-string</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.xQuest.process_xQuest_spectrum">
+<code class="descclassname">croco.lib.xQuest.</code><code class="descname">process_xQuest_spectrum</code><span class="sig-paren">(</span><em>spec_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xQuest.html#process_xQuest_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xQuest.process_xQuest_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract rawfile name, precursor charge and scan no from xQuest sequence
+string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of rawfile, scanno, prec_ch</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.xTable">
+<span id="croco-lib-xtable-module"></span><h2>croco.lib.xTable module<a class="headerlink" href="#module-croco.lib.xTable" title="Permalink to this headline">¶</a></h2>
+<p>Functions to write xTable data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.xTable.Write">
+<code class="descclassname">croco.lib.xTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xTable.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xTable.Write" title="Permalink to this definition">¶</a></dt>
+<dd><p>writes an xtable data structure to file (in xtable format)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">xtable: data table structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">outpath to write file (w/o file extension!)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.xVis">
+<span id="croco-lib-xvis-module"></span><h2>croco.lib.xVis module<a class="headerlink" href="#module-croco.lib.xVis" title="Permalink to this headline">¶</a></h2>
+<p>Functions to write xWalk data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.xVis.Write">
+<code class="descclassname">croco.lib.xVis.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xVis.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xVis.Write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts xtable data structure to cross-link
+data file for xVis data
+visualisation tool
+(<a class="reference external" href="https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php">https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php</a>)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">xtable: data table structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">outpath: path to write file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.xWalk">
+<span id="croco-lib-xwalk-module"></span><h2>croco.lib.xWalk module<a class="headerlink" href="#module-croco.lib.xWalk" title="Permalink to this headline">¶</a></h2>
+<p>Functions to write xWalk data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.xWalk.Write">
+<code class="descclassname">croco.lib.xWalk.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xWalk.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xWalk.Write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts xTable into a list format that can be used as
+input for the xWalk web-server at <a class="reference external" href="http://www.xwalk.org/cgi-bin/home.cgi">http://www.xwalk.org/cgi-bin/home.cgi</a></p>
+<p>Format is:</p>
+<p>residue #     residue #</p>
+<p>As xWalk can only validate one protein at a time, the function
+generates several oouput files for all intra-protein cross-links</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">xtable: data table structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">outpath: path to write file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="croco.lib.xWalk.alphanum_string">
+<code class="descclassname">croco.lib.xWalk.</code><code class="descname">alphanum_string</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xWalk.html#alphanum_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xWalk.alphanum_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to clean strings from incorrect characters for file output</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib.xiNET">
+<span id="croco-lib-xinet-module"></span><h2>croco.lib.xiNET module<a class="headerlink" href="#module-croco.lib.xiNET" title="Permalink to this headline">¶</a></h2>
+<p>Functions to write xWalk data.</p>
+<p>This script is part of the CroCo cross-link converter project</p>
+<dl class="function">
+<dt id="croco.lib.xiNET.Write">
+<code class="descclassname">croco.lib.xiNET.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/lib/xiNET.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.lib.xiNET.Write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts xtable data structure to cross-link
+data file for xiNET data
+visualisation tool
+(<a class="reference external" href="http://crosslinkviewer.org">http://crosslinkviewer.org</a>)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params:</th><td class="field-body">xtable: data table structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params:</th><td class="field-body">outpath: path to write file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-croco.lib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-croco.lib" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Author.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/croco.lib.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
