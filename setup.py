@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import sys, os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 # set proper paths to tcl and tk libraries
 PYTHON_INSTALL_DIR = os.path.dirname(os.path.dirname(os.__file__))
@@ -19,13 +19,23 @@ def read(fname):
 setup(
     name = "croco_qt",
     version = "0.1",
-    packages=find_packages('croco'),  # include all packages under src
-    #package_dir={'':'src'},   # tell distutils packages are under src
-    scripts = ['bin/croco_qt.py',
-               'bin/croco_cl.py'],
-    data_files=[('data/images', ['data/images/logo.png']),
-                  ('data/config', ['data/config/modification.ini'])],
-    #
+    packages=['croco', 'croco_qt_wrapper'],  # find all packages under src
+    package_dir={'croco': 'src/croco',
+                 'croco_qt_wrapper': 'src/croco_qt_wrapper'},
+    package_data={'croco': ['data/*', 'lib/*'],
+                  'croco_qt_wrapper': ['data/*', 'ui/*']},
+    # scripts = ['bin/croco_qt.py',
+    #            'bin/croco_cl.py'],
+ 
+    entry_points={
+        'console_scripts': [
+            'croco_cl = croco.croco_cl',
+                           ],
+        'gui_scripts': [
+            'croco_qt = croco_qt_wrapper.__main__:main',
+        ]
+    },
+ 
     # can contain requirements such as 'docutils>=0.3'
     install_requires = [],
     #

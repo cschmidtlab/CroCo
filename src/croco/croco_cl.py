@@ -20,32 +20,13 @@ if os.path.islink(croco_script):
     croco_script = os.readlink(croco_script)
 # dir is the directory above the bin-dir
 croco_dir = os.path.abspath(os.path.join(os.path.dirname(croco_script), '..'))
-# resolve relative path
-prefix = os.path.abspath(os.path.normpath(croco_dir))
 
-data_dir = os.path.join(prefix, 'data')
-
-if os.path.exists(croco_dir):
-    # started from local directory, not installed
-    sys.stderr.write('Using modules from ' + croco_dir + '\n')
-    sys.path.append(croco_dir)
-else:
-    if os.name == 'nt':
-        # installed on windows
-        sys.stderr.write('Installed on Win \n')
-    else:
-        # started under *nix or Mac
-        sys.stderr.write('Installed on *nix or Mac \n')
-
-# use relative paths from within data to simplify programme
-if os.path.exists(data_dir):
-    os.chdir(data_dir)
+sys.path.append(os.path.abspath(os.path.join('..', croco_dir)))
 
 import argparse
-
-import croco.main
-
 import pandas as pd
+
+import croco
 
 description = """The CroCo cross-link converter:
 -------------------------------
@@ -83,16 +64,16 @@ args = parser.parse_args()
 def print_warning(error):
     print("An error occurred: %s"%error)
 
-in_dict = {'pLink1': croco.main.pLink1.Read,
-           'pLink2': croco.main.pLink2.Read,
-           'Kojak': croco.main.Kojak.Read,
+in_dict = {'pLink1': croco.pLink1.Read,
+           'pLink2': croco.pLink2.Read,
+           'Kojak': croco.Kojak.Read,
            'xTable': pd.read_csv}
 
-out_dict = {'xTable': croco.main.xTable.Write,
-            'xVis': croco.main.xVis.Write,
-            'xiNet': croco.main.xiNET.Write,
-            'DynamXL': croco.main.DynamXL.Write,
-            'xWalk': croco.main.xWalk.Write}
+out_dict = {'xTable': croco.xTable.Write,
+            'xVis': croco.xVis.Write,
+            'xiNet': croco.xiNET.Write,
+            'DynamXL': croco.DynamXL.Write,
+            'xWalk': croco.xWalk.Write}
                         
 infiles = list(args.infiles.split(','))
             
@@ -120,7 +101,7 @@ for f in infiles:
     try:
         out_dict[args.out_format](xtable, outpath)
         print('{}: Table successfully written '.format(f) +
-                'to {}!'.format(outpath))
+                'to {}!'.format(outpath))   
     except Exception as e:
         print_warning('Conversion of {} was '.format(f) +
                       'not successfull: {}'.format(str(e)))

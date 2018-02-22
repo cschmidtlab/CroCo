@@ -13,10 +13,16 @@ import PyQt5.QtCore as QtCore
 
 import os
 import pandas as pd
+import sys
 
-from .ui.ui_mainwindow import Ui_MainWindow
+croco_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-from . import main
+sys.path.append(os.path.abspath(os.path.join('..', croco_dir)))
+
+from croco_qt_wrapper.ui.ui_mainwindow import Ui_MainWindow
+
+# load croco
+import croco
 
 """
 Dict that contains all variables, options and settings that should be
@@ -32,7 +38,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         # initialise the parent class
         super().__init__()
-        # initial itself
+        # initiate itself
         self.setupUi(self)
         self.createConnects()
         # read Options
@@ -135,17 +141,17 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                                                    self.cv_input_format) +
                'format to {} format'.format(self.cv_output_format))
 
-        in_dict = {'pLink1': main.pLink1.Read,
-                   'pLink2': main.pLink2.Read,
-                   'Kojak': main.Kojak.Read,
-                   'xQuest': main.xQuest.Read,
+        in_dict = {'pLink1': croco.pLink1.Read,
+                   'pLink2': croco.pLink2.Read,
+                   'Kojak': croco.Kojak.Read,
+                   'xQuest': croco.xQuest.Read,
                    'xTable': pd.read_csv}
 
-        out_dict = {'xTable': main.xTable.Write,
-                    'xVis': main.xVis.Write,
-                    'xiNet': main.xiNET.Write,
-                    'DynamXL': main.DynamXL.Write,
-                    'xWalk': main.xWalk.Write}
+        out_dict = {'xTable': croco.xTable.Write,
+                    'xVis': croco.xVis.Write,
+                    'xiNet': croco.xiNET.Write,
+                    'DynamXL': croco.DynamXL.Write,
+                    'xWalk': croco.xWalk.Write}
 
         was_error = False
 
