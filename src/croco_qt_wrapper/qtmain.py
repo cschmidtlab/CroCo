@@ -113,6 +113,8 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
         if 'pLink' in self.cv_input_format:
             self.cv_fnames = [QFileDialog.getExistingDirectory(self,\
                                                 'Select directory')]
+                                                
+            print('You selected {}'.format(self.cv_fnames))
         else:
             self.cv_fnames = QFileDialog.getOpenFileNames(self, 'Open file',\
                                                        '/home')[:-1][0]
@@ -145,7 +147,7 @@ class CroCo_MainWindow(QMainWindow, Ui_MainWindow):
                    'pLink2': croco.pLink2.Read,
                    'Kojak': croco.Kojak.Read,
                    'xQuest': croco.xQuest.Read,
-                   'xTable': pd.read_csv}
+                   'xTable': pd.read_excel}
 
         out_dict = {'xTable': croco.xTable.Write,
                     'xVis': croco.xVis.Write,

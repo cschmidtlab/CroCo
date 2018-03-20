@@ -48,6 +48,11 @@ link_dist - nominally bridged distance in Angstrom
 
 """
 
+import timeit
+
+starttime = timeit.default_timer()
+
+
 # defines the column headers required for xtable output
 col_order = [ 'rawfile', 'scanno', 'prec_ch',
               'pepseq1', 'xlink1',
@@ -57,18 +62,28 @@ col_order = [ 'rawfile', 'scanno', 'prec_ch',
               'prot1', 'xpos1', 'prot2',
               'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
+plink_col_order = ['Order',] + col_order
+
 # all conversion scripts are imported as modules and initialised
 from .lib import pLink1
-pLink1.init(col_order)
+pLink1.init(plink_col_order)
+print('Finished with pLink1: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
 
 from .lib import pLink2
-pLink2.init(col_order)
+pLink2.init(plink_col_order)
+print('Finished with pLink2: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
 
 from .lib import Kojak
 Kojak.init(col_order)
+print('Finished with Kojak: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
 
 from .lib import xQuest
 xQuest.init(col_order)
+print('Finished with xQuest: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
 
 from .lib import Manual
 Manual.init(col_order)
