@@ -21,6 +21,7 @@ croco_dir = os.path.abspath(os.path.join(os.path.dirname(croco_script), '..'))
 sys.path.append(os.path.abspath(os.path.join('..', croco_dir)))
 
 import wx
+import wx.lib.agw.multidirdialog as MDD # required for selecting multiple dirs
 
 import croco
 from pandas import read_csv
@@ -32,22 +33,23 @@ class CrocoMainWindow(wx.Frame):
         wx.Frame.__init__(self,
                           None,
                           wx.ID_ANY,
+                          style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
                           title='The CroCo cross-link converter')
 
         # create a panel in the frame
         self.panel = wx.Panel(self)
 
         # define the croco read and write options and link to the modules
-        self.availReads = {'pLink1': 'croco.pLink1.Read',
-                           'pLink2': 'croco.pLink2.Read',
-                           'Kojak': 'croco.Kojak.Read',
-                           'xQuest': 'croco.xQuest.Read',
-                           'xTable': 'read_csv'}
-        self.availWrites =  {'xTable': 'croco.xTable.Write',
-                             'xVis': 'croco.xVis.Write',
-                             'xiNet': 'croco.xiNET.Write',
-                             'DynamXL': 'croco.DynamXL.Write',
-                             'xWalk': 'croco.xWalk.Write'}
+        self.availReads = {'pLink1': croco.pLink1.Read,
+                           'pLink2': croco.pLink2.Read,
+                           'Kojak': croco.Kojak.Read,
+                           'xQuest': croco.xQuest.Read,
+                           'xTable': read_csv}
+        self.availWrites =  {'xTable': croco.xTable.Write,
+                             'xVis': croco.xVis.Write,
+                             'xiNet': croco.xiNET.Write,
+                             'DynamXL': croco.DynamXL.Write,
+                             'xWalk': croco.xWalk.Write}
 
         # set triggers allowing the start button to unhide
         self.readSet = False
@@ -67,10 +69,15 @@ class CrocoMainWindow(wx.Frame):
     def createWidgets(self):
 
         ## define the widgets
+        
         # define the contents of the first sizer
+        
+        input_lbl = wx.StaticText(self.panel,wx.ID_ANY, label='Input', style=wx.ALIGN_CENTER )
         self.inputButton = wx.Button(self.panel, label='Load file(s)')
         self.inputButton.Enable(False)
         self.readFormat = wx.Choice(self.panel, choices=list(self.availReads.keys()))
+        
+        output_lbl = wx.StaticText(self.panel,wx.ID_ANY, label='Output', style=wx.ALIGN_CENTER )
         self.outputButton = wx.Button(self.panel, label='Write to')
         self.outputButton.Enable(False)
         self.writeFormat = wx.Choice(self.panel, choices=list(self.availWrites.keys()))
@@ -90,19 +97,22 @@ class CrocoMainWindow(wx.Frame):
         self.outputButton.Bind(wx.EVT_BUTTON, self.OnOutputDir)
 
         controlQuit.Bind(wx.EVT_BUTTON, self.OnExit)
+        self.controlStart.Bind(wx.EVT_BUTTON, self.OnStart)
 
         ## define the layout
         # define the sizers (main widget layouts) used in the app
         topSizer = wx.BoxSizer(wx.VERTICAL)
-        loadSizer = wx.FlexGridSizer(rows=2, cols=2, vgap=10, hgap=10)
+        loadSizer = wx.FlexGridSizer(rows=2, cols=3, vgap=10, hgap=10)
         loadSizerContainer = wx.BoxSizer(wx.HORIZONTAL)
         controlSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # assign the widgets to the sizers
-        loadSizer.AddMany([(self.readFormat, 1, wx.EXPAND),
-                           self.inputButton,
-                           (self.writeFormat, 1, wx.EXPAND),
-                           self.outputButton])
+        loadSizer.AddMany([input_lbl,
+                          (self.readFormat, 1, wx.EXPAND),
+                          self.inputButton,
+                          output_lbl,
+                          (self.writeFormat, 1, wx.EXPAND),
+                          self.outputButton])
 
         # allow to resize the second row
         loadSizer.AddGrowableCol(1, 1)
@@ -166,7 +176,7 @@ class CrocoMainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
-    ## Functions
+    ## GUI Functions
 
     def OnReadFormat(self, event):
         self.theReadFormat = self.readFormat.GetString(self.readFormat.GetSelection())
@@ -188,14 +198,13 @@ class CrocoMainWindow(wx.Frame):
 
     def OnOpenFile(self):
        dlg = wx.FileDialog(self, 
-                           message="Choose a file",
+                           message="Choose one or multiple files for input",
                            defaultDir=os.getcwd(),
                            defaultFile="",
                            wildcard="*.*",
-                           style=wx.FD_OPEN)
+                           style=wx.FD_MULTIPLE)
        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            self.inpath = os.path.basename(path)
+            self.theInput = dlg.GetPaths()
        dlg.Destroy()
        
        self.readSet = True
@@ -203,10 +212,11 @@ class CrocoMainWindow(wx.Frame):
            self.controlStart.Enable(True)
 
     def OnOpenDir(self):
-        dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        dlg = MDD.MultiDirDialog(self,
+                                 title="Choose one or multiple directories for Input:",
+                                 agwStyle=MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            self.inpath = os.path.basename(path)
+            self.theInput = dlg.GetPaths()
         dlg.Destroy()
         
         self.readSet = True
@@ -216,8 +226,7 @@ class CrocoMainWindow(wx.Frame):
     def OnOutputDir(self, event):
         dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            self.outpath = os.path.basename(path)
+            self.theOutput = dlg.GetPath()
         dlg.Destroy()
         
         self.writeSet = True
@@ -245,6 +254,64 @@ class CrocoMainWindow(wx.Frame):
         wx.MessageBox("This is a wxPython Hello World sample",
                       "About Hello World 2",
                       wx.OK|wx.ICON_INFORMATION)
+
+    def Warning(self, message, caption = 'Warning!'):
+        dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_WARNING)
+        dlg.ShowModal()
+        dlg.Destroy()
+        
+    def Info(self, message, caption = 'CroCo'):
+        dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    ## Procedural Functions
+
+
+    def OnStart(self, event):
+        """
+        Collect all necessary information from self and start the
+        conversion by calling the actual conversion script
+        """
+
+        print('Going to convert {} from {} '.format(', '.join(self.theInput),
+                                                   self.theReadFormat) +
+               'format to {} format'.format(self.theWriteFormat))
+
+        was_error = False
+
+        for f in self.theInput:
+            try:
+                xtable = self.availReads[self.theReadFormat](f)
+                print('{}: Table succesfully read!'.format(f))
+            except Exception as e:
+                self.Warning(str(e))
+
+            # if no user-defined output dir use current
+            if self.theOutput == '':
+                self.theOutput = os.path.dirname(f)
+
+            # set filename for output file
+            fname = os.path.splitext(os.path.split(f)[1])[0] + '_' + self.theReadFormat +\
+                    '_to_' + self.theWriteFormat
+
+            # generate output path w/o extension
+            outpath = os.path.join(self.theOutput, fname)
+
+            try:
+                self.availWrites[self.theOutput](xtable, outpath)
+                print('{}: Table successfully written '.format(f) +
+                      'to {}!'.format(outpath))
+            except Exception as e:
+                self.Warning('Conversion of {} was '.format(f) +
+                                   'not successfull:{}'.format(str(e)))
+                was_error = True
+                break
+
+        if not was_error:
+            self.Info('Success!',
+                     'File(s) successfully written ' +
+                     'to {}!'.format(outpath))
 
 
 if __name__ == '__main__':

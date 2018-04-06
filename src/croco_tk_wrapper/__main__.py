@@ -50,8 +50,7 @@ class CroCoMainWindow():
         self.input_dropdown['values'] = list(self.availWrites.keys())
         self.input_dropdown.grid(column=3, row=0)
         
-        self.load_btn = ttk.Button(self.input_frame,
-                                   'Load file(s)')
+        self.load_btn = ttk.Button(self.input_frame, 'Load file(s)')
         
         ## Control Frame
         control_frame = tk.Frame(self.win)
