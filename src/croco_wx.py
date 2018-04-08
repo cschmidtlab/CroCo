@@ -11,17 +11,8 @@ This script creates the GUI in wxPython (https://wxpython.org/pages/overview/)
 """
 import sys, os
 
-croco_script = sys.argv[0]
-# check if programme was called via symlink
-if os.path.islink(croco_script):
-    croco_script = os.readlink(croco_script)
-# dir is the directory above the bin-dir
-croco_dir = os.path.abspath(os.path.join(os.path.dirname(croco_script), '..'))
-
-sys.path.append(os.path.abspath(os.path.join('..', croco_dir)))
-
 import wx
-import wx.lib.agw.multidirdialog as MDD # required for selecting multiple dirs
+import wx.adv
 
 import croco
 from pandas import read_csv
@@ -212,11 +203,16 @@ class CrocoMainWindow(wx.Frame):
            self.controlStart.Enable(True)
 
     def OnOpenDir(self):
-        dlg = MDD.MultiDirDialog(self,
-                                 title="Choose one or multiple directories for Input:",
-                                 agwStyle=MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST)
+        dlg = wx.DirDialog(self, 
+                           message="Choose one or multiple directories for Input:",
+                           defaultPath=os.getcwd(),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
         if dlg.ShowModal() == wx.ID_OK:
-            self.theInput = dlg.GetPaths()
+            # write the input as list with one entry to allow recursion
+            # in future versions of wx it might be possible to select
+            # multiple dirs
+            self.theInput = [dlg.GetPath(),]
         dlg.Destroy()
         
         self.readSet = True
@@ -224,7 +220,10 @@ class CrocoMainWindow(wx.Frame):
             self.controlStart.Enable(True)
        
     def OnOutputDir(self, event):
-        dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        dlg = wx.DirDialog(self,
+                           message="Choose a directory:",
+                           defaultPath=os.getcwd(),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
             self.theOutput = dlg.GetPath()
         dlg.Destroy()
@@ -246,14 +245,22 @@ class CrocoMainWindow(wx.Frame):
     def OnLoad(self, event):
         pass
 
-    def onCancel(self, event):
+    def OnCancel(self, event):
         self.closeProgram()
-
+    
     def OnAbout(self, event):
-        """Display an About Dialog"""
-        wx.MessageBox("This is a wxPython Hello World sample",
-                      "About Hello World 2",
-                      wx.OK|wx.ICON_INFORMATION)
+    
+        aboutInfo = wx.adv.AboutDialogInfo()
+        aboutInfo.SetName("The CroCo cross-link converter")
+        aboutInfo.SetVersion('0.2')
+        aboutInfo.SetDescription("Graphical interface to convert results from "+\
+                                 "data analysis of chemical cross-linking "+\
+                                 "mass-spectrometry experiments.")
+        aboutInfo.SetCopyright("(C) 2018")
+        aboutInfo.SetWebSite("www.halomem.de")
+        aboutInfo.AddDeveloper("Julian Bender (jub@halomem.de)")
+    
+        wx.adv.AboutBox(aboutInfo)
 
     def Warning(self, message, caption = 'Warning!'):
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_WARNING)
@@ -299,9 +306,9 @@ class CrocoMainWindow(wx.Frame):
             outpath = os.path.join(self.theOutput, fname)
 
             try:
-                self.availWrites[self.theOutput](xtable, outpath)
-                print('{}: Table successfully written '.format(f) +
-                      'to {}!'.format(outpath))
+                print('Writing table in {} format to {}'.format(self.theWriteFormat, outpath))
+                self.availWrites[self.theWriteFormat](xtable, outpath)
+                print('Table successfully written!')
             except Exception as e:
                 self.Warning('Conversion of {} was '.format(f) +
                                    'not successfull:{}'.format(str(e)))

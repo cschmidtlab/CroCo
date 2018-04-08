@@ -19,20 +19,16 @@ def read(fname):
 setup(
     name = "croco_qt",
     version = "0.1",
-    packages=['croco', 'croco_qt_wrapper'],  # find all packages under src
+    packages=['croco', 'croco_wx_wrapper'],  # find all packages under src
     package_dir={'croco': 'src/croco',
-                 'croco_qt_wrapper': 'src/croco_qt_wrapper'},
-    package_data={'croco': ['data/*', 'lib/*'],
-                  'croco_qt_wrapper': ['data/*', 'ui/*']},
-    # scripts = ['bin/croco_qt.py',
-    #            'bin/croco_cl.py'],
- 
+                 'croco_wx_wrapper': 'src/croco_wx_wrapper'},
+    package_data={'croco': ['data/*', 'lib/*']},
     entry_points={
         'console_scripts': [
             'croco_cl = croco.croco_cl',
                            ],
         'gui_scripts': [
-            'croco_qt = croco_qt_wrapper.__main__:main',
+            'croco_wx = croco_wx_wrapper.__main__:main',
         ]
     },
  
