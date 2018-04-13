@@ -9,7 +9,7 @@ mass-spectrometry experiments.
 
 This script creates the GUI in wxPython (https://wxpython.org/pages/overview/)
 """
-import sys, os
+import os
 
 import wx
 import wx.adv
