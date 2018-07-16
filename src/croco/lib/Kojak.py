@@ -66,7 +66,7 @@ def process_kojak_protein(protein_string):
         return np.nan, np.nan
 
 
-def Read(kojak_file, rawfile=None):
+def Read(kojak_file, rawfile=None, keep=False):
     """
     reads pLink results file and returns an xtable data array.
 
@@ -153,14 +153,23 @@ def Read(kojak_file, rawfile=None):
     xtable['rawfile'] = rawfile
 
     xtable['xtype'] = np.nan
-
+    
+    xtable['search_engine'] = 'Kojak'
+    
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
-    # reorder columns
-    xtable = xtable[col_order]
+    if keep is True:
+        # reorder columns to start with the xtable columns
+        all_cols = list(xtable.columns.values)
+        remaining_cols = [x for x in all_cols if x not in col_order]
+        new_order = col_order + remaining_cols
+
+        xtable = xtable[new_order]
+    elif keep is False:
+        xtable = xtable[col_order]
 
     ### return xtable df
 

@@ -16,6 +16,16 @@ def init(this_order):
     global col_order
     col_order = this_order
 
+def generate_ID(type, prot1, xpos1, prot2, xpos2):
+    """
+    Return a link ID based on the type of the xlink
+    """
+
+    if type in ['mono', 'loop']:
+        return '-'.join([str(prot1), str(xpos1)])
+    else:
+        return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
+
 def plink2peptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
@@ -271,8 +281,7 @@ def Read(plinkdir):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
-            lambda x: '-'.join(x), axis=1)
+        np.vectorize(generate_ID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # calculate absolute position of first AA of peptide
     xtable['pos1'], xtable['pos2'] = zip(*xtable.apply(calculate_abs_pos,
@@ -390,8 +399,19 @@ def Read(plinkdir):
     xtable['mod2'] = mod2
     xtable['modpos2'] = modpos2
 
-    # reorder columns
-    xtable = xtable[col_order]
+    xtable['search_engine'] = 'pLink2'
+
+    # reassign dtypes for every element in the df
+    # errors ignore leaves the dtype as object for every
+    # non-numeric element
+    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+    
+    # reorder columns to start with the xtable columns
+    all_cols = list(xtable.columns.values)
+    remaining_cols = [x for x in all_cols if x not in col_order]
+    new_order = col_order + remaining_cols
+
+    xtable = xtable[new_order]
 
     ### return xtable df
 

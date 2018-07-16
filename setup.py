@@ -18,7 +18,7 @@ def read(fname):
 # see https://setuptools.readthedocs.io/en/latest/setuptools.html#including-data-files
 setup(
     name = "croco_qt",
-    version = "0.1",
+    version = "0.3",
     packages=['croco', 'croco_wx_wrapper'],  # find all packages under src
     package_dir={'croco': 'src/croco',
                  'croco_wx_wrapper': 'src/croco_wx_wrapper'},

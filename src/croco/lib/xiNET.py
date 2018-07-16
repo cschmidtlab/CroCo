@@ -56,5 +56,8 @@ def Write(xtable, outpath):
                  columns=rename_dict,
                  inplace=True)
 
-    xinet.to_csv(outpath + '.csv',
-                 index=False)
+    if outpath.endswith('.csv'):
+        xinet.to_csv(outpath, index=False)
+    else:
+        xinet.to_csv(outpath + '.csv',
+                    index=False)

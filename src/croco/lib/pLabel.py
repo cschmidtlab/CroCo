@@ -1,0 +1,46 @@
+# -*- coding: utf-8 -*-
+
+"""
+Functions to write pLabel data.
+
+This script is part of the CroCo cross-link converter project
+"""
+
+import pandas as pd
+
+def Write(xtable, outpath):
+    """
+    Converts xtable data structure to (multiple) input file(s)
+    for the pLabel cross-link annotation tool
+
+    :params: xtable: data table structure
+    :params: outpath: path to write file
+    """
+#    xvis = xtable.loc[:,['prot1','prot2', 'xpos1', 'xpos2', 'score']]
+#
+#    # remove mono-links
+#    xvis = xvis[xvis['xpos2'].notnull()]
+#
+#    # sort by score before dropping duplicates
+#    xvis.sort_values(by='score',
+#                     inplace=True,
+#                     ascending=False)
+#    # drop duplicates
+#    xvis.drop_duplicates(inplace=True,
+#                         keep='first',
+#                         subset=['prot1','prot2', 'xpos1', 'xpos2'])
+#
+#    rename_dict = {'prot1':'Protein1',
+#                   'prot2':'Protein2',
+#                   'xpos1': 'AbsPos1',
+#                   'xpos2': 'AbsPos2',
+#                   'score': 'Id-Score'}
+#    xvis.rename(index=str,
+#                columns=rename_dict,
+#                inplace=True)
+#
+#    if outpath.endswith('.csv'):
+#        xvis.to_csv(outpath, index=False)
+#    else:
+#        xvis.to_csv(outpath + '.csv',
+#                index=False)

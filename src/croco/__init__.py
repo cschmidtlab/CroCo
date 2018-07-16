@@ -27,8 +27,11 @@ pos2 - Absolute postiton of the first AA of the second peptide
 xpos1 - Absolute position of the cross-linker of the longer peptide
 xpos2 - Absolute position of the cross-linker of the shorter peptide (only if interlink)
 
-mod1 - relative position of a modification within peptide 1 (;-delimited string)
-mod2 - same for peptide 2
+mod1 - name of the modification(s) of the first peptide (;-delimited string)
+mnod2 - name of the modification(s) of the second pepetide (;-delimited string)
+
+modpos1 - relative position of a modification within peptide 1 (;-delimited string)
+modpos2 - same for peptide 2
 modmass1 - mass of modification 1 (;-delimited string)
 modmass2 - mass of modification 2
 
@@ -67,22 +70,36 @@ plink_col_order = ['Order',] + col_order
 # all conversion scripts are imported as modules and initialised
 from .lib import pLink1
 pLink1.init(plink_col_order)
-print('Finished with pLink1: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+print('Finished with pLink1: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
 from .lib import pLink2
 pLink2.init(plink_col_order)
-print('Finished with pLink2: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+print('Finished with pLink2: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
 from .lib import Kojak
+from .lib import KojakPercolator
 Kojak.init(col_order)
-print('Finished with Kojak: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+KojakPercolator.init(col_order)
+print('Finished with Kojak: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
+
+from .lib import Xi
+from .lib import XiSearchFDR
+Xi.init(col_order)
+XiSearchFDR.init(col_order)
+print('Finished with Xi: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
 from .lib import xQuest
 xQuest.init(col_order)
-print('Finished with xQuest: {} ms'.format((timeit.default_timer() - starttime) * 1000))
+print('Finished with xQuest: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
+starttime = timeit.default_timer()
+
+from .lib import StavroX
+StavroX.init(col_order)
+print('Finished with StavroX: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
 from .lib import Manual

@@ -109,8 +109,17 @@ def Read(xquest_file):
     xtable['decoy'] = xtable['ID'].str.contains('reverse') |\
         xtable['ID'].str.contains('decoy')
 
-    # reorder columns
-    xtable = xtable[col_order]
+    # reassign dtypes for every element in the df
+    # errors ignore leaves the dtype as object for every
+    # non-numeric element
+    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+    
+    # reorder columns to start with the xtable columns
+    all_cols = list(xtable.columns.values)
+    remaining_cols = [x for x in all_cols if x not in col_order]
+    new_order = col_order + remaining_cols
+
+    xtable = xtable[new_order]
 
     ### Return df
     return xtable
