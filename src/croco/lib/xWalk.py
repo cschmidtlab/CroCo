@@ -50,7 +50,7 @@ def xWalk_from_xTable(pepseq, xlink, xpos, atom):
 
     AA = aa_dict[pepseq[int(xlink)-1].upper()]
     
-    return AA + '-' + str(xpos) + '--' + str(atom)
+    return AA + '-' + str(int(xpos)) + '--' + str(atom)
 
 def Write(xtable, outpath, pdb, atom):
     """

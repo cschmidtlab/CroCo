@@ -17,186 +17,6 @@ import wx.adv
 import croco
 from pandas import read_csv
 
-class CroCoOptionsFrame(wx.Frame):
-    """
-    This is a Child Frame to CroCoMainWindow asking the user for input
-    regarding the possible optinos of a submodule
-    """
-
-    def __init__(self, parent):
-        wx.Frame.__init__(self,
-                          None,
-                          wx.ID_ANY,
-                          style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
-                          title='Options')
-
-        self.panel = wx.Panel(self)
-
-        # generate a variable containing the parent to allow pushing back
-        # the user-provided input
-        self.parent = parent
-
-        # in these variables the options from CroCoMainWindow will be written
-        self.InputOptionsToAsk = ''
-        self.OutputOptionsToAsk = ''
-
-    def updateOptions(self):
-
-        def CreateOptionsContainer(self, option, listofOptions):
-            """
-            Args:
-                option: tuple with (label, type of input)
-                listOfOptions: a list object to append to user-input to
-            Returns:
-                optionContainer: wx.BoxSizer object
-            """
-
-            optionLabel = wx.StaticText(self.panel,
-                                        wx.ID_ANY,
-                                        label=option[0],
-                                        style=wx.ALIGN_CENTER)
-
-            if option[1] == 'file':
-                optionButton = wx.Button(self.panel, label='Load file', name=option[0])
-                # Bind using a lambda function to be able to pass multiple args
-                # to the called function
-                # see: https://wiki.wxpython.org/Passing%20Arguments%20to%20Callbacks
-                optionButton.Bind(wx.EVT_BUTTON,
-                                  lambda evt, appendTo=listofOptions, label=option[0]: self.onOpenFile(evt, appendTo, label))
-            elif option[1] == 'dir':
-                optionButton = wx.Button(self.panel, label='Open directory', name=option[0])
-                optionButton.Bind(wx.EVT_BUTTON,
-                                  lambda evt, appendTo=listofOptions, label=option[0]: self.onOpenDir(evt, appendTo, label))
-            elif option[1] == 'input':
-                optionButton = wx.TextCtrl(self.panel, value="", name=option[0])
-                self.textCtrls[option[0]] = optionButton
-
-            else:
-                raise Exception('Wrong options format for option: {}'\
-                                    .format(option[0]))
-
-            optionContainer = wx.BoxSizer(wx.HORIZONTAL)
-            optionContainer.Add(optionLabel, 0, wx.ALL|wx.EXPAND, 5)
-            optionContainer.Add(optionButton, 0, wx.ALL|wx.EXPAND, 5)
-
-            return optionContainer
-
-        # Dicts mapping the label names to the user-provided input
-        self.inputOptionsToUserInput = {}
-        self.outputOptionsToUserInput = {}
-
-        # dict mapping text labels to input text fields
-        self.textCtrls = {}
-
-        # lists containign the label, button sizers for passing to higher
-        # level sizer
-        InputOptionContainers = []
-        OutputOptionContainers = []
-
-        for option in self.InputOptionsToAsk:
-
-            optionContainer = CreateOptionsContainer(self,
-                                                     option,
-                                                     self.inputOptionsToUserInput)
-            InputOptionContainers.append((optionContainer, 0, wx.ALL|wx.EXPAND, 5))
-
-        for option in self.OutputOptionsToAsk:
-            optionContainer = CreateOptionsContainer(self,
-                                                     option,
-                                                     self.outputOptionsToUserInput)
-            OutputOptionContainers.append((optionContainer, 0, wx.ALL|wx.EXPAND, 5))
-
-        ### createWidgets
-
-        inputSizer = wx.BoxSizer(wx.VERTICAL)
-        inputSizer.AddMany(InputOptionContainers)
-
-        outputSizer = wx.BoxSizer(wx.VERTICAL)
-        outputSizer.AddMany(OutputOptionContainers)
-
-        optionSizer = wx.BoxSizer(wx.HORIZONTAL)
-        optionSizer.Add(inputSizer, 0, wx.ALL|wx.EXPAND, 5)
-        optionSizer.Add(outputSizer, 0, wx.ALL|wx.EXPAND, 5)
-
-        ## Controls
-        okayButton = wx.Button(self.panel, label='Okay')
-        closeButton = wx.Button(self.panel, label='Close')
-
-        controlSizer = wx.BoxSizer(wx.HORIZONTAL)
-        controlSizer.Add(okayButton, 0, wx.EXPAND|wx.LEFT, 5)
-        controlSizer.Add(closeButton, 0, wx.EXPAND|wx.RIGHT, 5)
-
-        ## topSizer
-        topSizer = wx.BoxSizer(wx.VERTICAL)
-        topSizer.Add(optionSizer, 0, wx.ALL|wx.EXPAND, 5)
-        topSizer.Add(wx.StaticLine(self.panel), 0, wx.ALL|wx.EXPAND, 5)
-        topSizer.Add(controlSizer, 0, wx.ALL|wx.EXPAND, 5)
-
-        # assign the top sizer to the panel i.e. main layout instance
-        self.panel.SetSizer(topSizer)
-        topSizer.Fit(self)
-
-        closeButton.Bind(wx.EVT_BUTTON, self.onCancel)
-        okayButton.Bind(wx.EVT_BUTTON, self.onOkay)
-
-    def onCancel(self, event):
-        print('Closing options window')
-        self.Close()
-
-    def onOkay(self, event):
-
-        for label, t in self.InputOptionsToAsk:
-            if t == 'input':
-                self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
-
-        for label, t in self.OutputOptionsToAsk:
-            if t == 'input':
-                self.outputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
-
-        inputArgs = []
-        for label, _ in self.InputOptionsToAsk:
-            inputArgs.append(self.inputOptionsToUserInput[label])
-        outputArgs = []
-        for label, _ in self.OutputOptionsToAsk:
-            outputArgs.append(self.outputOptionsToUserInput[label])  
-
-        print('=== Input ===')
-        for key in self.inputOptionsToUserInput:
-            print('{}: {}'.format(key, self.inputOptionsToUserInput[key]))
-        
-        print('=== Output ===')
-        for key in self.outputOptionsToUserInput:
-            print('{}: {}'.format(key, self.outputOptionsToUserInput[key]))
-        
-        self.parent.inputArgs = inputArgs
-        self.parent.outputArgs = outputArgs
-        
-        self.parent.onRun(event)
-
-        print('Closing options window after passing options to main window')
-        self.Close()
-
-    def onOpenFile(self, event, dictToAppend, label):
-       dlg = wx.FileDialog(self,
-                           message="Choose a file for input",
-                           defaultDir=os.getcwd(),
-                           defaultFile="",
-                           wildcard="*.*",
-                           style=wx.FD_MULTIPLE)
-       if dlg.ShowModal() == wx.ID_OK:
-            dictToAppend[label] = dlg.GetPath()
-       dlg.Destroy()
-
-    def OnOpenDir(self, event, listToAppend):
-        dlg = wx.DirDialog(self,
-                           message="Choose one directory for Input:",
-                           defaultPath=os.getcwd(),
-                           style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            dictToAppend[label] = dlg.GetPath()
-        dlg.Destroy()
-
 class CroCoMainFrame(wx.Frame):
 
     def __init__(self):
@@ -227,7 +47,8 @@ class CroCoMainFrame(wx.Frame):
                              'xiNet': [croco.xiNET.Write, []],
                              'DynamXL': [croco.DynamXL.Write, []],
                              'xWalk': [croco.xWalk.Write, [('PDB to map xlinks to', 'file'),
-                                                           ('PDB Atom code', 'input')]]}
+                                                           ('PDB Atom code', 'input')]],
+                             'pLabel': [croco.pLabel.Write, []]}
 
         # set triggers allowing the start button to unhide
         self.readSet = False
@@ -257,12 +78,12 @@ class CroCoMainFrame(wx.Frame):
         input_lbl = wx.StaticText(self.panel,wx.ID_ANY, label='Input', style=wx.ALIGN_CENTER )
         self.inputButton = wx.Button(self.panel, label='Load file(s)')
         self.inputButton.Enable(False)
-        self.readFormat = wx.Choice(self.panel, choices=list(self.availReads.keys()))
+        self.readFormat = wx.Choice(self.panel, choices=sorted(list(self.availReads.keys())))
 
         output_lbl = wx.StaticText(self.panel,wx.ID_ANY, label='Output', style=wx.ALIGN_CENTER )
         self.outputButton = wx.Button(self.panel, label='Write to')
         self.outputButton.Enable(False)
-        self.writeFormat = wx.Choice(self.panel, choices=list(self.availWrites.keys()))
+        self.writeFormat = wx.Choice(self.panel, choices=sorted(list(self.availWrites.keys())))
 
         self.controlStart = wx.Button(self.panel, label='Start')
         self.controlStart.Enable(False)
@@ -488,6 +309,10 @@ class CroCoMainFrame(wx.Frame):
             OptionsFrame.Show()
 
         else:
+            # reset args lists
+            self.inputArgs = ''
+            self.outputArgs = ''
+            
             self.onRun(event)
 
     def onRun(self, event):
@@ -544,6 +369,186 @@ class CroCoMainFrame(wx.Frame):
             self.Info('Success!',
                      'File(s) successfully written ' +
                      'to {}!'.format(outpath))
+
+class CroCoOptionsFrame(wx.Frame):
+    """
+    This is a Child Frame to CroCoMainWindow asking the user for input
+    regarding the possible optinos of a submodule
+    """
+
+    def __init__(self, parent):
+        wx.Frame.__init__(self,
+                          None,
+                          wx.ID_ANY,
+                          style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
+                          title='Options')
+
+        self.panel = wx.Panel(self)
+
+        # generate a variable containing the parent to allow pushing back
+        # the user-provided input
+        self.parent = parent
+
+        # in these variables the options from CroCoMainWindow will be written
+        self.InputOptionsToAsk = ''
+        self.OutputOptionsToAsk = ''
+
+    def updateOptions(self):
+
+        def CreateOptionsContainer(self, option, listofOptions):
+            """
+            Args:
+                option: tuple with (label, type of input)
+                listOfOptions: a list object to append to user-input to
+            Returns:
+                optionContainer: wx.BoxSizer object
+            """
+
+            optionLabel = wx.StaticText(self.panel,
+                                        wx.ID_ANY,
+                                        label=option[0],
+                                        style=wx.ALIGN_CENTER)
+
+            if option[1] == 'file':
+                optionButton = wx.Button(self.panel, label='Load file', name=option[0])
+                # Bind using a lambda function to be able to pass multiple args
+                # to the called function
+                # see: https://wiki.wxpython.org/Passing%20Arguments%20to%20Callbacks
+                optionButton.Bind(wx.EVT_BUTTON,
+                                  lambda evt, appendTo=listofOptions, label=option[0]: self.onOpenFile(evt, appendTo, label))
+            elif option[1] == 'dir':
+                optionButton = wx.Button(self.panel, label='Open directory', name=option[0])
+                optionButton.Bind(wx.EVT_BUTTON,
+                                  lambda evt, appendTo=listofOptions, label=option[0]: self.onOpenDir(evt, appendTo, label))
+            elif option[1] == 'input':
+                optionButton = wx.TextCtrl(self.panel, value="", name=option[0])
+                self.textCtrls[option[0]] = optionButton
+
+            else:
+                raise Exception('Wrong options format for option: {}'\
+                                    .format(option[0]))
+
+            optionContainer = wx.BoxSizer(wx.HORIZONTAL)
+            optionContainer.Add(optionLabel, 0, wx.ALL|wx.EXPAND, 5)
+            optionContainer.Add(optionButton, 0, wx.ALL|wx.EXPAND, 5)
+
+            return optionContainer
+
+        # Dicts mapping the label names to the user-provided input
+        self.inputOptionsToUserInput = {}
+        self.outputOptionsToUserInput = {}
+
+        # dict mapping text labels to input text fields
+        self.textCtrls = {}
+
+        # lists containign the label, button sizers for passing to higher
+        # level sizer
+        InputOptionContainers = []
+        OutputOptionContainers = []
+
+        for option in self.InputOptionsToAsk:
+
+            optionContainer = CreateOptionsContainer(self,
+                                                     option,
+                                                     self.inputOptionsToUserInput)
+            InputOptionContainers.append((optionContainer, 0, wx.ALL|wx.EXPAND, 5))
+
+        for option in self.OutputOptionsToAsk:
+            optionContainer = CreateOptionsContainer(self,
+                                                     option,
+                                                     self.outputOptionsToUserInput)
+            OutputOptionContainers.append((optionContainer, 0, wx.ALL|wx.EXPAND, 5))
+
+        ### createWidgets
+
+        inputSizer = wx.BoxSizer(wx.VERTICAL)
+        inputSizer.AddMany(InputOptionContainers)
+
+        outputSizer = wx.BoxSizer(wx.VERTICAL)
+        outputSizer.AddMany(OutputOptionContainers)
+
+        optionSizer = wx.BoxSizer(wx.HORIZONTAL)
+        optionSizer.Add(inputSizer, 0, wx.ALL|wx.EXPAND, 5)
+        optionSizer.Add(outputSizer, 0, wx.ALL|wx.EXPAND, 5)
+
+        ## Controls
+        okayButton = wx.Button(self.panel, label='Okay')
+        closeButton = wx.Button(self.panel, label='Close')
+
+        controlSizer = wx.BoxSizer(wx.HORIZONTAL)
+        controlSizer.Add(okayButton, 0, wx.EXPAND|wx.LEFT, 5)
+        controlSizer.Add(closeButton, 0, wx.EXPAND|wx.RIGHT, 5)
+
+        ## topSizer
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(optionSizer, 0, wx.ALL|wx.EXPAND, 5)
+        topSizer.Add(wx.StaticLine(self.panel), 0, wx.ALL|wx.EXPAND, 5)
+        topSizer.Add(controlSizer, 0, wx.ALL|wx.EXPAND, 5)
+
+        # assign the top sizer to the panel i.e. main layout instance
+        self.panel.SetSizer(topSizer)
+        topSizer.Fit(self)
+
+        closeButton.Bind(wx.EVT_BUTTON, self.onCancel)
+        okayButton.Bind(wx.EVT_BUTTON, self.onOkay)
+
+    def onCancel(self, event):
+        print('Closing options window')
+        self.Close()
+
+    def onOkay(self, event):
+
+        for label, t in self.InputOptionsToAsk:
+            if t == 'input':
+                self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
+
+        for label, t in self.OutputOptionsToAsk:
+            if t == 'input':
+                self.outputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
+
+        inputArgs = []
+        for label, _ in self.InputOptionsToAsk:
+            inputArgs.append(self.inputOptionsToUserInput[label])
+        outputArgs = []
+        for label, _ in self.OutputOptionsToAsk:
+            outputArgs.append(self.outputOptionsToUserInput[label])  
+
+        print('=== Input ===')
+        for key in self.inputOptionsToUserInput:
+            print('{}: {}'.format(key, self.inputOptionsToUserInput[key]))
+        
+        print('=== Output ===')
+        for key in self.outputOptionsToUserInput:
+            print('{}: {}'.format(key, self.outputOptionsToUserInput[key]))
+        
+        self.parent.inputArgs = inputArgs
+        self.parent.outputArgs = outputArgs
+        
+        self.parent.onRun(event)
+
+        print('Closing options window after passing options to main window')
+        self.Close()
+
+    def onOpenFile(self, event, dictToAppend, label):
+       dlg = wx.FileDialog(self,
+                           message="Choose a file for input",
+                           defaultDir=os.getcwd(),
+                           defaultFile="",
+                           wildcard="*.*",
+                           style=wx.FD_MULTIPLE)
+       if dlg.ShowModal() == wx.ID_OK:
+            dictToAppend[label] = dlg.GetPath()
+       dlg.Destroy()
+
+    def OnOpenDir(self, event, dictToAppend, label):
+        dlg = wx.DirDialog(self,
+                           message="Choose one directory for Input:",
+                           defaultPath=os.getcwd(),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            dictToAppend[label] = dlg.GetPath()
+        dlg.Destroy()
 
 
 if __name__ == '__main__':

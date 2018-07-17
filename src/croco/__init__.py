@@ -114,3 +114,5 @@ from .lib import xTable
 from .lib import xVis
 
 from .lib import xWalk
+
+from .lib import pLabel

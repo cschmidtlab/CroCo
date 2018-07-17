@@ -6,6 +6,51 @@ Created on Mon Jun 18 14:18:32 2018
 """
 
 import pandas as pd
+import numpy as np
+
+def toList(strorList):
+    """
+    take lists, floats or strings as input and return either the list or
+    a one-element list of the string or float
+    """
+    if isinstance(strorList, list):
+        return strorList
+
+    elif isinstance(strorList, float):
+        if not np.isnan(strorList):
+            return [strorList]
+    else:
+        return [strorList]
+
+def isNaN(num):
+    return num != num
+
+def convertToListOf(input, typefunc, delimiter=';'):
+    """
+    Take an object that is not NaN, check if it contains a delimiter, split
+    by delimiter and return list of elements of type typefunc
+    
+    Args:
+        input: input object
+        typefunc: e.g. Python int, str, or float
+        delimiter (optional): string to split on
+    Returns:
+        List of objects of type typefunc
+    """
+    if not isNaN(input):
+        if not isinstance(input, str):
+            return [input]
+        else:
+            inputList = input.split(delimiter)
+            return [typefunc(x) for x in inputList]
+    else:
+        return input
+
+def castIfNotNan(input, typefunc):
+    if not isNaN(input):
+        return typefunc(input)
+    else:
+        return input
 
 def alphanum_string(s):
     """

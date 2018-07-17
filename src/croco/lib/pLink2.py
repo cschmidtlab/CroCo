@@ -145,22 +145,28 @@ def process_plink2_proteins(row):
         pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, prot2, xpos2 = match.groups()
-        prot1 = prot1.strip()
-        prot2 = prot2.strip()
+
+        xpos1 = int(xpos1)
+        xpos2 = int(xpos2)
+        prot1 = str(prot1.strip())
+        prot2 = str(prot2.strip())
 
     elif row['type'] == 'loop':
         pattern = re.compile(r'(.+?)\((\d+)\)\((\d*)\)')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, xpos2 = match.groups()
-        prot1 = prot1.strip()
+        xpos1 = int(xpos1)
+        xpos2 = int(xpos2)
+        prot1 = str(prot1.strip())
         prot2 = prot1
 
     elif row['type'] == 'mono':
         pattern = re.compile(r'(.+?)\((\d+)\)')
         match = pattern.match(row['Proteins'])
         prot1, xpos1 = match.groups()
+        xpos1 = int(xpos1)
         xpos2, prot2 = [np.nan] * 2
-        prot1 = prot1.strip()
+        prot1 = str(prot1.strip())
 
     else:
         prot1, xpos1, pepseq2, xpos2 = [np.nan] * 4
