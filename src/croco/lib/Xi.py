@@ -60,7 +60,7 @@ def Read(xi_file, keep=False):
     Collects data from Xi spectrum search and returns an xtable data array.
 
     Args:
-        xi_file: path to percolated Kojak file
+        xi_file: path to xi file
         keep (bool): Whether to keep the columns of the original dataframe or not
 
     Returns:

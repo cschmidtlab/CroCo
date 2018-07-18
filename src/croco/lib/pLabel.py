@@ -21,7 +21,7 @@ def Write(xtable, outpath, mgfPath, xlinker):
     for the pLabel cross-link annotation tool
 
     :params: xtable: data table structure
-    :params: outpath: path to write file
+    :params: outpath: path to write file (w/o file extension!)
     """
 
     def uniqueMods(modlist):
@@ -139,16 +139,38 @@ def Write(xtable, outpath, mgfPath, xlinker):
         """
         
         rawfiles2titles = {}
+        localMGFFiles = []
+       
+        # collect mgf file names in mgfPath
+        for file in os.listdir(mgfPath):
+            if file.endswith('.mgf'):
+                localMGFFiles.append(file)
         
-        for f in filenames:
-            if os.path.isfile(os.path.join(mgfPath, f + '.mgf')):
-                rawfiles2titles[f] = []
-                with open(os.path.join(mgfPath, f + '.mgf')) as inf:
-                    for line in inf.readlines():
-                        if line.startswith('TITLE='):
-                            rawfiles2titles[f].append(line[6:].strip())
+        # check which files referenced in xtable are present in the dir
+        mgfToOpen = []
+        mgfNotFound = []
+        for file in filenames:
+            if file + '.mgf' in localMGFFiles:
+                mgfToOpen.append(file + '.mgf')
             else:
-                raise Exception('MGF file not found: {}'.format(f + '.mgf'))
+                mgfNotFound.append(file + '.mgf')
+        
+        # raise error if file is missing
+        if len(mgfNotFound) > 0:
+            raise Exception('The following mgf files were not found at the ' +
+                            'specified directory: {}'.format(', '.join(mgfNotFound)))
+            
+        # parse the mgf files for titles
+        for f in mgfToOpen:
+            # rawnames in xtable are without extension --> generate dict w/o ext
+            f_base = f.split('.')[0]
+            rawfiles2titles[f_base] = []
+            with open(os.path.join(mgfPath, f)) as inf:
+                for line in inf.readlines():
+                    if line.startswith('TITLE='):
+                        rawfiles2titles[f_base].append(line[6:].strip())
+
+        print('rawfiles2titles = {}'.format(rawfiles2titles.keys()))
 
         return rawfiles2titles
 
@@ -163,7 +185,8 @@ def Write(xtable, outpath, mgfPath, xlinker):
         # separate per type within rawfile
         for t in types:
             xtablePerType = xtablePerRawfile[xtablePerRawfile['type'] == t].copy()
-            outfile = os.path.join(outpath, '_'.join([rf, t + '.pLabel']))
+            outfile = '_'.join([outpath, rf, t + '.pLabel'])
+            print('Opening {} to write'.format(outfile))
             with open(outfile, 'w') as out:
                 out.write('[FilePath]\n')
                 out.write('File_Path=' + os.path.join(mgfPath, rf + '.mgf\n'))
@@ -214,10 +237,10 @@ if __name__ == '__main__':
     
     import croco
     
-    infile = r'C:\Users\User\Downloads\test\test_xTable.xlsx'
+    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel\test_xTable.xlsx'
     xTable = croco.xTable.Read(infile)
 
-    outpath = r'C:\Users\User\Downloads\test'
-    mgfPath = r'C:\Users\User\Downloads\test'
+    outpath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel'
+    mgfPath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel'
 
     Write(xTable, outpath, mgfPath, 'BS3')
