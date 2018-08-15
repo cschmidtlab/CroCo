@@ -12,6 +12,11 @@ import pandas as pd
 
 import re
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def init(this_order):
     """
     Set required variables for conversion
@@ -48,7 +53,7 @@ def process_xQuest_Id(Id_string):
     else:
         return np.nan
 
-def Read(xquest_file):
+def Read(xquest_file, compact=False):
     """
     Read xQuest results file and return file in xTable format.
 
@@ -114,12 +119,7 @@ def Read(xquest_file):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
     
-    # reorder columns to start with the xtable columns
-    all_cols = list(xtable.columns.values)
-    remaining_cols = [x for x in all_cols if x not in col_order]
-    new_order = col_order + remaining_cols
-
-    xtable = xtable[new_order]
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### Return df
     return xtable

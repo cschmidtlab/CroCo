@@ -9,6 +9,11 @@ import os, sys
 import re
 import numpy as np
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def init(this_order):
     """
     Set required variables for conversion
@@ -210,14 +215,16 @@ def read_plink_modifications(filepath):
 
     return mod_dict
 
-def Read(plinkdir):
+def Read(plinkdir, compact=False):
     """
     reads pLink2 report dir and returns an xtabel data array.
 
-    :param plinkdir: plink2 reports subdir (reports)
+    Args:
+        plinkdir: plink2 reports subdir (reports)
+        keep (bool): Whether to keep the columns of the original dataframe or not
 
-    :returns: xtable data table
-    :returns: xinfo meta-data object
+    Returns:
+        xtable: data table
     """
 
     ### Collect data, convert to pandas format and merge
@@ -258,32 +265,25 @@ def Read(plinkdir):
             mono_df['type'] = 'mono'
             frames.append(mono_df)
 
-    data = pd.concat(frames)
+    xtable = pd.concat(frames)
 
     ### Convert data inside pandas df
 
-    # init xtable with column containing lists of rawfile, scanno, prec_ch
-    xtable = pd.DataFrame(data['Title'].apply(process_plink2_title))
-    # split column into three
+    # split title column into three
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Title'])
-    # drop the original column
-    xtable.drop('Title',
-                axis = 1,
-                inplace=True)
+        zip(*xtable['Title'].apply(process_plink2_title))
 
     # Directly assign the re group matches into new columns
     xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
     xtable['xlink2'], xtable['xtype'] =\
-        zip(*data.apply(process_plink2_sequence,
-                        axis=1))
+        zip(*xtable.apply(process_plink2_sequence,
+                          axis=1))
 
     xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*data.apply(process_plink2_proteins,
-                            axis=1))
+            zip(*xtable.apply(process_plink2_proteins,
+                              axis=1))
 
-    xtable['type'] = data['type']
-    xtable['score'] = data['Score']
+    xtable['score'] = xtable['Score']
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
@@ -293,11 +293,10 @@ def Read(plinkdir):
     xtable['pos1'], xtable['pos2'] = zip(*xtable.apply(calculate_abs_pos,
                                                        axis=1))
     # add a label referring to the ordering in the pLink results table
-    xtable['Order'] = data[['Peptide_Order', 'Spectrum_Order']].apply(lambda x: ','.join(x), axis=1)
+    xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].apply(lambda x: ','.join(x), axis=1)
 
     # set the sequence of loop links to be the same as the corresponding pepseq1
     xtable.loc[xtable['type'] == 'loop', 'pepseq2'] = xtable[xtable['type'] == 'loop']['pepseq1']
-
 
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
@@ -307,12 +306,6 @@ def Read(plinkdir):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
-    # save original score in columns
-    xtable['plink score'] = xtable['score']
-
-    # compute a minus log P score for better comparison with higher=better scores
-    xtable['score'] = -np.log(xtable['score'])
 
     ## generate the mod_dict linking pLink modification names to masses
     # in case of calling croco from the source folder structure...
@@ -342,7 +335,7 @@ def Read(plinkdir):
     pattern = re.compile(r'(.*)\((\d+)\)')
 
     pepseq1 = xtable['pepseq1'].tolist()
-    Modifications = data['Modifications'].tolist()
+    Modifications = xtable['Modifications'].tolist()
 
     if len(pepseq1) == len(Modifications):
         print('Len of pepseq1 and Modification match!')
@@ -412,13 +405,24 @@ def Read(plinkdir):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
     
-    # reorder columns to start with the xtable columns
-    all_cols = list(xtable.columns.values)
-    remaining_cols = [x for x in all_cols if x not in col_order]
-    new_order = col_order + remaining_cols
-
-    xtable = xtable[new_order]
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
-
     return xtable
+
+if __name__ == '__main__':
+    """
+    For testing purposes only
+    """
+    
+    col_order = [ 'rawfile', 'scanno', 'prec_ch',
+                  'pepseq1', 'xlink1',
+                  'pepseq2', 'xlink2', 'xtype',
+                  'modmass1', 'modpos1', 'mod1',
+                  'modmass2', 'modpos2', 'mod2',
+                  'prot1', 'xpos1', 'prot2',
+                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
+    
+    init(col_order)
+    
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink2\Sec23_24_only\reports')

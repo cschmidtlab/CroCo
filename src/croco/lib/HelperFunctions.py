@@ -8,6 +8,28 @@ Created on Mon Jun 18 14:18:32 2018
 import pandas as pd
 import numpy as np
 
+def applyColOrder(xtable, col_order, compact):
+    """
+    Sort columns of xtable by col_order and return the whole xtable including
+    columns mentioned in col_order if keep is true. Otherwise only return a
+    minimal xTable
+    """
+    compact = bool(compact)
+    
+    if compact is False:    
+        # reorder columns to start with the xtable columns
+        all_cols = list(xtable.columns.values)
+        remaining_cols = [x for x in all_cols if x not in col_order]
+        new_order = col_order + sorted(remaining_cols)
+    
+        xtable = xtable[new_order]
+    elif compact is True:
+        xtable = xtable[col_order]
+    else:
+        raise Exception('Compact argument passed to applyColOrder must be either True or False')
+    
+    return xtable
+
 def toList(strorList):
     """
     take lists, floats or strings as input and return either the list or

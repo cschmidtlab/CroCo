@@ -11,8 +11,10 @@ import pandas as pd
 
 import re
 
-from . import HelperFunctions as HeFn
-
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
 def init(this_order):
     """
     Set required variables for conversion
@@ -138,7 +140,7 @@ def split_concaten(dataframe, where, delimiter=';'):
     """
     
 
-def Read(perc_file, percolator_string='.validated', rawfile=None, keep=False):
+def Read(perc_file, percolator_string='.validated', rawfile=None, compact=False):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 
@@ -200,7 +202,7 @@ def Read(perc_file, percolator_string='.validated', rawfile=None, keep=False):
     data = pd.merge(data, kojak, on=['scannr', 'Charge', 'dScore', 'Score'], how='left')
 
     # split ambiguous concatenated protein names
-    data = HeFn.split_concatenated_lists(data, where=['Protein #1', 'Protein #2'])
+    data = hf.split_concatenated_lists(data, where=['Protein #1', 'Protein #2'])
 
     print(sum(data['split_entry'] == False))
 
@@ -258,15 +260,7 @@ def Read(perc_file, percolator_string='.validated', rawfile=None, keep=False):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
     
-    if keep is True:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + remaining_cols
-
-        xtable = xtable[new_order]
-    elif keep is False:
-        xtable = xtable[col_order]
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     return xtable
     

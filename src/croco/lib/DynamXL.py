@@ -20,8 +20,9 @@ def Write(xtable, outpath):
 
     dynamxl.chem.ox.ac.uk
 
-    :params: xtable data table structure
-    :params: outpath_ path to write file
+    Args:
+        xtable: data table structure
+        outpath: path to write file
     """
     def aa_and_pos(row):
         """

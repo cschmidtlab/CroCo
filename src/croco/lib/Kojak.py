@@ -11,6 +11,11 @@ import pandas as pd
 
 import re
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def init(this_order):
     """
     Set required variables for conversion
@@ -66,7 +71,7 @@ def process_kojak_protein(protein_string):
         return np.nan, np.nan
 
 
-def Read(kojak_file, rawfile=None, keep=False):
+def Read(kojak_file, rawfile=None, compact=False):
     """
     reads pLink results file and returns an xtable data array.
 
@@ -160,17 +165,13 @@ def Read(kojak_file, rawfile=None, keep=False):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
-    if keep is True:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + remaining_cols
-
-        xtable = xtable[new_order]
-    elif keep is False:
-        xtable = xtable[col_order]
+    
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
-
     return xtable
+
+if __name__ == '__main__':
+    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\kojak\2017_08_04_SVs_BS3_13.kojak.txt'
+    xtable = Read(infile, rawfile='Test')
+    

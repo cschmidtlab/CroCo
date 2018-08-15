@@ -7,15 +7,26 @@ This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
-from . import HelperFunctions as hf
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
 
-def Write(xtable, outpath):
+def init(this_order):
+    """
+    Set required variables for conversion
+    """
+    global col_order
+    col_order = this_order
+
+def Write(xtable, outpath, keep=True):
     """
     writes an xtable data structure to file (in xtable format)
     
     Args:
         xtable: data table structure
         outpath to write file (w/o file extension!)
+        keep (optional): whether to restrict columns to the defined xTable cols
     
     """
     
@@ -26,7 +37,17 @@ def Write(xtable, outpath):
             return entry
     
     xtable = xtable.applymap(convert_list)
+
+    if keep is True:    
+        # reorder columns to start with the xtable columns
+        all_cols = list(xtable.columns.values)
+        remaining_cols = [x for x in all_cols if x not in col_order]
+        new_order = col_order + remaining_cols
     
+        xtable = xtable[new_order]
+    elif keep is False:
+        xtable = xtable[col_order]
+
     xtable.to_excel(outpath + '.xlsx',
                     index=False)
 

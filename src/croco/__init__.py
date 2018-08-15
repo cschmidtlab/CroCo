@@ -42,19 +42,11 @@ score - not normalised score
 type - inter, intra, loop or mono
 xtype - heavy or light label
 
-==============================
-Definition of the xinfo format
-==============================
-
-xlinker - Name of the used reagent
-link_dist - nominally bridged distance in Angstrom
-
 """
 
 import timeit
 
 starttime = timeit.default_timer()
-
 
 # defines the column headers required for xtable output
 col_order = [ 'rawfile', 'scanno', 'prec_ch',
@@ -102,17 +94,19 @@ StavroX.init(col_order)
 print('Finished with StavroX: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
-from .lib import Manual
-Manual.init(col_order)
+from .lib import HelperFunctions
 
 from .lib import DynamXL
 
 from .lib import xiNET
 
 from .lib import xTable
+xTable.init(col_order)
 
 from .lib import xVis
 
 from .lib import xWalk
 
 from .lib import pLabel
+
+from .lib import customTable

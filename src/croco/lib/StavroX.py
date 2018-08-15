@@ -10,6 +10,10 @@ import numpy as np
 import pandas as pd
 
 import os, re
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
 
 def init(this_order):
     """
@@ -296,7 +300,7 @@ def ParseSSF(ssf_file):
 
     return mod2mass, mod2name
 
-def Read(stavrox_file, ssf_file, keep=False):
+def Read(stavrox_file, ssf_file, compact=False):
     """
     Collects data from StavroX spectrum search and returns an xtable data array.
 
@@ -413,15 +417,7 @@ def Read(stavrox_file, ssf_file, keep=False):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
-    if keep is True:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + remaining_cols
-
-        xtable = xtable[new_order]
-    elif keep is False:
-        xtable = xtable[col_order]
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     return xtable
 

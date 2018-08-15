@@ -9,13 +9,13 @@ mass-spectrometry experiments.
 
 This script creates the GUI in wxPython (https://wxpython.org/pages/overview/)
 """
-import os
+import os, sys
 
 import wx
 import wx.adv
 
 import croco
-from pandas import read_csv
+#from pandas import read_csv
 
 class CroCoMainFrame(wx.Frame):
 
@@ -30,12 +30,37 @@ class CroCoMainFrame(wx.Frame):
         # create a panel in the frame
         self.panel = wx.Panel(self)
 
+        ## setting the icon for the frame
+        # in case of calling croco from the source folder structure...
+        file_dir, file_name = os.path.split(__file__)
+        if os.path.exists(os.path.join(file_dir,
+                                       './croco/data/croco_logo.ico')):
+            iconFile = os.path.abspath(os.path.join(file_dir,
+                                                      './croco/data/croco_logo.ico'))
+        # ... or calling from a exe-file in a folder-setup with the data folder at top-level
+        elif os.path.exists('./croco/data/croco_logo.ico'):
+            iconFile = os.path.abspath('./croco/data/croco_logo.ico')
+        # ... or calling from within a single bundled exe-file
+        else:
+            try:
+                # PyInstaller creates a temp folder and stores its path in _MEIPASS
+                base_path = sys._MEIPASS
+                iconFile =  os.path.abspath(\
+                    os.path.join(base_path, './data/croco_logo.ico'))
+            # ... or something went wrong
+            except:
+                raise Exception('croco_logo.ico not found')
+        ## end setting the icon
+
+        icon = wx.Icon(iconFile, wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icon)
+
         # define the croco read and write options and link to the modules
         # each value of a dict is a list of [options, functionToCall]
         self.availReads = {'pLink1': [croco.pLink1.Read, []],
                            'pLink2': [croco.pLink2.Read, []],
                            'Kojak': [croco.Kojak.Read, [('Kojak rawfile',
-                                                         'file',
+                                                         'input',
                                                          'Please provide the name of the rawfile for the data')]],
                            'Kojak + Percolator': [croco.KojakPercolator.Read, []],
                            'StavroX': [croco.StavroX.Read, [('SSF file',
@@ -66,7 +91,19 @@ class CroCoMainFrame(wx.Frame):
                                                              ('Xlinker as referenced by pLabel',
                                                               'input',
                                                               'Provide a cross-linker name (e.g. BS3) that is used by pLabel'+\
-                                                              'to calculate the potentially linked amino acids')]]}
+                                                              'to calculate the potentially linked amino acids')]],
+                              'customTable': [croco.customTable.Write, [('Custom Template',
+                                                                         'file',
+                                                                         'Provide tample file for parsing')]]}
+
+        # defines the column headers required for xtable output
+        self.col_order = ['rawfile', 'scanno', 'prec_ch',
+                          'pepseq1', 'xlink1',
+                          'pepseq2', 'xlink2', 'xtype',
+                          'modmass1', 'modpos1', 'mod1',
+                          'modmass2', 'modpos2', 'mod2',
+                          'prot1', 'xpos1', 'prot2',
+                          'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
         # set triggers allowing the start button to unhide
         self.readSet = False
@@ -74,10 +111,6 @@ class CroCoMainFrame(wx.Frame):
 
         # create a menu bar
         self.makeMenuBar()
-
-        # and a status bar
-        #self.CreateStatusBar()
-        #self.SetStatusText("Welcome to CroCo!")
 
         # load widgets
         # ALWAYS AFTER LOADING MENU AND STATUS BAR!!!!
@@ -103,6 +136,9 @@ class CroCoMainFrame(wx.Frame):
         self.outputButton.Enable(False)
         self.writeFormat = wx.Choice(self.panel, choices=sorted(list(self.availWrites.keys())))
 
+        self.compactTableCheck = wx.CheckBox(self.panel, label='Compact xTable')
+        self.filterTableCheck = wx.CheckBox(self.panel, label='Filter xTable')
+
         self.controlStart = wx.Button(self.panel, label='Start')
         self.controlStart.Enable(False)
         controlQuit = wx.Button(self.panel, label='Quit')
@@ -127,7 +163,7 @@ class CroCoMainFrame(wx.Frame):
         self.outputButton.Bind(wx.EVT_BUTTON, self.OnOutputDir)
         self.outputButton.Bind(wx.EVT_HELP,
                               lambda evt: self.Info('Opens a dialog to select output dir', caption='Help'))
-        
+
         controlQuit.Bind(wx.EVT_BUTTON, self.OnExit)
         self.controlStart.Bind(wx.EVT_BUTTON, self.OnStart)
         self.controlStart.Bind(wx.EVT_HELP,
@@ -138,6 +174,7 @@ class CroCoMainFrame(wx.Frame):
         loadSizer = wx.FlexGridSizer(rows=2, cols=3, vgap=10, hgap=10)
         loadSizerContainer = wx.BoxSizer(wx.HORIZONTAL)
         controlSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # assign the widgets to the sizers
         loadSizer.AddMany([input_lbl,
@@ -152,6 +189,10 @@ class CroCoMainFrame(wx.Frame):
         # contain the grid in a BoxSizer to set borders individually
         loadSizerContainer.Add(loadSizer, proportion=1, flag=wx.ALL|wx.EXPAND)
 
+        # Set checkboxes
+        checkSizer.Add(self.compactTableCheck, 1, wx.ALL|wx.EXPAND, 5)
+        checkSizer.Add(self.filterTableCheck, 1,  wx.ALL|wx.EXPAND, 5)
+
         # Set start and quit buttons
         controlSizer.Add(self.controlStart, 1, wx.RIGHT, 5)
         controlSizer.Add(controlQuit, 0, wx.LEFT | wx.ALIGN_RIGHT, 5)
@@ -160,6 +201,7 @@ class CroCoMainFrame(wx.Frame):
         # assign lower sizers to the top-level sizer
         topSizer.Add(loadSizerContainer, 0, wx.ALL|wx.EXPAND, 5)
         # topSizer.Add(reviewSizer, 0, wx.ALL|wx.EXPAND, 5)
+        topSizer.Add(checkSizer, 0, wx.EXPAND|wx.RIGHT, 5)
         topSizer.Add(wx.StaticLine(self.panel), 0, wx.ALL|wx.EXPAND, 5)
         topSizer.Add(controlSizer, 0, wx.EXPAND|wx.RIGHT, 5)
         # topSizer.Add(gauge, 0,wx.ALL|wx.EXPAND, 5)
@@ -295,7 +337,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.4')
+        aboutInfo.SetVersion('0.5')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -342,7 +384,7 @@ class CroCoMainFrame(wx.Frame):
             # reset args lists
             self.inputArgs = ''
             self.outputArgs = ''
-            
+
             self.onRun(event)
 
     def onRun(self, event):
@@ -364,10 +406,17 @@ class CroCoMainFrame(wx.Frame):
                     xtable = self.availReads[self.theReadFormat][0](f, *self.inputArgs)
                 else:
                     print('Using standard args for input')
-                    xtable = self.availReads[self.theReadFormat][0](f)  
+                    xtable = self.availReads[self.theReadFormat][0](f)
                 print('{}: Table succesfully read!'.format(f))
             except Exception as e:
                 self.Warning(str(e))
+
+            print('xTable read from input: {}'.format(', '.join(xtable.columns)))
+
+            # Compact the xTable if checkbox is checked
+            xtable = croco.HelperFunctions.applyColOrder(xtable,
+                                                         col_order=self.col_order,
+                                                         compact=self.compactTableCheck.GetValue())
 
             # if no user-defined output dir use current
             if self.theOutput == '':
@@ -451,7 +500,7 @@ class CroCoOptionsFrame(wx.Frame):
                                   lambda evt, appendTo=listofOptions, label=option[0]: self.onOpenFile(evt, appendTo, label))
                 optionButton.Bind(wx.EVT_HELP,
                                   lambda evt: self.Info(option[2], caption='Help'))
-                        
+
             elif option[1] == 'dir':
                 optionButton = wx.Button(self.panel, label='Open directory', name=option[0])
                 optionButton.Bind(wx.EVT_BUTTON,
@@ -538,32 +587,33 @@ class CroCoOptionsFrame(wx.Frame):
 
     def onOkay(self, event):
 
-        for label, t in self.InputOptionsToAsk:
-            if t == 'input':
-                self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
-
-        for label, t in self.OutputOptionsToAsk:
+        # label, type, help
+        for label, t, _ in self.OutputOptionsToAsk:
             if t == 'input':
                 self.outputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
 
+        for label, t, _ in self.InputOptionsToAsk:
+            if t == 'input':
+                self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
+
         inputArgs = []
-        for label, _ in self.InputOptionsToAsk:
+        for label, _, _ in self.InputOptionsToAsk:
             inputArgs.append(self.inputOptionsToUserInput[label])
         outputArgs = []
-        for label, _ in self.OutputOptionsToAsk:
-            outputArgs.append(self.outputOptionsToUserInput[label])  
+        for label, _, _ in self.OutputOptionsToAsk:
+            outputArgs.append(self.outputOptionsToUserInput[label])
 
         print('=== Input ===')
         for key in self.inputOptionsToUserInput:
             print('{}: {}'.format(key, self.inputOptionsToUserInput[key]))
-        
+
         print('=== Output ===')
         for key in self.outputOptionsToUserInput:
             print('{}: {}'.format(key, self.outputOptionsToUserInput[key]))
-        
+
         self.parent.inputArgs = inputArgs
         self.parent.outputArgs = outputArgs
-        
+
         self.parent.onRun(event)
 
         print('Closing options window after passing options to main window')

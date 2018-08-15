@@ -11,7 +11,12 @@ import pandas as pd
 
 import os
 
-from . import Xi as xi
+if __name__ == '__main__':
+    import HelperFunctions as hf
+    import Xi as xi
+else:
+    from . import Xi as xi
+    from . import HelperFunctions as hf
 
 def init(this_order):
     """
@@ -20,7 +25,7 @@ def init(this_order):
     global col_order
     col_order = this_order
 
-def Read(xifdr_file, xi_file, keep=False):
+def Read(xifdr_file, xi_file, compact=False):
     """
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.
 
@@ -91,16 +96,8 @@ def Read(xifdr_file, xi_file, keep=False):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
-    if keep is True:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + remaining_cols
-
-        xtable = xtable[new_order]
-    elif keep is False:
-        xtable = xtable[col_order]
+    
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     return xtable
 if __name__ == '__main__':
@@ -117,7 +114,7 @@ if __name__ == '__main__':
     os.chdir(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi')
     xi_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_XiVersion1.6.739.csv'
     xifdr_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_5_FDR_PSM_xiFDR1.0.22.csv'
-    xi_df = Read(xi_file, xifdr_file, keep=True)
+    xi_df = Read(xi_file, xifdr_file, compact=True)
 
     xi_df.to_excel('test.xls',
                    index=False)

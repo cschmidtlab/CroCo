@@ -13,6 +13,11 @@ import os
 import sys
 import re
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def init(this_order):
     """
     Set required variables for conversion
@@ -146,14 +151,16 @@ def process_plink_proteins(prot_string):
     match = pattern.match(prot_string)
     return match.groups()
 
-def Read(plinkdir):
+def Read(plinkdir, compact=False):
     """
     reads pLink report dir and returns an xtabel data array.
 
-    :params: plinkdir: plink report subdir (e.g. sample1)
+    Args:
+        plinkdir: plink report subdir (e.g. sample1)
+        keep (bool): Whether to keep the columns of the original dataframe or not
 
-    :returns: xtable data table
-    :returns: xinfo meta-data object
+    Returns:
+        xtable: data table
     """
 
     ### Collect data, convert to pandas format and merge
@@ -358,12 +365,7 @@ def Read(plinkdir):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
     
-    # reorder columns to start with the xtable columns
-    all_cols = list(xtable.columns.values)
-    remaining_cols = [x for x in all_cols if x not in col_order]
-    new_order = col_order + remaining_cols
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
-    xtable = xtable[new_order]
     ### return xtable df
-
     return xtable
