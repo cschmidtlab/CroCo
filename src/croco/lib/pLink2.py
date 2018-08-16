@@ -376,7 +376,7 @@ def Read(plinkdir, compact=False):
                 seqlen1 = len(pepseq1[idx]) + 1
                 if int(modpos) > seqlen1:
                     this_mod2.append(mod)
-                    this_modpos2.append(str(int(modpos) - seqlen1))
+                    this_modpos2.append(int(modpos) - seqlen1)
                     this_modmass2.append(mass)
                 else:
                     this_mod1.append(mod)
@@ -384,12 +384,12 @@ def Read(plinkdir, compact=False):
                     this_modmass1.append(mass)
 
         # multiple modifications of one peptide are stored as ;-delimited strings
-        modmass1.append(';'.join(this_modmass1))
-        mod1.append(';'.join(this_mod1))
-        modpos1.append(';'.join(this_modpos1))
-        modmass2.append(';'.join(this_modmass2))
-        mod2.append(';'.join(this_mod2))
-        modpos2.append(';'.join(this_modpos2))
+        modmass1.append(this_modmass1)
+        mod1.append(this_mod1)
+        modpos1.append(this_modpos1)
+        modmass2.append(this_modmass2)
+        mod2.append(this_mod2)
+        modpos2.append(this_modpos2)
 
     xtable['modmass1'] = modmass1
     xtable['mod1'] = mod1

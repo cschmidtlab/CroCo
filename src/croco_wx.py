@@ -399,6 +399,9 @@ class CroCoMainFrame(wx.Frame):
 
         was_error = False
 
+        # Displays a busy cursor during the run of the programme
+        wait = wx.BusyCursor()
+
         for f in self.theInput:
             try:
                 if len(self.inputArgs) > 0 :
@@ -444,6 +447,8 @@ class CroCoMainFrame(wx.Frame):
                 print(e)
                 was_error = True
                 break
+        # ends busy cursor
+        del wait
 
         if not was_error:
             self.Info('Success!',

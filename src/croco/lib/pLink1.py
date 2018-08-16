@@ -332,7 +332,8 @@ def Read(plinkdir, compact=False):
                 
                 seqlen1 = len(pepseq1[idx]) + 1
                 if int(modpos) > seqlen1:
-                    this_modpos2.append(str(int(modpos) - seqlen1))
+                    # add +1 to account for modification position at the xlinker
+                    this_modpos2.append(int(modpos) - seqlen1 + 1)
                     this_modmass2.append(mass)
                     this_mod2.append(mod)
                 else:
@@ -341,12 +342,12 @@ def Read(plinkdir, compact=False):
                     this_mod1.append(mod)
 
         # multiple modifications of one peptide are stored as ;-delimited strings
-        modmass1.append(';'.join(this_modmass1))
-        modpos1.append(';'.join(this_modpos1))
-        mod1.append(';'.join(this_mod1))
-        modmass2.append(';'.join(this_modmass2))
-        modpos2.append(';'.join(this_modpos2))
-        mod2.append(';'.join(this_mod2))
+        modmass1.append(this_modmass1)
+        modpos1.append(this_modpos1)
+        mod1.append(this_mod1)
+        modmass2.append(this_modmass2)
+        modpos2.append(this_modpos2)
+        mod2.append(this_mod2)
 
     xtable['mod1'] = mod1
     xtable['modmass1'] = modmass1
@@ -369,3 +370,20 @@ def Read(plinkdir, compact=False):
 
     ### return xtable df
     return xtable
+
+if __name__ == '__main__':
+    """
+    For testing purposes only
+    """
+    
+    col_order = [ 'rawfile', 'scanno', 'prec_ch',
+                  'pepseq1', 'xlink1',
+                  'pepseq2', 'xlink2', 'xtype',
+                  'modmass1', 'modpos1', 'mod1',
+                  'modmass2', 'modpos2', 'mod2',
+                  'prot1', 'xpos1', 'prot2',
+                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
+    
+    init(col_order)
+    
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\plink\2.report\sample1')
