@@ -330,16 +330,18 @@ def Read(plinkdir, compact=False):
                     # use the input string if no subsitution found
                     mass = mod
                 
-                seqlen1 = len(pepseq1[idx]) + 1
+                seqlen1 = len(pepseq1[idx])
+                # pLink assigns additional modification position to the C-term
+                # of the first peptide, the xlinker and the N-term of the
+                # second peptide
                 if int(modpos) > seqlen1:
-                    # add +1 to account for modification position at the xlinker
-                    this_modpos2.append(int(modpos) - seqlen1 + 1)
-                    this_modmass2.append(mass)
                     this_mod2.append(mod)
+                    this_modpos2.append(int(modpos) - seqlen1)
+                    this_modmass2.append(mass)
                 else:
+                    this_mod1.append(mod)
                     this_modpos1.append(modpos)
                     this_modmass1.append(mass)
-                    this_mod1.append(mod)
 
         # multiple modifications of one peptide are stored as ;-delimited strings
         modmass1.append(this_modmass1)
@@ -386,4 +388,4 @@ if __name__ == '__main__':
     
     init(col_order)
     
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\plink\2.report\sample1')
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink1\SV_BS3_pLink1\sample1')

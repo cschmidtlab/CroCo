@@ -373,10 +373,26 @@ def Read(plinkdir, compact=False):
                     # use the input string if no subsitution found
                     mass = mod
 
-                seqlen1 = len(pepseq1[idx]) + 1
-                if int(modpos) > seqlen1:
+                seqlen1 = len(pepseq1[idx])
+                # pLink assigns additional modification position to the C-term
+                # of the first peptide, the xlinker and the N-term of the
+                # second peptide
+                if int(modpos) > (seqlen1 + 3):
                     this_mod2.append(mod)
-                    this_modpos2.append(int(modpos) - seqlen1)
+                    this_modpos2.append(int(modpos) - (seqlen1 + 3))
+                    this_modmass2.append(mass)
+                # C-term of first peptide
+                elif int(modpos) == (seqlen1 + 1):
+                    this_mod2.append(mod)
+                    this_modpos2.append(int(modpos) - 1)
+                    this_modmass2.append(mass)
+                # cannot assign modifications to xlinker in xTable
+                elif int(modpos) == (seqlen1 + 2):
+                    pass
+                # Modification on N-term of second peptide
+                elif int(modpos) == (seqlen1 + 3):
+                    this_mod2.append(mod)
+                    this_modpos2.append(1)
                     this_modmass2.append(mass)
                 else:
                     this_mod1.append(mod)

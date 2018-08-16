@@ -91,8 +91,8 @@ def Write(xtable, outpath, mgfPath, xlinker):
         if not hf.isNaN(modpos2):
             
             # increment the modpos2 position to fit pLabel numbering
-            # add position for: nterm1, cterm1, xlink, nterm2
-            modpos2 = [x + (len(pepseq1) + 4) for x in modpos2]
+            # add position for: cterm1, xlink, nterm2
+            modpos2 = [x + (len(pepseq1) + 3) for x in modpos2]
 
             if not hf.isNaN(modpos1):
                 mods.extend(hf.toList(mod1))
@@ -107,7 +107,7 @@ def Write(xtable, outpath, mgfPath, xlinker):
             modposs.extend(hf.toList(modpos1))
             
         for mod, pos in zip(mods, modposs):
-            modlabels.append('{},{}'.format(pos, mods2num[mod]))
+            modlabels.append('{},{}'.format(int(pos), mods2num[mod]))
 
         pepStringElements.extend(modlabels)
 
