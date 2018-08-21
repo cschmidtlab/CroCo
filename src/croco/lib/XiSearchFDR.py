@@ -81,12 +81,20 @@ def Read(xifdr_file, xi_file, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].apply(\
-        lambda row: '-'.join(str(element) for element in row), axis=1)
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
         xi.assign_type, axis=1)
+
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
 
     xtable['xtype'] = np.nan
 

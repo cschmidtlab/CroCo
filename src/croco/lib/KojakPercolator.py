@@ -91,16 +91,6 @@ def process_kojak_protein(protein_string):
         else:
             return np.nan, np.nan
 
-def generate_ID(type, prot1, xpos1, prot2, xpos2):
-    """
-    Return a link ID based on the type of the xlink
-    """
-
-    if type in ['mono', 'loop']:
-        return '-'.join([str(prot1), str(xpos1)])
-    else:
-        return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
-
 def assign_type(row):
     """
     Assign mono, loop, inter and intra link
@@ -233,11 +223,19 @@ def Read(perc_file, percolator_string='.validated', rawfile=None, compact=False)
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
         assign_type, axis=1)
-    
+
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(generate_ID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
 
     xtable['decoy'] = 'T-' in xtable['SpecId']
 

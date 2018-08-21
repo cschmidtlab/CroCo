@@ -8,6 +8,23 @@ Created on Mon Jun 18 14:18:32 2018
 import pandas as pd
 import numpy as np
 
+def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
+    """
+    Categorizes cross-linked peptides into inter, intra, homomultimeric
+    """
+    pepend1 = int(pos1) + len(pepseq1)
+    pepend2 = int(pos2) + len(pepseq2)
+    
+    if prot1 != prot2:
+        return 'inter'
+    
+    else:
+        if (pos2 <= pepend1 <= pepend2) or (pos1 <= pepend2 <= pepend1):
+            return 'homomultimeric'
+        else:
+            return 'intra'
+            
+
 def applyColOrder(xtable, col_order, compact):
     """
     Sort columns of xtable by col_order and return the whole xtable including
@@ -29,6 +46,24 @@ def applyColOrder(xtable, col_order, compact):
         raise Exception('Compact argument passed to applyColOrder must be either True or False')
     
     return xtable
+
+def generateID(type, prot1, xpos1, prot2, xpos2):
+    """
+    Return a link ID based on the type of the xlink
+    """
+
+    if type in ['mono', 'loop']:
+        return '-'.join([str(prot1), str(xpos1)])
+    else:
+        xpos1 = int(xpos1)
+        xpos2 = int(xpos2)
+        if xpos1 > xpos2:
+            return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
+        elif xpos1 == xpos2:
+            prot_list = sorted([str(prot1), str(prot2)])
+            return '-'.join([prot_list[0], str(xpos1), prot_list[1], str(xpos2)])
+        else:
+            return '-'.join([str(prot2), str(xpos2), str(prot1), str(xpos1)])
 
 def toList(strorList):
     """

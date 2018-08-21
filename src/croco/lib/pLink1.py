@@ -226,8 +226,7 @@ def Read(plinkdir, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
-            lambda x: '-'.join(x), axis=1)
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -247,6 +246,15 @@ def Read(plinkdir, compact=False):
     xtable['PSM image'] = xtable['PSM image'].astype(str).\
                             apply(lambda x: '=HYPERLINK("' + os.path.abspath(x) +\
                                   '", "' + x.split(os.path.sep)[-1] + '")')
+
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
 
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm

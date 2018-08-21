@@ -142,8 +142,7 @@ def Read(kojak_file, rawfile=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        xtable[['prot1', 'xpos1', 'prot2', 'xpos2']].astype(str).apply(\
-            lambda x: '-'.join(x), axis=1)
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -154,6 +153,14 @@ def Read(kojak_file, rawfile=None, compact=False):
     xtable['pos2'] = xtable['xpos2'].astype(float, errors='ignore') - \
                      xtable['xlink2'].astype(float, errors='ignore') + 1
 
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
     # set the rawfile name for xtable (None if not provided by call)
     xtable['rawfile'] = rawfile
 

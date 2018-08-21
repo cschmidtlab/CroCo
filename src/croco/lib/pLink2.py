@@ -21,16 +21,6 @@ def init(this_order):
     global col_order
     col_order = this_order
 
-def generate_ID(type, prot1, xpos1, prot2, xpos2):
-    """
-    Return a link ID based on the type of the xlink
-    """
-
-    if type in ['mono', 'loop']:
-        return '-'.join([str(prot1), str(xpos1)])
-    else:
-        return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
-
 def plink2peptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
@@ -126,7 +116,6 @@ def process_plink2_sequence(row):
         match = pattern.match(row['Peptide'])
         pepseq1, xlink1, xlink2 = match.groups()
         pepseq2 = np.nan
-
 
     elif row['type'] == 'mono':
         pattern = re.compile(r'(\w+)\((\d*)\)')
@@ -287,7 +276,7 @@ def Read(plinkdir, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(generate_ID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # calculate absolute position of first AA of peptide
     xtable['pos1'], xtable['pos2'] = zip(*xtable.apply(calculate_abs_pos,
@@ -301,6 +290,15 @@ def Read(plinkdir, compact=False):
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
     xtable['decoy'] = False
+
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
 
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every

@@ -402,12 +402,22 @@ def Read(stavrox_file, ssf_file, compact=False):
                                            mod2mass),
            axis=1))
 
+
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(generate_ID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # Stavrox does not run on isotope-labeled xlinkers
     xtable['xtype'] = np.nan
+
+    # Reassign the type for inter xlink to inter/intra/homomultimeric
+    xtable.loc[xtable['type'] == 'inter', 'type'] =\
+        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                 xtable[xtable['type'] == 'inter']['pos1'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                 xtable[xtable['type'] == 'inter']['prot2'],
+                                                 xtable[xtable['type'] == 'inter']['pos2'],
+                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
 
     # StavroX already filters decoys
     xtable['decoy'] = False
