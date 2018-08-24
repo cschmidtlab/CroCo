@@ -69,6 +69,8 @@ def Write(xtable, outpath, mgfPath, xlinker):
             typeno = 3
         elif xtype == 'intra':
             typeno = 3
+        elif xtype == 'homomultimeric':
+            typeno = 3
         elif xtype == 'loop':
             typeno = 2
         elif xtype == 'mono':
