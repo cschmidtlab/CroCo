@@ -183,54 +183,51 @@ def Write(xtable, outpath, mgfPath, xlinker):
     # separate by rawfile
     for rf in rawfiles:
         xtablePerRawfile = xtable[xtable['rawfile'] == rf].copy()
-        types = xtablePerRawfile['type'].unique().tolist()
         # separate per type within rawfile
-        for t in types:
-            xtablePerType = xtablePerRawfile[xtablePerRawfile['type'] == t].copy()
-            outfile = '_'.join([outpath, rf, t + '.pLabel'])
-            print('Opening {} to write'.format(outfile))
-            with open(outfile, 'w') as out:
-                out.write('[FilePath]\n')
-                out.write('File_Path=' + os.path.join(mgfPath, rf + '.mgf\n'))
+        outfile = '_'.join([outpath, rf + '.pLabel'])
+        print('Opening {} to write'.format(outfile))
+        with open(outfile, 'w') as out:
+            out.write('[FilePath]\n')
+            out.write('File_Path=' + os.path.join(mgfPath, rf + '.mgf\n'))
 
-                modifications = uniqueMods(xtablePerType['mod2'].tolist() +\
-                                           xtablePerType['mod1'].tolist())
+            modifications = uniqueMods(xtablePerRawfile['mod2'].tolist() +\
+                                       xtablePerRawfile['mod1'].tolist())
 
-                mods2num = {} # dict mapping mod names to indices
-                out.write('[Modification]\n')
-                for idx, mod in enumerate(modifications):
-                    out.write('{}={}\n'.format(idx+1, mod))
-                    mods2num[mod] = idx+1
+            mods2num = {} # dict mapping mod names to indices
+            out.write('[Modification]\n')
+            for idx, mod in enumerate(modifications):
+                out.write('{}={}\n'.format(idx+1, mod))
+                mods2num[mod] = idx+1
 
-                out.write('[xlink]\n')
-                out.write('xlink={}\n'.format(xlinker))
+            out.write('[xlink]\n')
+            out.write('xlink={}\n'.format(xlinker))
 
-                out.write('[Total]\n')
-                out.write('total={}\n'.format(len(xtablePerType.index)))
+            out.write('[Total]\n')
+            out.write('total={}\n'.format(len(xtablePerRawfile.index)))
 
-                idx = 1
-                for _, row in xtablePerType.iterrows():
-                    
-                    out.write('[Spectrum{}]\n'.format(idx))
-                    idx += 1
-                    # name for the spectrum
-                    out.write('name={}\n'.format(\
-                                  GeneratepLabelNameString(row['rawfile'],
-                                                           row['scanno'],
-                                                           row['prec_ch'],
-                                                           rawfiles2titles)))
+            idx = 1
+            for _, row in xtablePerRawfile.iterrows():
+                
+                out.write('[Spectrum{}]\n'.format(idx))
+                idx += 1
+                # name for the spectrum
+                out.write('name={}\n'.format(\
+                              GeneratepLabelNameString(row['rawfile'],
+                                                       row['scanno'],
+                                                       row['prec_ch'],
+                                                       rawfiles2titles)))
 
-                    out.write('pep1={}\n'.format(GeneratepLabelPepString(row['type'],
-                                                                         row['xlink1'],
-                                                                         row['xlink2'],
-                                                                         row['pepseq1'],
-                                                                         row['pepseq2'],
-                                                                         row['score'],
-                                                                         row['mod1'],
-                                                                         row['mod2'],
-                                                                         row['modpos1'],
-                                                                         row['modpos2'],
-                                                                         mods2num)))
+                out.write('pep1={}\n'.format(GeneratepLabelPepString(row['type'],
+                                                                     row['xlink1'],
+                                                                     row['xlink2'],
+                                                                     row['pepseq1'],
+                                                                     row['pepseq2'],
+                                                                     row['score'],
+                                                                     row['mod1'],
+                                                                     row['mod2'],
+                                                                     row['modpos1'],
+                                                                     row['modpos2'],
+                                                                     mods2num)))
 
 
 if __name__ == '__main__':
