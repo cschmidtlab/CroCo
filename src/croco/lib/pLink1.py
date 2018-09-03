@@ -265,12 +265,6 @@ def Read(plinkdir, compact=False):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
-    # save original score in columns
-    xtable['plink score'] = xtable['score']
-
-    # compute a minus log P score for better comparison with higher=better scores
-    xtable['score'] = -np.log(xtable['score'])
-
     # generate the mod_dict linking pLink modification names to masses
     
     # in case of calling croco from the source folder structure...
@@ -366,10 +360,7 @@ def Read(plinkdir, compact=False):
     xtable['modmass2'] = modmass2
     xtable['modpos2'] = modpos2
 
-    # reorder columns
-    # append pLink specific columns
-    col_order.extend(['PSM image', 'plink score'])
-    col_order[0] = 'Order' # append to front
+    xtable['search_engine'] = 'pLink1'
 
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every
