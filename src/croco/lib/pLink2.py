@@ -71,8 +71,14 @@ def plink2peptide2pandas(filepath):
         if '' in data:
             del data['']
 
-    return pd.DataFrame.from_dict(data)
-
+        try:
+            data = pd.DataFrame.from_dict(data)
+            if len(data) > 0:
+                return data
+            else:
+                raise Exception('Generated xtable had a length of 0!')
+        except:
+            raise Exception('Could not generat xtable. Please check file at: {}'.format(filepath))
 
 def process_plink2_title(spec_string):
     """

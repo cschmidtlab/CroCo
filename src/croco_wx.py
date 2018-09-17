@@ -341,7 +341,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.5.6.1')
+        aboutInfo.SetVersion('0.5.6.2')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -416,7 +416,7 @@ class CroCoMainFrame(wx.Frame):
                     xtable = self.availReads[self.theReadFormat][0](f)
                 print('{}: Table succesfully read!'.format(f))
             except Exception as e:
-                self.Warning(str(e))
+                self.Warning('Error while reading Input-file: ' + str(e))
 
             print('xTable read from input: {}'.format(', '.join(xtable.columns)))
 

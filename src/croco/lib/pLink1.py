@@ -84,8 +84,15 @@ def plinkprotein2pandas(filepath):
                     data[header1[idx]].append(d)
                 for idx, d in enumerate(entry2_data):
                     data[header2[idx]].append(d)
-
-    return pd.DataFrame.from_dict(data)
+                    
+        try:
+            data = pd.DataFrame.from_dict(data)
+            if len(data) > 0:
+                return data
+            else:
+                raise Exception('Generated xtable had a length of 0!')
+        except:
+            raise Exception('Could not generat xtable. Please check file at: {}'.format(filepath))
 
 def read_plink_modifications(filepath):
     """

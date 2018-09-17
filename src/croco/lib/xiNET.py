@@ -39,7 +39,7 @@ def Write(xtable, outpath):
     # drop duplicates
     xinet.drop_duplicates(inplace=True,
                           keep='first',
-                          subset=['prot1','prot2', 'xlink1', 'xlink2'])
+                          subset=['prot1','prot2', 'pos1', 'pos2', 'xlink1', 'xlink2'])
 
     rename_dict = {'prot1':'Protein1',
                    'prot2':'Protein2',
