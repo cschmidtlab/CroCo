@@ -55,6 +55,9 @@ class CroCoMainFrame(wx.Frame):
         icon = wx.Icon(iconFile, wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
+        # set starting path for folder selection GUI
+        self.currentPath = os.getcwd()
+
         # define the croco read and write options and link to the modules
         # each value of a dict is a list of [options, functionToCall]
         self.availReads = {'pLink1': [croco.pLink1.Read, []],
@@ -137,7 +140,6 @@ class CroCoMainFrame(wx.Frame):
         self.writeFormat = wx.Choice(self.panel, choices=sorted(list(self.availWrites.keys())))
 
         self.compactTableCheck = wx.CheckBox(self.panel, label='Compact xTable')
-        self.filterTableCheck = wx.CheckBox(self.panel, label='Filter xTable')
 
         self.controlStart = wx.Button(self.panel, label='Start')
         self.controlStart.Enable(False)
@@ -191,7 +193,6 @@ class CroCoMainFrame(wx.Frame):
 
         # Set checkboxes
         checkSizer.Add(self.compactTableCheck, 1, wx.ALL|wx.EXPAND, 5)
-        checkSizer.Add(self.filterTableCheck, 1,  wx.ALL|wx.EXPAND, 5)
 
         # Set start and quit buttons
         controlSizer.Add(self.controlStart, 1, wx.RIGHT, 5)
@@ -275,12 +276,13 @@ class CroCoMainFrame(wx.Frame):
     def OnOpenFile(self):
        dlg = wx.FileDialog(self,
                            message="Choose one or multiple files for input",
-                           defaultDir=os.getcwd(),
+                           defaultDir=self.currentPath,
                            defaultFile="",
                            wildcard="*.*",
                            style=wx.FD_MULTIPLE)
        if dlg.ShowModal() == wx.ID_OK:
             self.theInput = dlg.GetPaths()
+            self.currentPath = os.path.dirname(self.theInput[0])
        dlg.Destroy()
 
        self.readSet = True
@@ -290,7 +292,7 @@ class CroCoMainFrame(wx.Frame):
     def OnOpenDir(self):
         dlg = wx.DirDialog(self,
                            message="Choose one or multiple directories for Input:",
-                           defaultPath=os.getcwd(),
+                           defaultPath=self.currentPath,
                            style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -298,6 +300,8 @@ class CroCoMainFrame(wx.Frame):
             # in future versions of wx it might be possible to select
             # multiple dirs
             self.theInput = [dlg.GetPath(),]
+            self.currentPath = os.path.dirname(self.theInput[0])
+
         dlg.Destroy()
 
         self.readSet = True
@@ -307,10 +311,10 @@ class CroCoMainFrame(wx.Frame):
     def OnOutputDir(self, event):
         dlg = wx.DirDialog(self,
                            message="Choose a directory:",
-                           defaultPath=os.getcwd(),
+                           defaultPath=self.currentPath,
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
-            self.theOutput = dlg.GetPath()
+            self.currentPath = self.theOutput = dlg.GetPath()
         dlg.Destroy()
 
         self.writeSet = True
@@ -337,7 +341,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.5.5')
+        aboutInfo.SetVersion('0.5.6.1')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -473,6 +477,9 @@ class CroCoOptionsFrame(wx.Frame):
         # generate a variable containing the parent to allow pushing back
         # the user-provided input
         self.parent = parent
+
+        # set starting path for folder selection GUI
+        self.currentPath = os.getcwd()
 
         # in these variables the options from CroCoMainWindow will be written
         self.InputOptionsToAsk = ''
@@ -627,22 +634,22 @@ class CroCoOptionsFrame(wx.Frame):
     def onOpenFile(self, event, dictToAppend, label):
        dlg = wx.FileDialog(self,
                            message="Choose a file for input",
-                           defaultDir=os.getcwd(),
+                           defaultDir=self.currentPath,
                            defaultFile="",
                            wildcard="*.*",
                            style=wx.FD_MULTIPLE)
        if dlg.ShowModal() == wx.ID_OK:
-            dictToAppend[label] = dlg.GetPath()
+            self.currentPath = dictToAppend[label] = dlg.GetPath()
        dlg.Destroy()
 
     def onOpenDir(self, event, dictToAppend, label):
         dlg = wx.DirDialog(self,
                            message="Choose one directory for Input:",
-                           defaultPath=os.getcwd(),
+                           defaultPath=self.currentPath,
                            style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            dictToAppend[label] = dlg.GetPath()
+            self.currentPath = dictToAppend[label] = dlg.GetPath()
         dlg.Destroy()
 
     def Info(self, message, caption = 'CroCo'):

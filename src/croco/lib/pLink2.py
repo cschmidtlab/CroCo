@@ -298,7 +298,7 @@ def Read(plinkdir, compact=False):
                                                  xtable[xtable['type'] == 'inter']['pepseq1'],
                                                  xtable[xtable['type'] == 'inter']['prot2'],
                                                  xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
+                                                 xtable[xtable['type'] == 'inter']['pepseq2'])
 
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every
@@ -439,4 +439,4 @@ if __name__ == '__main__':
     
     init(col_order)
     
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink2\Sec23_24_only\reports')
+    xtable = Read(r'H:\pLink_task_2018.08.13.16.45.46\reports')

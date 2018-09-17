@@ -12,8 +12,8 @@ def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
     """
     Categorizes cross-linked peptides into inter, intra, homomultimeric
     """
-    pepend1 = int(pos1) + len(pepseq1)
-    pepend2 = int(pos2) + len(pepseq2)
+    pepend1 = int(pos1) + len(pepseq1) - 1
+    pepend2 = int(pos2) + len(pepseq2) - 1
     
     if prot1 != prot2:
         return 'inter'
@@ -24,6 +24,9 @@ def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
         else:
             return 'intra'
             
+def testVariable(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
+    
+    return ', '.join([str(prot1), str(pos1), str(pepseq1), str(prot2), str(pos2), str(pepseq2)])
 
 def applyColOrder(xtable, col_order, compact):
     """
@@ -33,7 +36,7 @@ def applyColOrder(xtable, col_order, compact):
     """
     compact = bool(compact)
     
-    if compact is False:    
+    if compact is False:
         # reorder columns to start with the xtable columns
         all_cols = list(xtable.columns.values)
         remaining_cols = [x for x in all_cols if x not in col_order]
