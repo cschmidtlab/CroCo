@@ -89,12 +89,16 @@ class CroCoMainFrame(wx.Frame):
                                                             'Provide an PDB atom code (e.g. CB) for distance calculation')]],
                              'pLabel': [croco.pLabel.Write, [('Dir containing mgf files',
                                                               'dir',
-                                                              'Provide path to a fodler containing mgf-files corresponding to the'+\
+                                                              'Provide path to a folder containing mgf-files corresponding to the'+\
                                                               'rawfile names in the input file'),
                                                              ('Xlinker as referenced by pLabel',
                                                               'input',
                                                               'Provide a cross-linker name (e.g. BS3) that is used by pLabel'+\
-                                                              'to calculate the potentially linked amino acids')]],
+                                                              'to calculate the potentially linked amino acids'),
+                                                             ('Merge mgf files',
+                                                              'check',
+                                                              'Tick to merge mgf files into one file containign' +
+                                                              'only the spectra  mentioned in the (merged) pLabel')]],
                               'customTable': [croco.customTable.Write, [('Custom Template',
                                                                          'file',
                                                                          'Provide tample file for parsing')]]}
@@ -341,7 +345,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.5.6.2')
+        aboutInfo.SetVersion('0.5.7.0')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -455,9 +459,9 @@ class CroCoMainFrame(wx.Frame):
         del wait
 
         if not was_error:
-            self.Info('Success!',
-                     'File(s) successfully written ' +
-                     'to {}!'.format(outpath))
+            self.Info('File(s) successfully written ' +
+                     'to {}!'.format(outpath),
+                     caption='Success!')
 
 class CroCoOptionsFrame(wx.Frame):
     """
@@ -522,7 +526,13 @@ class CroCoOptionsFrame(wx.Frame):
             elif option[1] == 'input':
                 optionButton = wx.TextCtrl(self.panel, value="", name=option[0])
                 self.textCtrls[option[0]] = optionButton
-
+                optionButton.Bind(wx.EVT_HELP,
+                                  lambda evt: self.Info(option[2], caption='Help'))
+            elif option[1] == 'check':
+                optionButton = wx.CheckBox(self.panel, name=option[0])
+                self.textCtrls[option[0]] = optionButton
+                optionButton.Bind(wx.EVT_HELP,
+                                  lambda evt: self.Info(option[2], caption='Help'))
             else:
                 raise Exception('Wrong options format for option: {}'\
                                     .format(option[0]))
@@ -599,13 +609,19 @@ class CroCoOptionsFrame(wx.Frame):
 
     def onOkay(self, event):
 
+        print("self.outputOptionsToUserInput: {}".format(self.outputOptionsToUserInput))
+        print("self.OutputOptionsToAsk: {}".format(self.OutputOptionsToAsk))
         # label, type, help
         for label, t, _ in self.OutputOptionsToAsk:
             if t == 'input':
                 self.outputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
+            elif t == 'check':
+                self.outputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
 
         for label, t, _ in self.InputOptionsToAsk:
             if t == 'input':
+                self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
+            elif t == 'check':
                 self.inputOptionsToUserInput[label] = self.textCtrls[label].GetValue()
 
         inputArgs = []

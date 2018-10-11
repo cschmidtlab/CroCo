@@ -8,6 +8,7 @@ Created on Mon Jun 18 14:18:32 2018
 import pandas as pd
 import numpy as np
 
+
 def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
     """
     Categorizes cross-linked peptides into inter, intra, homomultimeric
