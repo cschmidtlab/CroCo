@@ -42,11 +42,22 @@ def process_kojak_peptide(peptide_string):
     from a Kojak sequence string such as M[15.99]TDSKYFTTNK
     """
 
-    pattern = re.compile('\[(.*?)\]')
-    mods = re.findall(pattern, peptide_string)
+    mods = []
+    sequence = ''
+    is_mod = False
 
-    pattern = re.compile('([A-Z]+)')
-    sequence = ''.join(re.findall(pattern, peptide_string))
+    for char in peptide_string:
+        if char == '[':
+            is_mod = True
+            theMod = ''
+        elif char == ']':
+            is_mod = False
+            mods.append(theMod)
+        elif is_mod == False:
+            if char.isalpha():
+                sequence += char
+        else:
+            theMod += char
 
     if mods == []:
         mods = np.nan
@@ -91,7 +102,7 @@ def Read(kojak_file, rawfile=None, compact=False):
                            skiprows = 1, # skip the Kojak version
                            delimiter='\t')
     else:
-        return FileNotFoundError('Kojak txt file not found')
+        return FileNotFoundError('Kojak txt file not found: {}'.format(kojak_file))
 
     ### Convert data inside pandas df
 

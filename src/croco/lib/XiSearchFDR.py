@@ -79,13 +79,13 @@ def Read(xifdr_file, xi_file, compact=False):
 
     xtable['rawfile'] = xtable['Source'].apply(xi.rawfile_from_source)
 
-    # generate an ID for every crosslink position within the protein(s)
-    xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
-
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
         xi.assign_type, axis=1)
+
+    # generate an ID for every crosslink position within the protein(s)
+    xtable['ID'] =\
+        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
 
     # Reassign the type for inter xlink to inter/intra/homomultimeric
     xtable.loc[xtable['type'] == 'inter', 'type'] =\

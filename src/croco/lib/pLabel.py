@@ -241,10 +241,13 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     idx += 1
 
                     scanno = str(int(row['scanno']))
+                    prec_ch = str(int(row['prec_ch']))
                     
                     title = ''
                     for t in allTitles:
-                        if '.'.join([rf, scanno]).upper() in t:
+                        # add the scanno twice to the search string to avoid
+                        # matching of substrings e.g. 2516 to 25164
+                        if '.'.join([rf, scanno, scanno, prec_ch]).upper() in t:
                             title = t
                     
                     # Generate the spectrum title as used by pLabel from
@@ -305,10 +308,13 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     idx += 1
 
                     scanno = str(int(row['scanno']))
+                    prec_ch = str(int(row['prec_ch']))
 
                     title = ''
                     for t in allTitles:
-                        if '.'.join([rf, scanno]).upper() in t:
+                        # add the scanno twice to the search string to avoid
+                        # matching of substrings e.g. 2516 to 25164
+                        if '.'.join([rf, scanno, scanno, prec_ch]).upper() in t:
                             title = t
 
                     # Generate the spectrum title as used by pLabel from

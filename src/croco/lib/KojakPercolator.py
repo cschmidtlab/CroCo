@@ -185,7 +185,7 @@ def Read(perc_file, percolator_string='.validated', rawfile=None, compact=False)
                             skiprows = 1, # skip the Kojak version
                             delimiter='\t')
     except:
-        raise FileNotFoundError(kojak_file)
+        raise FileNotFoundError("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
         
     kojak.rename(columns={'Scan Number': 'scannr'}, inplace=True)
 
