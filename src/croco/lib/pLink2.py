@@ -138,11 +138,13 @@ def process_plink2_proteins(row):
     """
     Extract protein name and absolute cross-link position from
     pLink protein string e.g.
-    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)
+    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/
+    or (worst-case)
+    Stx1A(1-262)(259)-Stx1A(1-262)(259)/
     """
 
     if row['type'] == 'inter':
-        pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
+        pattern = re.compile('(.+?)\((\d+)\)-(.+?)\((\d*)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, prot2, xpos2 = match.groups()
 
@@ -152,7 +154,7 @@ def process_plink2_proteins(row):
         prot2 = str(prot2.strip())
 
     elif row['type'] == 'loop':
-        pattern = re.compile(r'(.+?)\((\d+)\)\((\d*)\)')
+        pattern = re.compile(r'(.+?)\((\d+)\)\((\d*)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, xpos2 = match.groups()
         xpos1 = int(xpos1)
@@ -161,7 +163,7 @@ def process_plink2_proteins(row):
         prot2 = prot1
 
     elif row['type'] == 'mono':
-        pattern = re.compile(r'(.+?)\((\d+)\)')
+        pattern = re.compile(r'(.+?)\((\d+)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1 = match.groups()
         xpos1 = int(xpos1)
