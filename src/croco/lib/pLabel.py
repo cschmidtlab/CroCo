@@ -362,9 +362,6 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                             else:
                                 mgf.write(line)
 
-
-
-
 if __name__ == '__main__':
     import sys
     sys.path.append(r'C:\Users\User\Documents\03_software\python\CroCo\src')
