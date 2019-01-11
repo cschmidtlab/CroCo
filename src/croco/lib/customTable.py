@@ -58,7 +58,7 @@ def Write(xtable, outpath, customTemplatePath):
         except Exception as e:
             raise Exception('Could not resolve string from xtable column header: {}'.format(e))
     
-    with open(outpath + '.csv', 'w') as out:
+    with open(hf.FSCompatiblePath(outpath + '.csv'), 'w') as out:
         print('Writing to {}'.format(outpath + '.csv'))
         # write the header
         out.write(Templates[0])

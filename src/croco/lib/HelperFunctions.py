@@ -7,7 +7,21 @@ Created on Mon Jun 18 14:18:32 2018
 
 import pandas as pd
 import numpy as np
+import os
 
+def FSCompatiblePath(raw_path, encoding=None):
+    """
+    Convert paths on Win to overcome the win32 pathlength limit
+    """
+    if encoding is not None:
+        raw_path = raw_path.decode(encoding)
+    path = os.path.abspath(raw_path)
+    if os.name == 'nt':
+        if path.startswith(u"\\\\"):
+            return u"\\\\?\\UNC\\" + path[2:]
+        return u"\\\\?\\" + path 
+    else:
+        return path
 
 def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
     """
@@ -179,7 +193,7 @@ def split_concatenated_lists(dataframe, where, delimiter=';'):
                         # create working copy of row
                         mod_row = row.copy()
                         # replace the original string with one of its constituents
-                        mod_row[w] = element
+                        mod_row[w] = element + delimiter
                         # add an identifier for splitted entries
                         mod_row['split_entry'] = True
                         # append the new row at the bottom of the df
@@ -196,15 +210,3 @@ def split_concatenated_lists(dataframe, where, delimiter=';'):
         dataframe = dataframe.reset_index(drop=True)
 
     return dataframe
-
-if __name__ == '__main__':
-        
-    d = {'one' : ['ProtA', 'ProtB;ProtE;', 'ProtC', 'ProtD'],
-         'two' : [1, 2, 3, 4],
-         'three' : ['ProtA', 'ProtB;ProtE;', 'ProtC', 'ProtD']}
-    
-    my_df = pd.DataFrame(d)
-    
-    print(my_df)
-    
-    print(split_concatenated_lists(my_df, ['one', 'three']))
