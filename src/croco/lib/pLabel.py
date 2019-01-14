@@ -202,7 +202,12 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
         return titles2mgfoffset
 
+    ## Start of WRITE
+
     rawfiles = xtable['rawfile'].unique().tolist()
+
+    if xlinker == '':
+        raise Exception('Please provide a name for the cross-linker')
 
     titles2mgfoffset = ParseMGF(rawfiles, mgfDir)
     allTitles = list(set(titles2mgfoffset.keys()))
