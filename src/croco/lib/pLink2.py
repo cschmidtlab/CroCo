@@ -34,6 +34,8 @@ def plink2peptide2pandas(filepath):
 
         # read the first header-line into list
         headers1 = fh.readline().strip().split(',')
+        # remove potential empty strings due to trailing comma in plink csv file
+        headers1 = [x for x in headers1 if x != '']
         # read the second header-line and remove it from list
         # avoid the first entry as it is only the line-indicator
         headers2 = fh.readline().strip().split(',')[1:]
@@ -56,7 +58,14 @@ def plink2peptide2pandas(filepath):
                 line1_data = line.strip().split(',')
 
             else:
+                # the first element of line2_data is empty
                 line2_data = line.strip().split(',')[1:]
+
+                # raise Ecception if e.g. the protein name contains a comma
+                if (len(line1_data) != len(headers1)) or (len(line2_data) != len(headers2)):
+                    raise Exception('Opening {:s} element {:s}: Number of elements in line does not correspond to number of header elements!'.format(filepath, line1_data[0]))
+
+                # once the second line is reached, all elements are appended
                 for i in range(len(line1_data)):
                     # iterate through the data and link them to their resp
                     # header by index
@@ -424,7 +433,7 @@ def Read(plinkdir, compact=False):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-    
+
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
@@ -434,15 +443,15 @@ if __name__ == '__main__':
     """
     For testing purposes only
     """
-    
+
     col_order = [ 'rawfile', 'scanno', 'prec_ch',
                   'pepseq1', 'xlink1',
                   'pepseq2', 'xlink2', 'xtype',
                   'modmass1', 'modpos1', 'mod1',
                   'modmass2', 'modpos2', 'mod2',
                   'prot1', 'xpos1', 'prot2',
-                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
-    
+                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
+
     init(col_order)
-    
+
     xtable = Read(r'H:\pLink_task_2018.08.13.16.45.46\reports')
