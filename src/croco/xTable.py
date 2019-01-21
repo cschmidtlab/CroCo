@@ -7,10 +7,12 @@ This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
-if __name__ == '__main__':
-    import HelperFunctions as hf
+
+if __name__ == '__main__' or __name__ =='xTable':
+    from HelperFunctions import convertToListOf
 else:
-    from . import HelperFunctions as hf
+    from .HelperFunctions import convertToListOf
+
 
 def init(this_order):
     """
@@ -67,13 +69,13 @@ def Read(inpath):
 
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
-        .applymap(lambda x: hf.convertToListOf(x, float))
+        .applymap(lambda x: convertToListOf(x, float))
 
     xtable[['modpos1', 'modpos2']] = xtable[['modpos1' ,'modpos2']]\
-        .applymap(lambda x: hf.convertToListOf(x, int))
+        .applymap(lambda x: convertToListOf(x, int))
 
     xtable[['mod1', 'mod2']] = xtable[['mod1', 'mod2']]\
-        .applymap(lambda x: hf.convertToListOf(x, str))
+        .applymap(lambda x: convertToListOf(x, str))
 
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 

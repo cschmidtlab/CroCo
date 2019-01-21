@@ -323,13 +323,11 @@ def Read(plinkdir, compact=False):
     ## generate the mod_dict linking pLink modification names to masses
     # in case of calling croco from the source folder structure...
     file_dir, file_name = os.path.split(__file__)
+    print(file_dir, file_name)
     if os.path.exists(os.path.join(file_dir,
-                                   '../data/modification.ini')):
+                                   './data/modification.ini')):
         modifi_dir = os.path.abspath(os.path.join(file_dir,
-                                                  '../data/modification.ini'))
-    # ... or calling from a exe-file in a folder-setup with the data folder at top-level
-    elif os.path.exists('./data/modification.ini'):
-        modifi_dir = os.path.abspath('./data/modification.ini')
+                                                  './data/modification.ini'))
     # ... or calling from within a single bundled exe-file
     else:
         try:

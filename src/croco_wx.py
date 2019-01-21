@@ -94,6 +94,14 @@ class CroCoMainFrame(wx.Frame):
                                                             'file',
                                                             'Please provide a PDB file you want to map the xlinks to.\n'+\
                                                             'No special format is required as only the filename is used'),
+                                                           ('Offset',
+                                                            'input',
+                                                            'Difference between the index in the PDB file and the xTable ' +\
+                                                            '(e.g. 1 for 12 in the xTable and 13 in the PDB)'),
+                                                           ('Chains',
+                                                            'input',
+                                                            'Map chains to protein names (e.g. Protein1:AB, Protein2:C). '+\
+                                                            'Use exactly the same naming scheme as the xTable file'),
                                                            ('PDB Atom code',
                                                             'input',
                                                             'Provide an PDB atom code (e.g. CB) for distance calculation')]],
@@ -312,7 +320,9 @@ class CroCoMainFrame(wx.Frame):
                            style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.theInput = self.currentPath = dlg.GetPath()
+            # self.theInput is always a list of paths
+            self.theInput = [dlg.GetPath()]
+            self.currentPath = dlg.GetPath()
             print('[onInputDir] Loaded {}'.format(self.currentPath))
 
         dlg.Destroy()
@@ -485,6 +495,31 @@ class CroCoOptionsFrame(wx.Frame):
                           title='Options')
 
         self.panel = wx.Panel(self)
+
+        ## setting the icon for the frame
+        # in case of calling croco from the source folder structure...
+        file_dir, file_name = os.path.split(__file__)
+        if os.path.exists(os.path.join(file_dir,
+                                       './croco/data/croco_logo.ico')):
+            iconFile = os.path.abspath(os.path.join(file_dir,
+                                                      './croco/data/croco_logo.ico'))
+        # ... or calling from a exe-file in a folder-setup with the data folder at top-level
+        elif os.path.exists('./croco/data/croco_logo.ico'):
+            iconFile = os.path.abspath('./croco/data/croco_logo.ico')
+        # ... or calling from within a single bundled exe-file
+        else:
+            try:
+                # PyInstaller creates a temp folder and stores its path in _MEIPASS
+                base_path = sys._MEIPASS
+                iconFile =  os.path.abspath(\
+                    os.path.join(base_path, './data/croco_logo.ico'))
+            # ... or something went wrong
+            except:
+                raise Exception('croco_logo.ico not found')
+        ## end setting the icon
+
+        icon = wx.Icon(iconFile, wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icon)
 
         # generate a variable containing the parent to allow pushing back
         # the user-provided input
