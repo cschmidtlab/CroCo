@@ -8,6 +8,11 @@ This script is part of the CroCo cross-link converter project
 
 import pandas as pd
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def Write(xtable, outpath):
     """
     Converts xTable data into cross-link information
@@ -63,7 +68,7 @@ def Write(xtable, outpath):
     # reorder df
     dynamxl = dynamxl[['ID1', 'atom1', 'ID2', 'atom2', 'score']]
 
-    dynamxl.to_csv(outpath + '.txt',
+    dynamxl.to_csv(hf.FSCompatiblePath(outpath + '.txt'),
                    sep = '\t',
                    header=False,
                    float_format='%.3f',

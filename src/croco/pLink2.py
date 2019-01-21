@@ -87,7 +87,7 @@ def plink2peptide2pandas(filepath):
             else:
                 raise Exception('Generated xtable had a length of 0!')
         except:
-            raise Exception('Could not generat xtable. Please check file at: {}'.format(filepath))
+            raise Exception('Could not generate xtable. Please check file at: {}'.format(filepath))  
 
 def process_plink2_title(spec_string):
     """
@@ -147,11 +147,13 @@ def process_plink2_proteins(row):
     """
     Extract protein name and absolute cross-link position from
     pLink protein string e.g.
-    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)
+    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/
+    or (worst-case)
+    Stx1A(1-262)(259)-Stx1A(1-262)(259)/
     """
 
     if row['type'] == 'inter':
-        pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
+        pattern = re.compile('(.+?)\((\d+)\)-(.+?)\((\d*)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, prot2, xpos2 = match.groups()
 
@@ -161,7 +163,7 @@ def process_plink2_proteins(row):
         prot2 = str(prot2.strip())
 
     elif row['type'] == 'loop':
-        pattern = re.compile(r'(.+?)\((\d+)\)\((\d*)\)')
+        pattern = re.compile(r'(.+?)\((\d+)\)\((\d*)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, xpos2 = match.groups()
         xpos1 = int(xpos1)
@@ -170,7 +172,7 @@ def process_plink2_proteins(row):
         prot2 = prot1
 
     elif row['type'] == 'mono':
-        pattern = re.compile(r'(.+?)\((\d+)\)')
+        pattern = re.compile(r'(.+?)\((\d+)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1 = match.groups()
         xpos1 = int(xpos1)
@@ -181,6 +183,14 @@ def process_plink2_proteins(row):
         prot1, xpos1, pepseq2, xpos2 = [np.nan] * 4
 
     return prot1, xpos1, prot2, xpos2
+
+def assignType(plinkType):
+    if plinkType == 'Cross-Linked':
+        return 'inter'
+    elif plinkType == 'Loop-Linked':
+        return 'loop'
+    elif plinkType == 'Mono-Linked':
+        return 'mono'
 
 def calculate_abs_pos(row):
     """
@@ -232,50 +242,40 @@ def Read(plinkdir, compact=False):
     """
 
     ### Collect data, convert to pandas format and merge
-
-    # Initialise file names as None to use implicit booleaness
-    inter_file = None
-    loop_file = None
-    mono_file = None
-
-    for e in os.listdir(plinkdir):
-        if 'filtered_cross-linked_peptides.csv' in e:
-            inter_file = e
-
-        if 'filtered_loop-linked_peptides' in e:
-            loop_file = e
-
-        if 'filtered_mono-linked_peptides' in e:
-            mono_file = e
+    plinkResultFiles = os.listdir(plinkdir)
 
     frames = []
-    # only called if inter_file is not None
-    if inter_file:
-        if os.path.exists(os.path.join(plinkdir, inter_file)):
-            print('Reading pLink inter-file: ' + inter_file)
-            inter_df = plink2peptide2pandas(os.path.join(plinkdir, inter_file))
-            inter_df['type'] = 'inter'
-            frames.append(inter_df)
-    if loop_file:
-        if os.path.exists(os.path.join(plinkdir, loop_file)):
-            print('Reading pLink loop-file: ' + loop_file)
-            loop_df = plink2peptide2pandas(os.path.join(plinkdir, loop_file))
-            loop_df['type'] = 'loop'
-            frames.append(loop_df)
-    if mono_file:
-        if os.path.exists(os.path.join(plinkdir, mono_file)):
-            print('Reading pLink mono-file: ' + mono_file)
-            mono_df =  plink2peptide2pandas(os.path.join(plinkdir, mono_file))
-            mono_df['type'] = 'mono'
-            frames.append(mono_df)
+
+    for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
+        dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
+        for f in dataFiles:
+            if '_peptides.csv' in f:
+                peptidesFile = f
+            if '_spectra.csv' in f:
+                spectraFile = f
+    
+        if os.path.exists(os.path.join(plinkdir, peptidesFile)):
+            print('Reading pLink peptide file: ' + peptidesFile)
+            peptide_df = plink2peptide2pandas(os.path.join(plinkdir, peptidesFile))
+            
+            print('Reading pLink spectra file: ' + spectraFile)
+            spectra_df = pd.read_csv(os.path.join(plinkdir, spectraFile))
+            merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
+                                spectra_df,
+                                on='Title')
+                
+            frames.append(merge_df)
 
     xtable = pd.concat(frames)
-
+    
     ### Convert data inside pandas df
 
     # split title column into three
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
         zip(*xtable['Title'].apply(process_plink2_title))
+
+    # assign the type
+    xtable['type'] = xtable['Peptide_Type'].apply(assignType)
 
     # Directly assign the re group matches into new columns
     xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
@@ -288,6 +288,8 @@ def Read(plinkdir, compact=False):
                               axis=1))
 
     xtable['score'] = xtable['Score']
+    
+    xtable['xlinker'] = xtable['Linker']
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
@@ -370,47 +372,57 @@ def Read(plinkdir, compact=False):
         this_modpos1 = []
         this_modpos2 = []
 
-        # Extract annotations from every item in the modstring
-        for mod in modstr.split(';'):
+        # unmodified peptides
+        if hf.isNaN(modstr):
+            this_modmass1 = ''
+            this_mod1 = ''
+            this_modpos1 = ''
+            
+            this_modmass2 = ''
+            this_mod2 = ''
+            this_modpos2 = ''
+        else:
+            # Extract annotations from every item in the modstring
+            for mod in modstr.split(';'):
+    
+                if pattern.match(mod):
+                    match = pattern.match(mod)
+                    mod, modpos = match.groups()
+    
+                    # transform modification names to masses
+                    try:
+                        mass = mod_dict[mod]
+                    except:
+                        # use the input string if no subsitution found
+                        mass = mod
+    
+                    seqlen1 = len(pepseq1[idx])
+                    # pLink assigns additional modification position to the C-term
+                    # of the first peptide, the xlinker and the N-term of the
+                    # second peptide
+                    if int(modpos) > (seqlen1 + 3):
+                        this_mod2.append(mod)
+                        this_modpos2.append(int(modpos) - (seqlen1 + 3))
+                        this_modmass2.append(mass)
+                    # C-term of first peptide
+                    elif int(modpos) == (seqlen1 + 1):
+                        this_mod2.append(mod)
+                        this_modpos2.append(int(modpos) - 1)
+                        this_modmass2.append(mass)
+                    # cannot assign modifications to xlinker in xTable
+                    elif int(modpos) == (seqlen1 + 2):
+                        pass
+                    # Modification on N-term of second peptide
+                    elif int(modpos) == (seqlen1 + 3):
+                        this_mod2.append(mod)
+                        this_modpos2.append(1)
+                        this_modmass2.append(mass)
+                    else:
+                        this_mod1.append(mod)
+                        this_modpos1.append(modpos)
+                        this_modmass1.append(mass)
 
-            if pattern.match(mod):
-                match = pattern.match(mod)
-                mod, modpos = match.groups()
-
-                # transform modification names to masses
-                try:
-                    mass = mod_dict[mod]
-                except:
-                    # use the input string if no subsitution found
-                    mass = mod
-
-                seqlen1 = len(pepseq1[idx])
-                # pLink assigns additional modification position to the C-term
-                # of the first peptide, the xlinker and the N-term of the
-                # second peptide
-                if int(modpos) > (seqlen1 + 3):
-                    this_mod2.append(mod)
-                    this_modpos2.append(int(modpos) - (seqlen1 + 3))
-                    this_modmass2.append(mass)
-                # C-term of first peptide
-                elif int(modpos) == (seqlen1 + 1):
-                    this_mod2.append(mod)
-                    this_modpos2.append(int(modpos) - 1)
-                    this_modmass2.append(mass)
-                # cannot assign modifications to xlinker in xTable
-                elif int(modpos) == (seqlen1 + 2):
-                    pass
-                # Modification on N-term of second peptide
-                elif int(modpos) == (seqlen1 + 3):
-                    this_mod2.append(mod)
-                    this_modpos2.append(1)
-                    this_modmass2.append(mass)
-                else:
-                    this_mod1.append(mod)
-                    this_modpos1.append(modpos)
-                    this_modmass1.append(mass)
-
-        # multiple modifications of one peptide are stored as ;-delimited strings
+        # multiple modifications of one peptide are stored as lists
         modmass1.append(this_modmass1)
         mod1.append(this_mod1)
         modpos1.append(this_modpos1)
