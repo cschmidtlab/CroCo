@@ -120,24 +120,6 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
         return ' '.join(pepStringElements)
 
-    def GeneratepLabelNameString(rawfile, scanno, prec_ch, rawfiles2titles):
-        """
-        2018_05_04_JB_MINCA5.16826.16826.3.0.DTA
-        """
-
-        rawfile = str(rawfile)
-        scanno = str(int(scanno))
-        prec_ch = str(int(prec_ch))
-
-        allTitles = rawfiles2titles[rawfile]
-
-        for title in allTitles:
-            if title.startswith('.'.join([rawfile,
-                                scanno,
-                                scanno,
-                                prec_ch])):
-                return title.upper()
-
     def ParseMGF(filenames, mgfDir):
         """
         Parse all mgf files matching to a list of filenames and extract all
@@ -210,7 +192,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         raise Exception('Please provide a name for the cross-linker')
 
     titles2mgfoffset = ParseMGF(rawfiles, mgfDir)
-    allTitles = list(set(titles2mgfoffset.keys()))
+    allTitles = list(titles2mgfoffset.keys())
 
     if not mergepLabel:
 
@@ -247,14 +229,28 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
                     scanno = str(int(row['scanno']))
                     prec_ch = str(int(row['prec_ch']))
-                    
+
                     title = ''
-                    for t in allTitles:
+                    nothingFound = True
+
+                    for idx, t in enumerate(allTitles):
                         # add the scanno twice to the search string to avoid
                         # matching of substrings e.g. 2516 to 25164
                         if '.'.join([rf, scanno, scanno, prec_ch]).upper() in t:
                             title = t
-                    
+                            # set the variable to check if any matching title
+                            # was found for a row
+                            nothingFound = False
+                            # remove the title from the list to avoid setting
+                            # the same title twice
+                            del allTitles[idx]
+                            # leave the loop once the title has been removed
+                            break
+
+                    if nothingFound:
+                        raise Exception('[pLabel writer] couldnt find a matching spectrum for {}'.\
+                                            format('.'.join([rf, scanno, scanno, prec_ch]).upper()))
+
                     # Generate the spectrum title as used by pLabel from
                     # rawfile name, scanno and precursor charge
                     out.write('name={}\n'.format(title))
@@ -279,7 +275,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
         filesWithOffsetToCopy = []
 
-        print('Opening {} to write'.format(outfile))
+        print('[pLabel] Opening {} to write'.format(outfile))
         with open(outfile, 'w') as plabel:
 
             plabel.write('[FilePath]\n')
@@ -316,17 +312,31 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     prec_ch = str(int(row['prec_ch']))
 
                     title = ''
-                    for t in allTitles:
+                    nothingFound = True
+                    for idx, t in enumerate(allTitles):
                         # add the scanno twice to the search string to avoid
                         # matching of substrings e.g. 2516 to 25164
                         if '.'.join([rf, scanno, scanno, prec_ch]).upper() in t:
                             title = t
+                            # save the position of each title in the MGF file
+                            # for MGF-file merging
+                            filesWithOffsetToCopy.append(titles2mgfoffset[title])
+                            # set the variable to check if any matching title
+                            # was found for a row
+                            nothingFound = False
+                            # remove the title from the list to avoid setting
+                            # the same title twice
+                            del allTitles[idx]
+                            # leave the loop once the title has been removed
+                            break
+
+                    if nothingFound:
+                        raise Exception('[pLabel writer] couldnt find a matching spectrum for {}'.\
+                                            format('.'.join([rf, scanno, scanno, prec_ch]).upper()))
 
                     # Generate the spectrum title as used by pLabel from
                     # rawfile name, scanno and precursor charge
                     toWrite += ('name={}\n'.format(title))
-
-                    filesWithOffsetToCopy.append(titles2mgfoffset[title])
 
                     toWrite += ('pep1={}\n'.format(GeneratepLabelPepString(row['type'],
                                                                          row['xlink1'],
@@ -341,7 +351,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                                                                          mods2num)))
                     plabel.write(toWrite)
 
-
+        print('[pLabel] Merging MGF files')
         # Generate merged MGF file containing only the matching spectra
         print('Opening {} to write'.format(outMGF))
         with open(outMGF, 'w') as mgf:
