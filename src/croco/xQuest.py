@@ -69,7 +69,7 @@ def Read(xquest_file, compact=False):
 
     # only called if inter_file is not None
     try:
-        xquest = pd.read_csv(xquest_file,
+        xquest = pd.read_csv(hf.FSCompatiblePath(xquest_file),
                              delimiter='\t')
     except:
         raise(FileNotFoundError('xQuest results file not found'))

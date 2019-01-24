@@ -9,9 +9,9 @@ This script is part of the CroCo cross-link converter project
 import pandas as pd
 
 if __name__ == '__main__' or __name__ =='xTable':
-    from HelperFunctions import convertToListOf
+    from HelperFunctions import convertToListOf, FSCompatiblePath
 else:
-    from .HelperFunctions import convertToListOf
+    from .HelperFunctions import convertToListOf, FSCompatiblePath
 
 
 def init(this_order):
@@ -50,7 +50,7 @@ def Write(xtable, outpath, keep=True):
     elif keep is False:
         xtable = xtable[col_order]
 
-    xtable.to_excel(outpath + '.xlsx',
+    xtable.to_excel(FSCompatiblePath(outpath) + '.xlsx',
                     index=False)
 
 
@@ -65,7 +65,7 @@ def Read(inpath):
         xtable: xTable dataframe object
     """
 
-    xtable = pd.read_excel(inpath)
+    xtable = pd.read_excel(FSCompatiblePath(inpath))
 
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\

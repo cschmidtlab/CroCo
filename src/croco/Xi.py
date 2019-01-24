@@ -74,7 +74,7 @@ def Read(xi_file, compact=False):
 
     print('Reading xi-file: {}'.format(xi_file))
 
-    data = pd.read_csv(xi_file, delimiter=',')
+    data = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',')
 
     ### Process the data to comply to xTable format
     xtable = data.rename(columns={'Scan': 'scanno',

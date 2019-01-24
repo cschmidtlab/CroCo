@@ -177,7 +177,7 @@ def Read(plinkdir, compact=False):
     loop_file = None
     mono_file = None
 
-    for e in os.listdir(plinkdir):
+    for e in os.listdir(hf.FSCompatiblePath(plinkdir)):
         if '_inter_combine.protein.xls' in e:
             inter_file = e
 
@@ -191,17 +191,17 @@ def Read(plinkdir, compact=False):
     # only called if inter_file is not None
     if inter_file:
         print('Reading pLink inter-file: ' + inter_file)
-        inter_df = plinkprotein2pandas(os.path.join(plinkdir, inter_file))
+        inter_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, inter_file)))
         inter_df['type'] = 'inter'
         frames.append(inter_df)
     if loop_file:
         print('Reading pLink loop-file: ' + loop_file)
-        loop_df = plinkprotein2pandas(os.path.join(plinkdir, loop_file))
+        loop_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, loop_file)))
         loop_df['type'] = 'loop'
         frames.append(loop_df)
     if mono_file:
         print('Reading pLink mono-file: ' + mono_file)
-        mono_df =  plinkprotein2pandas(os.path.join(plinkdir, mono_file))
+        mono_df =  plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, mono_file)))
         mono_df['type'] = 'mono'
         frames.append(mono_df)
 

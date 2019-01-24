@@ -40,7 +40,7 @@ def Read(xifdr_file, xi_file, compact=False):
 
     print('Reading xiFDR-file: {}'.format(xifdr_file))
 
-    xifdr = pd.read_csv(xifdr_file, delimiter=',')
+    xifdr = pd.read_csv(hf.FSCompatiblePath(xifdr_file), delimiter=',')
 
     xifdr.rename(columns={'run': 'Run',
                           'scan': 'Scan',
@@ -49,7 +49,7 @@ def Read(xifdr_file, xi_file, compact=False):
 
     print('Reading xi-file: {}'.format(xi_file))
 
-    xiraw = pd.read_csv(xi_file, delimiter=',')
+    xiraw = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',')
 
     # Merge with left join (only keys that are in tje percolated DF will be re-
     # tained)

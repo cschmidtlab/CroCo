@@ -242,7 +242,7 @@ def Read(plinkdir, compact=False):
     """
 
     ### Collect data, convert to pandas format and merge
-    plinkResultFiles = os.listdir(plinkdir)
+    plinkResultFiles = os.listdir(hf.FSCompatiblePath(plinkdir))
 
     frames = []
 
@@ -256,10 +256,10 @@ def Read(plinkdir, compact=False):
     
         if os.path.exists(os.path.join(plinkdir, peptidesFile)):
             print('Reading pLink peptide file: ' + peptidesFile)
-            peptide_df = plink2peptide2pandas(os.path.join(plinkdir, peptidesFile))
+            peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, peptidesFile)))
             
             print('Reading pLink spectra file: ' + spectraFile)
-            spectra_df = pd.read_csv(os.path.join(plinkdir, spectraFile))
+            spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(plinkdir, spectraFile)))
             merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
                                 spectra_df,
                                 on='Title')

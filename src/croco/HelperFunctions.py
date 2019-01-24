@@ -13,13 +13,15 @@ def FSCompatiblePath(raw_path, encoding=None):
     """
     Convert paths on Win to overcome the win32 pathlength limit
     """
-    if encoding is not None:
+    if (not isinstance(raw_path, str) and 
+        encoding is not None):
         raw_path = raw_path.decode(encoding)
     path = os.path.abspath(raw_path)
-    if os.name == 'nt':
+    if (os.name == 'nt') and (len(path) > 255):
+        print('[FSCompatiblePath] converting to Windows extended path')
         if path.startswith(u"\\\\"):
             return u"\\\\?\\UNC\\" + path[2:]
-        return u"\\\\?\\" + path 
+        return u"\\\\?\\" + path
     else:
         return path
 

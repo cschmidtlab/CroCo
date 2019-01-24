@@ -63,7 +63,7 @@ def Read(perc_file, percolator_string='.validated', decoy_string='REVERSE', rawf
 
     # only called if inter_file is not None
 
-    percolated = pd.read_csv(perc_file,
+    percolated = pd.read_csv(hf.FSCompatiblePath(perc_file),
                              delimiter='\t',
                              usecols=range(5),
                              index_col=False, # avoid taking the first col as index
@@ -76,7 +76,7 @@ def Read(perc_file, percolator_string='.validated', decoy_string='REVERSE', rawf
     print('Reading Percolator input: ' + unperc_file)
 
     try:
-        unpercolated = pd.read_csv(unperc_file,
+        unpercolated = pd.read_csv(hf.FSCompatiblePath(unperc_file),
                                   delimiter = '\t',
                                   usecols=range(10),
                                   engine='python',
@@ -95,7 +95,7 @@ def Read(perc_file, percolator_string='.validated', decoy_string='REVERSE', rawf
     print('Reading Kojak-file: ' + kojak_file)
 
     try:
-        kojak = pd.read_csv(kojak_file,
+        kojak = pd.read_csv(hf.FSCompatiblePath(kojak_file),
                             skiprows = 1, # skip the Kojak version
                             delimiter='\t')
     except:

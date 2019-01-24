@@ -316,7 +316,7 @@ def Read(stavrox_file, ssf_file, compact=False):
     print('Reading StavroX-file: {}'.format(stavrox_file))
 
     # Reassign the column headers to avoid duplicate From and To fields
-    data = pd.read_csv(stavrox_file,
+    data = pd.read_csv(hf.FSCompatiblePath(stavrox_file),
                        delimiter=';',
                        header=0,
                        index_col = False,
@@ -390,7 +390,7 @@ def Read(stavrox_file, ssf_file, compact=False):
     xtable['xpos2'] =\
         np.vectorize(calc_xpos2)(xtable['type'], xtable['pos1'], xtable['pos2'], xtable['xlink2'])
 
-    mod2mass, mod2name = ParseSSF(ssf_file)
+    mod2mass, mod2name = ParseSSF(hf.FSCompatiblePath(ssf_file))
 
     # Extract the modification mass and position from the peptide string
     xtable['mod1'], xtable['modpos1'], xtable['modmass1'],\

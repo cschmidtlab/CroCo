@@ -138,7 +138,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         localMGFFiles = []
 
         # collect mgf file names in mgfDir
-        for file in os.listdir(mgfDir):
+        for file in os.listdir(hf.FSCompatiblePath(mgfDir)):
             if file.endswith('.mgf'):
                 localMGFFiles.append(file)
 
@@ -161,7 +161,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         # parse the mgf files for titles
         for f in mgfToOpen:
             mgfFile = os.path.join(mgfDir, f)
-            with open(mgfFile) as inf:
+            with open(hf.FSCompatiblePath(mgfFile)) as inf:
                 offset_last = 0
                 offset_before_last = 0
                 for line in inf.readlines():
@@ -202,7 +202,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
             # separate per type within rawfile
             outfile = os.path.join(outpath + '_' + rf + '.pLabel')
             print('Opening {} to write'.format(outfile))
-            with open(outfile, 'w') as out:
+            with open(hf.FSCompatiblePath(outfile), 'w') as out:
                 out.write('[FilePath]\n')
                 out.write('File_Path=' + os.path.join(mgfDir, rf + '.mgf\n'))
 
@@ -276,7 +276,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         filesWithOffsetToCopy = []
 
         print('[pLabel] Opening {} to write'.format(outfile))
-        with open(outfile, 'w') as plabel:
+        with open(hf.FSCompatiblePath(outfile), 'w') as plabel:
 
             plabel.write('[FilePath]\n')
             plabel.write('File_Path=' + outMGF + '\n')
@@ -354,10 +354,10 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         print('[pLabel] Merging MGF files')
         # Generate merged MGF file containing only the matching spectra
         print('Opening {} to write'.format(outMGF))
-        with open(outMGF, 'w') as mgf:
+        with open(hf.FSCompatiblePath(outMGF), 'w') as mgf:
             templates = set([file for file, offset in filesWithOffsetToCopy])
             for template in templates:
-                with open(template, 'r') as t:
+                with open(hf.FSCompatiblePath(template), 'r') as t:
                     print('Opening {} to read'.format(template))
 
                     offsets = []
