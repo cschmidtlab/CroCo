@@ -246,25 +246,37 @@ def Read(plinkdir, compact=False):
 
     frames = []
 
+    foundPeptidesFile = False
+    foundSpectraFile = False
     for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
         dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
         for f in dataFiles:
             if '_peptides.csv' in f:
                 peptidesFile = f
+                foundPeptidesFile = True
+                
+                print('Reading pLink peptide file: ' + peptidesFile)
+                peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, peptidesFile)))
             if '_spectra.csv' in f:
                 spectraFile = f
-    
-        if os.path.exists(os.path.join(plinkdir, peptidesFile)):
-            print('Reading pLink peptide file: ' + peptidesFile)
-            peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, peptidesFile)))
-            
-            print('Reading pLink spectra file: ' + spectraFile)
-            spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(plinkdir, spectraFile)))
+                foundSpectraFile = True               
+ 
+                print('Reading pLink spectra file: ' + spectraFile)
+                spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(plinkdir, spectraFile)))
+
+        if foundPeptidesFile and foundSpectraFile:
             merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
                                 spectra_df,
                                 on='Title')
-                
-            frames.append(merge_df)
+        else:
+            if foundPeptidesFile:
+                raise Exception('[pLink2 Read] Could not find spectra file.')
+            elif foundSpectraFile:
+                raise Exception('[pLink2 Read] Could not find peptide file')
+            else:
+                raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
+            
+        frames.append(merge_df)
 
     xtable = pd.concat(frames)
     
@@ -351,9 +363,9 @@ def Read(plinkdir, compact=False):
     Modifications = xtable['Modifications'].tolist()
 
     if len(pepseq1) == len(Modifications):
-        print('Len of pepseq1 and Modification match!')
+        print('[pLink2 Read] Len of pepseq1 and Modification match!')
     else:
-        print('Len of pepseq1 and Modification dont match!')
+        raise Exception('[pLink2 Read] Len of pepseq1 and Modification dont match!')
 
     modmass1 = []
     mod1 = []

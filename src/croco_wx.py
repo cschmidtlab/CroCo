@@ -376,6 +376,7 @@ class CroCoMainFrame(wx.Frame):
     def Warning(self, message, caption = 'Warning!'):
         print('[WARN] {}'.format(message))
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_WARNING)
+        del self.wait
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -427,7 +428,7 @@ class CroCoMainFrame(wx.Frame):
         was_error = False
 
         # Displays a busy cursor during the run of the programme
-        wait = wx.BusyCursor()
+        self.wait = wx.BusyCursor()
 
         for f in self.theInput:
             try:
@@ -474,7 +475,7 @@ class CroCoMainFrame(wx.Frame):
                 was_error = True
                 break
         # ends busy cursor
-        del wait
+        del self.wait
 
         if not was_error:
             self.Info('File(s) successfully written ' +
