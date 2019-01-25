@@ -60,43 +60,56 @@ def rawfile_from_source(source_str):
         else:
             raise Exception(e)
 
-def Read(xi_file, compact=False):
+def Read(xi_files, compact=False):
     """
     Collects data from Xi spectrum search and returns an xtable data array.
 
     Args:
-        xi_file: path to xi file
+        xi_file: path or list of paths to xi file(s)
         compact (bool): Whether to compact the columns to only the xTable specified columns or not
 
     Returns:
         xtable: xtable data table
     """
 
-    print('Reading xi-file: {}'.format(xi_file))
+    # convert to list if the input is only a single path
+    if not isinstance(xi_files, list):
+        xi_files = [xi_files]
+    
+    allData = list()
+    
+    for file in xi_files:
 
-    data = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',')
+        print('Reading xi-file: {}'.format(file))
+        try:
+            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',')
+            allData.append(s)
+        except:
+            raise Exception('[xTable Read] Failed opening file: {}'.format(file))
 
+    xtable = pd.concat(allData)
+    
     ### Process the data to comply to xTable format
-    xtable = data.rename(columns={'Scan': 'scanno',
-                                  'PrecoursorCharge': 'prec_ch',
-                                  'BasePeptide1': 'pepseq1',
-                                  'ProteinLink1': 'xpos1',
-                                  'BasePeptide2': 'pepseq2',
-                                  'ProteinLink2': 'xpos2',
-                                  'ModificationMasses1': 'modmass1',
-                                  'ModificationMasses2': 'modmass2',
-                                  'Modifications1': 'mod1',
-                                  'Modifications2': 'mod2',
-                                  'Protein1': 'prot1',
-                                  'Protein2': 'prot2',
-                                  'Start1': 'pos1',
-                                  'Start2': 'pos2',
-                                  'Link1': 'xlink1',
-                                  'Link2': 'xlink2',
-                                  'ModificationPositions1': 'modpos1',
-                                  'ModificationPositions2': 'modpos2',
-                                  'match score': 'score'
-                                  })
+    xtable = xtable.rename(columns={'Scan': 'scanno',
+                                   'PrecoursorCharge': 'prec_ch',
+                                   'BasePeptide1': 'pepseq1',
+                                   'ProteinLink1': 'xpos1',
+                                   'BasePeptide2': 'pepseq2',
+                                   'ProteinLink2': 'xpos2',
+                                   'ModificationMasses1': 'modmass1',
+                                   'ModificationMasses2': 'modmass2',
+                                   'Modifications1': 'mod1',
+                                   'Modifications2': 'mod2',
+                                   'Protein1': 'prot1',
+                                   'Protein2': 'prot2',
+                                   'Start1': 'pos1',
+                                   'Start2': 'pos2',
+                                   'Link1': 'xlink1',
+                                   'Link2': 'xlink2',
+                                   'ModificationPositions1': 'modpos1',
+                                   'ModificationPositions2': 'modpos2',
+                                   'match score': 'score'
+                                   })
 
     xtable['rawfile'] = xtable['Source'].apply(rawfile_from_source)
 

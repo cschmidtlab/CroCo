@@ -17,6 +17,8 @@ import wx.adv
 import croco
 #from pandas import read_csv
 
+
+
 class CroCoMainFrame(wx.Frame):
 
     def __init__(self):
@@ -454,7 +456,7 @@ class CroCoMainFrame(wx.Frame):
                 else:
                     print('[onRun] No extra input arguments provided.')
                     xtable = self.availReads[self.theReadFormat][0](f)
-                print('[onRun] Table successfully read: {}'.format(f))
+                print('[onRun] Table(s) successfully read: {}'.format(', '.join(f)))
             except Exception as e:
                 self.Warning('Error while reading Input-file: ' + str(e))
 
@@ -471,6 +473,7 @@ class CroCoMainFrame(wx.Frame):
 
             # set filename for output file
             fileString = '_'.join([os.path.splitext(os.path.basename(x))[0] for x in f])
+            fileString = croco.HelperFunctions.alphanum_string(fileString)
             fname = fileString + '_' + self.theReadFormat +\
                     '_to_' + self.theWriteFormat
 

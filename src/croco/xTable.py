@@ -29,7 +29,6 @@ def Write(xtable, outpath, keep=True):
         xtable: data table structure
         outpath to write file (w/o file extension!)
         keep (optional): whether to restrict columns to the defined xTable cols
-
     """
 
     def convert_list(entry):
@@ -54,19 +53,31 @@ def Write(xtable, outpath, keep=True):
                     index=False)
 
 
-def Read(inpath):
+def Read(xTable_files):
     """
     Read an xTable data structure form file
 
     Args:
-        inpath: path to the xtable file
+        xTable_files: path to the xtable file(s)
 
     Returns:
         xtable: xTable dataframe object
     """
 
-    xtable = pd.read_excel(FSCompatiblePath(inpath))
-
+    # convert to list if the input is only a single path
+    if not isinstance(xTable_files, list):
+        xTable_files = [xTable_files]
+    
+    allData = list()
+    
+    for file in xTable_files:
+        try:
+            s = pd.read_excel(FSCompatiblePath(file))
+            allData.append(s)
+        except:
+            raise Exception('[xTable Read] Failed opening file: {}'.format(file))
+    
+    xtable = pd.concat(allData)
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
         .applymap(lambda x: convertToListOf(x, float))

@@ -38,12 +38,12 @@ def calc_pos_from_xpos(xpos, xlink):
 
     return xpos - xlink + 1
 
-def Read(kojak_file, rawfile=None, compact=False, decoy_string='REVERSE'):
+def Read(kojak_files, rawfile=None, compact=False, decoy_string='REVERSE'):
     """
     reads pLink results file and returns an xtable data array.
 
     Args:
-        kojak_file: path to Kojak results file
+        kojak_file: path or paths to Kojak results file(s)
         rawfile: name of the corresponding rawfile
         decoy_string (optional): string used in kojak to label decoys
 
@@ -51,15 +51,27 @@ def Read(kojak_file, rawfile=None, compact=False, decoy_string='REVERSE'):
         xtable data table
     """
 
-    print('Reading Kojak-file: ' + kojak_file)
+    # convert to list if the input is only a single path
+    if not isinstance(kojak_files, list):
+        kojak_files = [kojak_files]
 
-    # only called if kojak_file is not None
-    if os.path.isfile(kojak_file):
-        xtable = pd.read_csv(hf.FSCompatiblePath(kojak_file),
-                           skiprows = 1, # skip the Kojak version
-                           delimiter='\t')
-    else:
-        return FileNotFoundError('Kojak txt file not found: {}'.format(kojak_file))
+    allData = list()
+
+    for file in kojak_files:
+
+
+        print('Reading Kojak-file: ' + kojak_file)
+
+        # only called if kojak_file is not None
+        try:
+            s = pd.read_csv(hf.FSCompatiblePath(kojak_file),
+                                 skiprows = 1, # skip the Kojak version
+                                 delimiter='\t')
+            allData.append(s)
+        except:
+            raise Exception('[xTable Read] Failed opening file: {}'.format(file))
+
+    xtable = pd.concat(allData)
 
     # remove lines containing non-identified PSMs (marked with '-' in both
     # Link columns

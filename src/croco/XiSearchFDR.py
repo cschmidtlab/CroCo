@@ -30,22 +30,33 @@ def Read(xifdr_file, xi_file, compact=False):
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.
 
     Args:
+        xifdr_file: results file from xiFDR (contains PSM_xiFDR)
         xi_file: path to percolated Kojak file
-        xifdr_file: results file from xiFDR (e.g. PSM_xiFDR)
         keep (bool): Whether to keep the columns of the original dataframe or not
 
     Returns:
         xtable: xtable data table
     """
+    
+    if isinstance(xifdr_file, list):
+        if len(xifdr_file) > 1:
+            raise Exception('[xiFDR Read] Sorry! Only one xiFDR file per conversion is allowed to unambiguously relate it to a xi-file')
+        xifdr_file = xifdr_file[0]
+
+    if not 'PSM_xiFDR' in xifdr_file:
+        raise Exception('[xiFDR Read] The string "PSM_xiFDR" is missing in your input file. Did you choose the right file?')
 
     print('Reading xiFDR-file: {}'.format(xifdr_file))
 
-    xifdr = pd.read_csv(hf.FSCompatiblePath(xifdr_file), delimiter=',')
-
-    xifdr.rename(columns={'run': 'Run',
-                          'scan': 'Scan',
-                          'Protein1': 'Protein1_FDR',
-                          'Protein2': 'Protein2_FDR'}, inplace=True)
+    try:
+        xifdr = pd.read_csv(hf.FSCompatiblePath(xifdr_file), delimiter=',')
+    
+        xifdr.rename(columns={'run': 'Run',
+                              'scan': 'Scan',
+                              'Protein1': 'Protein1_FDR',
+                              'Protein2': 'Protein2_FDR'}, inplace=True)
+    except Exception as e:
+        raise Exception('[xiFDR Read] Error while reading the xiFDR file: {}'.format(e))
 
     print('Reading xi-file: {}'.format(xi_file))
 
