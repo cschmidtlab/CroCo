@@ -300,12 +300,12 @@ def ParseSSF(ssf_file):
 
     return mod2mass, mod2name
 
-def Read(stavrox_file, ssf_file, compact=False):
+def Read(stavrox_files, ssf_file, compact=False):
     """
     Collects data from StavroX spectrum search and returns an xtable data array.
 
     Args:
-        stavrox_file: path to StavroX output file
+        stavrox_files: path to StavroX output file
         ssf_file: properties.ssf to load modification IDs and masses
         keep (bool): Whether to keep the columns of the original dataframe or not
 
@@ -313,50 +313,65 @@ def Read(stavrox_file, ssf_file, compact=False):
         xtable: xtable data table
     """
 
-    print('Reading StavroX-file: {}'.format(stavrox_file))
+    # convert to list if the input is only a single path
+    if not isinstance(stavrox_files, list):
+        stavrox_files = [stavrox_files]
+    
+    allData = list()
+    
+    for file in stavrox_files:
 
-    # Reassign the column headers to avoid duplicate From and To fields
-    data = pd.read_csv(hf.FSCompatiblePath(stavrox_file),
-                       delimiter=';',
-                       header=0,
-                       index_col = False,
-                       names = ['Score',
-                                'm/z',
-                                'Charge',
-                                'M+H+',
-                                'Calculated MassDeviation in ppm',
-                                'Deviation in ppm',
-                                'Peptide 1',
-                                'Protein 1',
-                                'Protein 1 From',
-                                'Protein 1 To',
-                                'Peptide 2',
-                                'Protein 2',
-                                'Protein 2 From',
-                                'Protein 2 To',
-                                'Scan number',
-                                'is Selected in Table',
-                                'Candidate identifier',
-                                'Folder Number',
-                                'Retention time in sec',
-                                'miscellaneous',
-                                'best linkage position peptide 1',
-                                'best linkage position peptide 2',
-                                'All linkage positions',
-                                'Spectrum UUID',
-                                'local False discovery rate',
-                                'Unknown'])
+        print('Reading StavroX-file: {}'.format(stavrox_files))
 
+        try:
+            # Reassign the column headers to avoid duplicate From and To fields
+            s = pd.read_csv(hf.FSCompatiblePath(file),
+                               delimiter=';',
+                               header=0,
+                               index_col = False,
+                               names = ['Score',
+                                        'm/z',
+                                        'Charge',
+                                        'M+H+',
+                                        'Calculated MassDeviation in ppm',
+                                        'Deviation in ppm',
+                                        'Peptide 1',
+                                        'Protein 1',
+                                        'Protein 1 From',
+                                        'Protein 1 To',
+                                        'Peptide 2',
+                                        'Protein 2',
+                                        'Protein 2 From',
+                                        'Protein 2 To',
+                                        'Scan number',
+                                        'is Selected in Table',
+                                        'Candidate identifier',
+                                        'Folder Number',
+                                        'Retention time in sec',
+                                        'miscellaneous',
+                                        'best linkage position peptide 1',
+                                        'best linkage position peptide 2',
+                                        'All linkage positions',
+                                        'Spectrum UUID',
+                                        'local False discovery rate',
+                                        'Unknown'])
+    
+            allData.append(s)
+        except:
+            raise Exception('[StavroX Read] Failed opening file: {}'.format(file))
+    
+    xtable = pd.concat(allData)
+    
     ### Process the data to comply to xTable format
-    xtable = data.rename(columns={'Scan': 'scanno',
-                                  'Charge': 'prec_ch',
-                                  'Protein 1 From': 'pos1',
-                                  'Protein 2 From': 'pos2',
-                                  'Score': 'score'
-                                  })
+    xtable = xtable.rename(columns={'Scan': 'scanno',
+                                    'Charge': 'prec_ch',
+                                    'Protein 1 From': 'pos1',
+                                    'Protein 2 From': 'pos2',
+                                    'Score': 'score'
+                                    })
 
     # calculate the type of line (i.e. mono, loop, intra or inter)
-    xtable['type'] = np.vectorize(type_from_proteins)(data['Protein 1'], data['Protein 2'])
+    xtable['type'] = np.vectorize(type_from_proteins)(xtable['Protein 1'], xtable['Protein 2'])
 
     # Set pos1 to 1 if Nterminal cross-link
     xtable.loc[(xtable['type'] != 'mono') & (xtable['pos1'] == 0), ['pos1', 'pos2']] = 1
@@ -365,22 +380,22 @@ def Read(stavrox_file, ssf_file, compact=False):
     # Extract the Peptide sequence e.g. from [KPDT]AGT]
     #xtable[['pepseq1', 'pepseq2']] = data[['Peptide 1', 'Peptide 2']].apply(pepseqs_from_peptides, axis=1)
     xtable['pepseq1'], xtable['pepseq2'] =\
-        np.vectorize(pepseqs_from_peptides)(data['Peptide 1'], data['Peptide 2'])
+        np.vectorize(pepseqs_from_peptides)(xtable['Peptide 1'], xtable['Peptide 2'])
 
     # extract rawfile name and scan no from the Scan header e.g.
     # 20180518_JB_jb05a_m100.10636.10636.2.dta
     xtable['rawfile'], xtable['scanno'] =\
-        zip(*data['Scan number'].apply(rawfile_and_scanno_from_Scan))
+        zip(*xtable['Scan number'].apply(rawfile_and_scanno_from_Scan))
 
     # remove for example preceding > in UniProt headers
-    xtable['prot1'] = data['Protein 1'].apply(clear_protname)
-    xtable['prot2'] = data['Protein 2'].apply(clear_protname)
+    xtable['prot1'] = xtable['Protein 1'].apply(clear_protname)
+    xtable['prot2'] = xtable['Protein 2'].apply(clear_protname)
 
     # Best linkage position also contains the linked AA (that is already given
     # by sequence and link position)
     # --> xtract only the numerical part
-    xtable['xlink1'] = data['best linkage position peptide 1'].apply(clear_xlink)
-    xtable['xlink2'] = data['best linkage position peptide 2'].apply(clear_xlink)
+    xtable['xlink1'] = xtable['best linkage position peptide 1'].apply(clear_xlink)
+    xtable['xlink2'] = xtable['best linkage position peptide 2'].apply(clear_xlink)
 
     # calculate absolute position of xlink as sum of start of peptide
     # and relative position of the xlink
@@ -395,7 +410,7 @@ def Read(stavrox_file, ssf_file, compact=False):
     # Extract the modification mass and position from the peptide string
     xtable['mod1'], xtable['modpos1'], xtable['modmass1'],\
     xtable['mod2'], xtable['modpos2'], xtable['modmass2'] =\
-        zip(*data[['Peptide 1', 'Peptide 2']].apply(\
+        zip(*xtable[['Peptide 1', 'Peptide 2']].apply(\
             lambda row: mods_from_peptides(row['Peptide 1'],
                                            row['Peptide 2'],
                                            mod2name,
@@ -446,10 +461,11 @@ if __name__ == '__main__':
                   'pos1', 'pos2', 'decoy']
 
     os.chdir(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX')
-    stavrox_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l50.csv'
+    stavrox_files = [r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l50.csv',
+                     r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l100.csv']
 
     ssf_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\properties.ssf'
-    stvrx = Read(stavrox_file, ssf_file, keep=True)
+    stvrx = Read(stavrox_files, ssf_file, compact=False)
 
     stvrx.to_excel('test.xls',
                    index=False)
