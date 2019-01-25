@@ -515,7 +515,7 @@ class CroCoOptionsFrame(wx.Frame):
 
     def __init__(self, parent):
         wx.Frame.__init__(self,
-                          None,
+                          wx.GetApp().TopWindow,
                           wx.ID_ANY,
                           style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
                           title='Options')
