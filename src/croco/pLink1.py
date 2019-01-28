@@ -3,7 +3,6 @@
 """
 Functions to read pLink1 data.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import numpy as np
@@ -20,18 +19,20 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI. No function if calling directly.
     """
     global col_order
     col_order = this_order
 
 def plinkprotein2pandas(filepath):
     """
-    Read a pLink protein results file and return a pandas dictionary
+    Read a pLink protein results file and return a pandas dictionary.
 
-    :params: filepath: Path to a pLink results file e.g. _inter_combine.protein.xls
+    Args:
+        filepath (str): Path to a pLink results file e.g. _inter_combine.protein.xls
 
-    :returns: pandas dataframe
+    Returns:
+        pandas.DataFrame
     """
     with open(filepath, 'r') as fh:
 
@@ -99,9 +100,11 @@ def read_plink_modifications(filepath):
     Open a pLink modification.ini file and extract all modifications with
     their names as dict.
     
-    :params: filepath: Path to modifications.ini
+    Args:
+        filepath (str): Path to modifications.ini
     
-    :returns: mod_dict: Dict mapping names to masses
+    Returns
+        dict: mod_dict mapping pLink modification names to masses
     """
     
     pattern = re.compile(r'^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+')
@@ -121,7 +124,10 @@ def process_plink_sequence(seq_string):
     Extract peptide sequences and cross-link positions from
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
 
-    :returns: list of pepseq1, pepseq2, xpos1, xpos2, xtype
+    Args:
+        seq_string (str): pLink sequence string
+    Returns:
+        list or np.nan: [pepseq1, pepseq2, xpos1, xpos2, xtype]
     """
     pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
     try:
@@ -135,10 +141,14 @@ def process_plink_sequence(seq_string):
 
 def process_plink_spectrum(spec_string):
     """
-    Extract rawfile name, precursor charge and scan no from pLink sequence
-    string
+    Extract rawfile name, precursor charge and scan no from pLink spectrum
+    string such as 2017_08_04_SVs_BS3_16.17079.17079.4.dta
 
-    :returns: list of rawfile, scanno, prec_ch
+    Args:
+        spec_string: pLink spectrum string
+
+    Returns:
+        list or np.nan: [rawfile, scanno, prec_ch]
     """
     pextract_pattern = re.compile('(.+)\.(\d+)\.\d+\.(\d+)\.dta')
     if pextract_pattern.match(spec_string):
@@ -153,21 +163,28 @@ def process_plink_proteins(prot_string):
     Extract protein name and absolute cross-link position from
     pLink protein string e.g.
     sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)
+    
+    Args:
+        prot_string: pLink protein string
+    
+    Returns:
+        list or np.nan: [prot1, xpos1, prot2, xpos2]
     """
     pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
     match = pattern.match(prot_string)
     return match.groups()
 
-def Read(plinkdir, compact=False):
+def Read(plinkdir, col_order=None, compact=False):
     """
-    reads pLink report dir and returns an xtabel data array.
+    Read pLink report dir and return an xtabel data array.
 
     Args:
         plinkdir: plink report subdir (e.g. sample1)
-        keep (bool): Whether to keep the columns of the original dataframe or not
+        col_order (list) – List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Compact the xTable to only the columns given in col_order or not
 
     Returns:
-        xtable: data table
+        pandas.DataFrame: xTable data table
     """
 
     ### Collect data, convert to pandas format and merge

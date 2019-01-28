@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 18 14:18:32 2018
-
-@author: User
+HelperFunctions: Function that are used in multiple modules of CroCo
 """
 
 import pandas as pd
@@ -61,7 +59,10 @@ def applyColOrder(xtable, col_order, compact):
     
         xtable = xtable[new_order]
     elif compact is True:
-        xtable = xtable[col_order]
+        try:
+            xtable = xtable[col_order]
+        except Exception as e:
+            raise Exception('[ApplyColOrder] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
     else:
         raise Exception('Compact argument passed to applyColOrder must be either True or False')
     

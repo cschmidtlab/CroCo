@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to read Kojak data.
+Functions to read xQuest data.
 
-This script is part of the CroCo cross-link converter project
 """
 
 
@@ -19,17 +18,22 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI. No function if calling directly.
     """
     global col_order
     col_order = this_order
 
 def process_xQuest_spectrum(spec_string):
     """
-    Extract rawfile name, precursor charge and scan no from xQuest sequence
+    Extract rawfile name, precursor charge and scan no from xQuest spectrum
     string
 
-    :returns: list of rawfile, scanno, prec_ch
+    Args:
+        spec_string: xQuest spectrum string
+    Returns:
+        str or np.nan: rawfile name
+        int or np.nan: scan number
+        int or np.nan: precursor charge
     """
     spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
     if spectrum_pattern.match(spec_string):
@@ -44,6 +48,14 @@ def process_xQuest_Id(Id_string):
     Extract peptide sequence of the alpha (longer) and the beta (shorter)
     peptide as well as the relative positions of the cross-links within
     these sequences from an xQuest Id-string
+    
+    Args:
+        ID_string (str): an xQuest Id-String
+    Returns:
+        str or np.nan: pepseq1
+        str or np.nan: pepseq2
+        int or np.nan: xlink1
+        int or np.nan: xlink2
     """
     Id_pattern = re.compile('(\w+)-(\w+)-a(\d+)-b(\d+)')
     if Id_pattern.match(Id_string):
@@ -58,10 +70,12 @@ def process_xQuest_Id(Id_string):
 def categorizexQuestType(XQType):
     """
     Extract protein name and absolute cross-link position from
-    pLink protein string e.g.
-    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/
-    or (worst-case)
-    Stx1A(1-262)(259)-Stx1A(1-262)(259)/
+    xQuest type string (xlink, loop, mono)
+    
+    Args:
+        XQType (str): xquest type string
+    Returns:
+        str or np.nan: type of cross-link (inter, loop, mono)
     """
 
     if XQType == 'xlink':
@@ -73,15 +87,17 @@ def categorizexQuestType(XQType):
     else:
         return np.nan
 
-def Read(xQuest_files, compact=False):
+def Read(xQuest_files, col_order=None, compact=False):
     """
     Read xQuest results file and return file in xTable format.
 
     Args:
-        xQuest_files: path to xQuest results file(s)
+        xQuest_files (list): path to xQuest results file(s)
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
 
     Returns:
-        xtable: data table
+        pandas.DataFrame: xTable data table
     """
 
     # convert to list if the input is only a single path

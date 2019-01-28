@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to read Percolator prcoesse Kojak data.
-
-This script is part of the CroCo cross-link converter project
+Functions to read Percolator processed Kojak data.
 """
 
 import numpy as np
@@ -18,43 +16,26 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI.
+    No function if calling directly.
     """
     global col_order
     col_order = this_order
 
-def calc_pos_from_xpos(xpos, xlink):
-    """
-    Calculates the absolute position of the first AA of a peptide
-    sequence from the absolute position of the cross-link AA (xpos) its
-    position within the sequence (xlink)
-
-    Returns: pos - Absolute position of AA in sequence
-    """
-    try:
-        if np.isnan(float(xpos)):
-            return np.nan
-
-        xpos = int(xpos)
-        xlink = int(xlink)
-
-        return xpos - xlink + 1
-
-    except Exception as e:
-        print('{}: xpos was {} and xlink was {}'.format(e, xpos, xlink))
-        return np.nan
-
-def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False):
+def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 
     Args:
-        perc_file: path or list of paths to percolated Kojak file(s)
-        percolator_string: user-defined string appended to the percolated filenames
-        rawfile: name of the corresponding rawfile
+        perc_file (str): path or list of paths to percolated Kojak file(s)
+        percolator_string (str): user-defined string appended to the percolated filenames
+        decoy_string (optional): string used in kojak to label decoys
+        rawfile (str): name of the corresponding rawfile
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
 
     Returns:
-        xtable: xtable data table
+        pandas.DataFrame: xtable data table
     """
     # convert to list if the input is only a single path
     if not isinstance(perc_files, list):
@@ -165,6 +146,7 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
+    
 
     return xtable
 

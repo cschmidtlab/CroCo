@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to read Kojak data.
-
-This script is part of the CroCo cross-link converter project
+Functions to read and process data generated with the Kojak cross-link
+search engine.
 """
 
 import numpy as np
@@ -20,35 +19,24 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI.
+    No function if calling directly.
     """
     global col_order
     col_order = this_order
 
-def calc_pos_from_xpos(xpos, xlink):
-    """
-    Calculates the absolute position of the first AA of a peptide
-    sequence from the absolute position of the cross-link AA (xpos) its
-    position within the sequence (xlink)
-
-    Returns: pos - Absolute position of AA in sequence
-    """
-    xpos = int(xpos)
-    xlink = int(xlink)
-
-    return xpos - xlink + 1
-
 def Read(kojak_files, rawfile=None, compact=False, decoy_string='REVERSE'):
     """
-    reads pLink results file and returns an xtable data array.
+    Read Kojak results file, calculate and process missing values required
+    for xTable and return the xTable.
 
     Args:
-        kojak_file: path or paths to Kojak results file(s)
-        rawfile: name of the corresponding rawfile
+        kojak_file (str): path or paths to Kojak results file(s)
+        rawfile (str): name of the corresponding rawfile
         decoy_string (optional): string used in kojak to label decoys
 
     Returns:
-        xtable data table
+        pandas.DataFrame: xtable data table
     """
 
     # convert to list if the input is only a single path
