@@ -101,6 +101,7 @@ ENV/
 # sphinx
 doctrees/
 .buildinfo
+_static
 
 # local test-data
 testdata
