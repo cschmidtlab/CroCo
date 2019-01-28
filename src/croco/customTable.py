@@ -29,7 +29,7 @@ def Write(xtable, outpath, customTemplatePath):
     
     """
     
-    with open(customTemplatePath, 'r') as tmpl:
+    with open(hf.FSCompatiblePath(customTemplatePath), 'r') as tmpl:
         
         headerTemp = ''
         dataTemp = ''

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to read Kojak data.
-
-This script is part of the CroCo cross-link converter project
+Functions to read and process data generated with the Kojak cross-link
+search engine.
 """
 
 import numpy as np
@@ -20,46 +19,47 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI.
+    No function if calling directly.
     """
     global col_order
     col_order = this_order
 
-def calc_pos_from_xpos(xpos, xlink):
+def Read(kojak_files, rawfile=None, compact=False, decoy_string='REVERSE'):
     """
-    Calculates the absolute position of the first AA of a peptide
-    sequence from the absolute position of the cross-link AA (xpos) its
-    position within the sequence (xlink)
-
-    Returns: pos - Absolute position of AA in sequence
-    """
-    xpos = int(xpos)
-    xlink = int(xlink)
-
-    return xpos - xlink + 1
-
-def Read(kojak_file, rawfile=None, compact=False, decoy_string='REVERSE'):
-    """
-    reads pLink results file and returns an xtable data array.
+    Read Kojak results file, calculate and process missing values required
+    for xTable and return the xTable.
 
     Args:
-        kojak_file: path to Kojak results file
-        rawfile: name of the corresponding rawfile
+        kojak_file (str): path or paths to Kojak results file(s)
+        rawfile (str): name of the corresponding rawfile
         decoy_string (optional): string used in kojak to label decoys
 
     Returns:
-        xtable data table
+        pandas.DataFrame: xtable data table
     """
 
-    print('Reading Kojak-file: ' + kojak_file)
+    # convert to list if the input is only a single path
+    if not isinstance(kojak_files, list):
+        kojak_files = [kojak_files]
 
-    # only called if kojak_file is not None
-    if os.path.isfile(kojak_file):
-        xtable = pd.read_csv(hf.FSCompatiblePath(kojak_file),
-                           skiprows = 1, # skip the Kojak version
-                           delimiter='\t')
-    else:
-        return FileNotFoundError('Kojak txt file not found: {}'.format(kojak_file))
+    allData = list()
+
+    for file in kojak_files:
+
+
+        print('Reading Kojak-file: ' + kojak_file)
+
+        # only called if kojak_file is not None
+        try:
+            s = pd.read_csv(hf.FSCompatiblePath(kojak_file),
+                                 skiprows = 1, # skip the Kojak version
+                                 delimiter='\t')
+            allData.append(s)
+        except:
+            raise Exception('[xTable Read] Failed opening file: {}'.format(file))
+
+    xtable = pd.concat(allData)
 
     # remove lines containing non-identified PSMs (marked with '-' in both
     # Link columns

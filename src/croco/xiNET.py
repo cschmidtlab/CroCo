@@ -8,6 +8,11 @@ This script is part of the CroCo cross-link converter project
 
 import pandas as pd
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def Write(xtable, outpath):
     """
     Converts xtable data structure to cross-link
@@ -57,7 +62,7 @@ def Write(xtable, outpath):
                  inplace=True)
 
     if outpath.endswith('.csv'):
-        xinet.to_csv(outpath, index=False)
+        xinet.to_csv(hf.FSCompatiblePath(outpath), index=False)
     else:
-        xinet.to_csv(outpath + '.csv',
+        xinet.to_csv(hf.FSCompatiblePath(outpath) + '.csv',
                     index=False)

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Kojak Helper Functions
-
-@author: User
+Functions that are collectively used by croco.Kojak and croco.KojakPercolator.
 """
 
 import re
@@ -21,6 +19,11 @@ def extract_peptide(xtable):
     """
     Extract peptide sequence, modification mass and position from the
     Peptide #1 and Peptide #2 entries
+    
+    Args:
+        xtable (pandas.DataFrame): xTable data structure with "Peptide #1" and "Peptide #2" columns
+    Returns:
+        pandas.DataFrame: xTable with modmass, modpos, pepseq and mod
     """
     xtable['modmass1'], xtable['modpos1'], xtable['pepseq1'] =\
         [pd.Series(x) for x in zip(*xtable['Peptide #1'].apply(kj.process_kojak_peptide))]
@@ -36,8 +39,13 @@ def extract_peptide(xtable):
 
 def extract_protein(xtable):
     """
-    extract protein name and relative cross-link position from the Protein #
+    Extract protein name and relative cross-link position from the Protein #
     entries
+    
+    Args:
+        xtable (pandas.DataFrame): xTable data structure with "Protein #1", "Protein #2", xpos1, xlink1, and xlink2 columns
+    Returns:
+        pandas.DataFrame: xTable with prot and xpos
     """
     xtable['prot1'], xtable['xpos1'] =\
            [pd.Series(x) for x in zip(*xtable['Protein #1'].apply(kj.process_kojak_protein))]
@@ -63,6 +71,11 @@ def assign_ID_and_type(xtable):
     Calculate if a cross link is of inter or of loop type
     Refine the inter type into inter/intra/homomultimeric
     Generate ID for the xlinks
+
+    Args:
+        xtable (pandas.DataFrame): Table data structure with "prot", "pos", "pepseq"
+    Returns:
+        pandas.DataFrame: xTable with type and ID
     """
     
     # assign cateogries of cross-links based on identification of prot1 and prot2
@@ -100,6 +113,12 @@ def set_decoy(xtable, decoy_string):
     """
     sets the column decoy based on whether the decoy string is present in the
     protein name or not
+
+    Args:
+        xtable (pandas.DataFrame): xTable with "prot" columns titles
+        decoy_string (str): Kojak decoy string
+    Returns:
+        pandas.DataFrame: xTable with decoy column
     """
     # Check if all prot2 are null (may be in only loop dfs)
     if xtable['prot2'].isnull().all():
@@ -115,7 +134,19 @@ def set_decoy(xtable, decoy_string):
 def process_kojak_peptide(peptide_string):
     """
     Return Modifications, their localisation and the peptide sequence
-    from a Kojak sequence string such as M[15.99]TDSKYFTTNK
+    from a Kojak sequence string such as M[15.99]TDSKYFTTNK.
+    
+    If modifications are found, two lists with modification masses, positions
+    and the raw peptide sequence are returned.
+    If no modififications are found within a peptide string, the function
+    returns np.nan, np.nan and the sequence.
+    
+    Args:
+        peptide_string (str): a Kojak peptide string
+    Returns:
+        list of float or np.nan: list of modification masses
+        list of int or np.nan: list of modification positions within the peptide
+        str: peptide sequence without modifications
     """
 
     modmasses = []
@@ -149,6 +180,13 @@ def process_kojak_protein(protein_string):
     Return protein name and absolute cross-link position from
     a kojak string such as
     sp|P07340|AT1B1_RAT Sodium/potassium-transporting ATPase subunit beta-1 OS=Rattus norvegicus GN=Atp1(13);
+
+    Args:
+        protein_string(str): a kojak protein string
+    
+    Returns:
+        str or np.nan: protein name
+        int or np.nan: position
     """
     # RE: group1: everything until the first (lazy) brackets
     # group2 (optional) everything inside the brackets

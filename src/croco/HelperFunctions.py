@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 18 14:18:32 2018
-
-@author: User
+HelperFunctions: Function that are used in multiple modules of CroCo
 """
 
 import pandas as pd
@@ -13,13 +11,15 @@ def FSCompatiblePath(raw_path, encoding=None):
     """
     Convert paths on Win to overcome the win32 pathlength limit
     """
-    if encoding is not None:
+    if (not isinstance(raw_path, str) and 
+        encoding is not None):
         raw_path = raw_path.decode(encoding)
     path = os.path.abspath(raw_path)
-    if os.name == 'nt':
+    if (os.name == 'nt') and (len(path) > 255):
+        print('[FSCompatiblePath] converting to Windows extended path')
         if path.startswith(u"\\\\"):
             return u"\\\\?\\UNC\\" + path[2:]
-        return u"\\\\?\\" + path 
+        return u"\\\\?\\" + path
     else:
         return path
 
@@ -59,7 +59,10 @@ def applyColOrder(xtable, col_order, compact):
     
         xtable = xtable[new_order]
     elif compact is True:
-        xtable = xtable[col_order]
+        try:
+            xtable = xtable[col_order]
+        except Exception as e:
+            raise Exception('[ApplyColOrder] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
     else:
         raise Exception('Compact argument passed to applyColOrder must be either True or False')
     

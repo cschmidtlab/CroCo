@@ -11,6 +11,11 @@ import pandas as pd
 
 import re
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def init(this_order):
     """
     Set required variables for conversion
@@ -86,7 +91,7 @@ def ReadManual(filepath):
             'Proteins']
 
 
-    true_hits = pd.read_excel(filepath,
+    true_hits = pd.read_excel(hf.FSCompatiblePath(filepath),
                             sheetname='yes',
                             header=None,
                             names=cols)
@@ -97,7 +102,7 @@ def ReadManual(filepath):
 
     true_hits['score'] = 1 # set true hits to a score of 1 and maybes to 0.5
 
-    maybe_hits = pd.read_excel(filepath,
+    maybe_hits = pd.read_excel(hf.FSCompatiblePath(filepath),
                             sheetname='naja',
                             header=None,
                             names=cols)
@@ -108,7 +113,7 @@ def ReadManual(filepath):
 
     maybe_hits['score'] = 0.5
 
-    no_hits = pd.read_excel(filepath,
+    no_hits = pd.read_excel(hf.FSCompatiblePath(filepath),
                             sheetname='no',
                             header=None,
                             names=cols)
@@ -143,8 +148,6 @@ def ReadManual(filepath):
     ann_data['decoy'] = False
 
     ann_data = ann_data.apply(pd.to_numeric, errors = 'ignore')
-
-    return ann_data
 
     true_hits['score'] = 1 # set true hits to a score of 1 and maybes to 0.5
 

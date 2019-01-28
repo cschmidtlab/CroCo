@@ -10,6 +10,11 @@ import pandas as pd
 import numpy as np
 import os
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def AA_from_sequence(pepseq, xlink):
     """
     Return the 3-character amino acid label of the cross-linked AA
@@ -163,7 +168,7 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xWalkTable.reset_index(inplace=True)
 
     xWalkTable.loc[:, ['File name', 'Atom Info 1', 'Atom Info 2']]\
-        .to_csv('{}_{}.tsv'.format(outpath, 'xWalk'),
+        .to_csv('{}_{}.tsv'.format(hf.FSCompatiblePath(outpath), 'xWalk'),
                                    index = True,
                                    index_label = 'Index',
                                    header = True,
