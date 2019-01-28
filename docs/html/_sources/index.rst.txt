@@ -6,6 +6,8 @@
 The CroCo cross-link converter
 ==============================
 
+.. include:: welcome.rst
+
 CroCo Documentation contents
 ----------------------------
 
@@ -14,6 +16,7 @@ CroCo Documentation contents
 
    read
    write
+   GUI_intro
 
 
 Indices and tables

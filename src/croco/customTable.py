@@ -3,7 +3,6 @@
 """
 Functions to write crosslink data as defined by a user-provided template.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd

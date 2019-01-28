@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write xWalk data.
+Functions to write data structures as input for the xVis webserver (https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php).
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
@@ -15,13 +14,12 @@ else:
 
 def Write(xtable, outpath):
     """
-    Converts xtable data structure to cross-link
-    data file for xVis data
-    visualisation tool
-    (https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php)
+    Convert xtable data structure to cross-link
+    data file for xVis data visualisation tool
 
-    :params: xtable: data table structure
-    :params: outpath: path to write file
+    Args:
+        xtable (pandas.DataFrame): data table structure
+        outpath (str): path to write file
     """
     xvis = xtable.loc[:,['prot1','prot2', 'xpos1', 'xpos2', 'score']]
 

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write xTable data.
+Functions to read and write xTable data.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
@@ -23,7 +22,7 @@ def init(this_order):
 
 def Write(xtable, outpath, keep=True):
     """
-    writes an xtable data structure to file (in xtable format)
+    writes an xtable data structure to file (in xlsx format)
 
     Args:
         xtable: data table structure
@@ -55,7 +54,7 @@ def Write(xtable, outpath, keep=True):
 
 def Read(xTable_files):
     """
-    Read an xTable data structure form file
+    Read an xTable data structure from file
 
     Args:
         xTable_files: path to the xtable file(s)
