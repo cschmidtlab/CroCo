@@ -24,9 +24,6 @@ setup(
                  'croco_wx_wrapper': 'src/croco_wx_wrapper'},
     package_data={'croco': ['data/*', 'lib/*']},
     entry_points={
-        'console_scripts': [
-            'croco_cl = croco.croco_cl',
-                           ],
         'gui_scripts': [
             'croco_wx = croco_wx_wrapper.__main__:main',
         ]

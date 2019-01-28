@@ -17,6 +17,8 @@ import wx.adv
 import croco
 #from pandas import read_csv
 
+
+
 class CroCoMainFrame(wx.Frame):
 
     def __init__(self):
@@ -65,12 +67,12 @@ class CroCoMainFrame(wx.Frame):
                            'Kojak': [croco.Kojak.Read, [('Kojak rawfile',
                                                          'input',
                                                          'Please provide the name of the rawfile for the data')]],
-                           'Kojak + Percolator': [croco.KojakPercolator.Read, []],
+                           'Kojak+Percolator': [croco.KojakPercolator.Read, []],
                            'StavroX': [croco.StavroX.Read, [('SSF file',
                                                              'file',
                                                              'Please provide an SSF file as returned by StavroX')]],
                            'Xi': [croco.Xi.Read, []],
-                           'Xi + XiFDR': [croco.XiSearchFDR.Read,[('Xi search file',
+                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('Xi search file',
                                                                    'file',
                                                                    'Please provide Xi output file')]],
                            'xQuest': [croco.xQuest.Read, []],
@@ -163,6 +165,7 @@ class CroCoMainFrame(wx.Frame):
         self.writeFormat = wx.Choice(self.panel, choices=sorted(list(self.availWrites.keys())))
 
         self.compactTableCheck = wx.CheckBox(self.panel, label='Compact xTable')
+        self.mergeTableCheck = wx.CheckBox(self.panel, label='Merge files')
 
         self.controlStart = wx.Button(self.panel, label='Start')
         self.controlStart.Enable(False)
@@ -193,6 +196,12 @@ class CroCoMainFrame(wx.Frame):
         self.controlStart.Bind(wx.EVT_BUTTON, self.onStart)
         self.controlStart.Bind(wx.EVT_HELP,
                                lambda evt: self.Info('Start the conversion', caption='Help'))
+
+        self.compactTableCheck.Bind(wx.EVT_HELP,
+                               lambda evt: self.Info('Only add minimal columns to xTable', caption='Help'))
+        self.mergeTableCheck.Bind(wx.EVT_HELP,
+                               lambda evt: self.Info('Merge the data from multiple input files into one. Does not work for pLink or xi+xiFDR.', caption='Help'))
+
         ## define the layout
         # define the sizers (main widget layouts) used in the app
         topSizer = wx.BoxSizer(wx.VERTICAL)
@@ -216,6 +225,7 @@ class CroCoMainFrame(wx.Frame):
 
         # Set checkboxes
         checkSizer.Add(self.compactTableCheck, 1, wx.ALL|wx.EXPAND, 5)
+        checkSizer.Add(self.mergeTableCheck, 1, wx.ALL|wx.EXPAND, 5)
 
         # Set start and quit buttons
         controlSizer.Add(self.controlStart, 1, wx.RIGHT, 5)
@@ -363,7 +373,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.5.11')
+        aboutInfo.SetVersion('0.5.12')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -376,6 +386,7 @@ class CroCoMainFrame(wx.Frame):
     def Warning(self, message, caption = 'Warning!'):
         print('[WARN] {}'.format(message))
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_WARNING)
+        del self.wait
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -424,12 +435,20 @@ class CroCoMainFrame(wx.Frame):
                                                    self.theReadFormat) +
                'format to {} format'.format(self.theWriteFormat))
 
-        was_error = False
-
         # Displays a busy cursor during the run of the programme
-        wait = wx.BusyCursor()
+        self.wait = wx.BusyCursor()
 
-        for f in self.theInput:
+        def runCroCo(f):
+            """
+            Function to wrap up the CroCo call to simplify maintenance.
+
+            Relies on many variables in self
+
+            Args:
+                f: list of files to call CroCo on
+            Returns:
+                outpath: path where the files are written
+            """
             try:
                 if len(self.inputArgs) > 0 :
                     print('[onRun] Found input args: "{}"'.format(self.inputArgs))
@@ -437,7 +456,7 @@ class CroCoMainFrame(wx.Frame):
                 else:
                     print('[onRun] No extra input arguments provided.')
                     xtable = self.availReads[self.theReadFormat][0](f)
-                print('[onRun] Table successfully read: {}'.format(f))
+                print('[onRun] Table(s) successfully read: {}'.format(', '.join(f)))
             except Exception as e:
                 self.Warning('Error while reading Input-file: ' + str(e))
 
@@ -453,7 +472,9 @@ class CroCoMainFrame(wx.Frame):
                 self.theOutput = os.path.dirname(f)
 
             # set filename for output file
-            fname = os.path.splitext(os.path.split(f)[1])[0] + '_' + self.theReadFormat +\
+            fileString = '_'.join([os.path.splitext(os.path.basename(x))[0] for x in f])
+            fileString = croco.HelperFunctions.alphanum_string(fileString)
+            fname = fileString + '_' + self.theReadFormat +\
                     '_to_' + self.theWriteFormat
 
             # generate output path w/o extension
@@ -471,15 +492,20 @@ class CroCoMainFrame(wx.Frame):
             except Exception as e:
                 self.Warning('[onRun] Conversion of {} was '.format(f) +
                                    'not successfull:{}'.format(str(e)))
-                was_error = True
-                break
-        # ends busy cursor
-        del wait
 
-        if not was_error:
-            self.Info('File(s) successfully written ' +
-                     'to {}!'.format(outpath),
-                     caption='Success!')
+            return outpath
+
+        if self.mergeTableCheck.GetValue() == True:
+            outpath = runCroCo(self.theInput)
+        else:
+            for f in self.theInput:
+                outpath = runCroCo([f])
+
+        # ends busy cursor
+        del self.wait
+        self.Info('File(s) successfully written ' +
+                 'to {}!'.format(outpath),
+                 caption='Success!')
 
 class CroCoOptionsFrame(wx.Frame):
     """
@@ -489,7 +515,7 @@ class CroCoOptionsFrame(wx.Frame):
 
     def __init__(self, parent):
         wx.Frame.__init__(self,
-                          None,
+                          wx.GetApp().TopWindow,
                           wx.ID_ANY,
                           style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
                           title='Options')

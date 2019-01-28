@@ -98,6 +98,11 @@ ENV/
 # mypy
 .mypy_cache/
 
+# sphinx
+doctrees/
+.buildinfo
+
+
 # local test-data
 testdata
 *.log

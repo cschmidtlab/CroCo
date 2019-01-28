@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to read Percolator prcoesse Kojak data.
-
-This script is part of the CroCo cross-link converter project
+Functions to read Percolator processed Kojak data.
 """
 
 import numpy as np
@@ -18,92 +16,85 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI.
+    No function if calling directly.
     """
     global col_order
     col_order = this_order
 
-def calc_pos_from_xpos(xpos, xlink):
-    """
-    Calculates the absolute position of the first AA of a peptide
-    sequence from the absolute position of the cross-link AA (xpos) its
-    position within the sequence (xlink)
-
-    Returns: pos - Absolute position of AA in sequence
-    """
-    try:
-        if np.isnan(float(xpos)):
-            return np.nan
-
-        xpos = int(xpos)
-        xlink = int(xlink)
-
-        return xpos - xlink + 1
-
-    except Exception as e:
-        print('{}: xpos was {} and xlink was {}'.format(e, xpos, xlink))
-        return np.nan
-
-def Read(perc_file, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False):
+def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 
     Args:
-        perc_file: path to percolated Kojak file
-        percolator_string: user-defined string appended to the percolated filenames
-        rawfile: name of the corresponding rawfile
+        perc_file (str): path or list of paths to percolated Kojak file(s)
+        percolator_string (str): user-defined string appended to the percolated filenames
+        decoy_string (optional): string used in kojak to label decoys
+        rawfile (str): name of the corresponding rawfile
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
 
     Returns:
-        xtable: xtable data table
+        pandas.DataFrame: xtable data table
     """
+    # convert to list if the input is only a single path
+    if not isinstance(perc_files, list):
+        perc_files = [perc_files]
+    
+    allData = list()
+    
+    for p_file in perc_files:
+        ### Collect data and convert to pandas format
+    
+        print('Reading Percolator-file: ' + p_file)
+    
+        # only called if inter_file is not None
+    
+        percolated = pd.read_csv(hf.FSCompatiblePath(p_file),
+                                 delimiter='\t',
+                                 usecols=range(5),
+                                 index_col=False, # avoid taking the first col as index
+                                 engine='python')
+    
+        percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
+    
+        unperc_file = p_file.replace(percolator_string, '')
+    
+        print('Reading Percolator input: ' + unperc_file)
+    
+        try:
+            unpercolated = pd.read_csv(hf.FSCompatiblePath(unperc_file),
+                                      delimiter = '\t',
+                                      usecols=range(10),
+                                      engine='python',
+                                      index_col=False)
+        except:
+            raise FileNotFoundError(unperc_file)
+    
+        # Merge with left join (only keys that are in tje percolated DF will be re-
+        # tained)
+        xtable = pd.merge(percolated, unpercolated, on='SpecId', how='left')
+    
+        # Reading the Kojak-file is required to get additional information on the
+        # matches such as the corresponding protein names
+        kojak_file = unperc_file[0:unperc_file.find('.perc')] + '.kojak.txt'
+    
+        print('Reading Kojak-file: ' + kojak_file)
+    
+        try:
+            kojak = pd.read_csv(hf.FSCompatiblePath(kojak_file),
+                                skiprows = 1, # skip the Kojak version
+                                delimiter='\t')
+        except:
+            raise FileNotFoundError("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
+    
+        kojak.rename(columns={'Scan Number': 'scannr'}, inplace=True)
+    
+        s = pd.merge(xtable, kojak, on=['scannr', 'Charge', 'dScore', 'Score'], how='left')
+        
+        allData.append(s)
 
-    ### Collect data and convert to pandas format
-
-    print('Reading Percolator-file: ' + perc_file)
-
-    # only called if inter_file is not None
-
-    percolated = pd.read_csv(perc_file,
-                             delimiter='\t',
-                             usecols=range(5),
-                             index_col=False, # avoid taking the first col as index
-                             engine='python')
-
-    percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
-
-    unperc_file = perc_file.replace(percolator_string, '')
-
-    print('Reading Percolator input: ' + unperc_file)
-
-    try:
-        unpercolated = pd.read_csv(unperc_file,
-                                  delimiter = '\t',
-                                  usecols=range(10),
-                                  engine='python',
-                                  index_col=False)
-    except:
-        raise FileNotFoundError(unperc_file)
-
-    # Merge with left join (only keys that are in tje percolated DF will be re-
-    # tained)
-    xtable = pd.merge(percolated, unpercolated, on='SpecId', how='left')
-
-    # Reading the Kojak-file is required to get additional information on the
-    # matches such as the corresponding protein names
-    kojak_file = unperc_file[0:unperc_file.find('.perc')] + '.kojak.txt'
-
-    print('Reading Kojak-file: ' + kojak_file)
-
-    try:
-        kojak = pd.read_csv(kojak_file,
-                            skiprows = 1, # skip the Kojak version
-                            delimiter='\t')
-    except:
-        raise FileNotFoundError("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
-
-    kojak.rename(columns={'Scan Number': 'scannr'}, inplace=True)
-
-    xtable = pd.merge(xtable, kojak, on=['scannr', 'Charge', 'dScore', 'Score'], how='left')
+    xtable = pd.concat(allData)
 
     # split ambiguous concatenated protein names
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])
@@ -155,6 +146,7 @@ def Read(perc_file, percolator_string='.validated', decoy_string='REVERSE', rawf
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
+    
 
     return xtable
 

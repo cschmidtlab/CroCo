@@ -1,20 +1,30 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write xWalk data.
+Functions to write data as input for xWalk.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
 import numpy as np
 import os
 
+if __name__ == '__main__':
+    import HelperFunctions as hf
+else:
+    from . import HelperFunctions as hf
+
 def AA_from_sequence(pepseq, xlink):
     """
     Return the 3-character amino acid label of the cross-linked AA
     from a peptide sequence
     and the relative position of the cross-linker in the sequence
+    
+    Args:
+        pepseq (str): peptide sequence
+        xlink (int): position of the cross-link within the sequence
+    Returns:
+        str: 3-letter amino acid code for the cross-linked amino acid
     """
 
     aa_dict = {'R': 'ARG',
@@ -47,8 +57,8 @@ def AA_from_sequence(pepseq, xlink):
 
 def Write(xtable, outpath, pdb, offset, chains, atom):
     """
-    Converts xTable into a list format that can be used as
-    input for the xWalk web-server at http://www.xwalk.org/cgi-bin/home.cgi
+    Convert xTable into a list format that can be used as
+    input for the xWalk standalone programme.
 
     Format is:
 
@@ -58,12 +68,12 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     generates several oouput files for all intra-protein cross-links
 
     Args:
-        xtable: data table structure
-        pdb (string): PDB-file name
+        xtable (pandas.DataFrame): data table structure
+        pdb (str): PDB-file name
         offset (int): shift between PDB AA indices and the xTable
-        chains: (string) comma separated list protein:chain allocations
-        atom (string): Atom identifier (e.g. CB)
-        outpath: path to write file
+        chains: (str) comma separated list protein:chain allocations
+        atom (str): Atom identifier (e.g. CB)
+        outpath (str): path to write file
     """
 
 
@@ -163,7 +173,7 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xWalkTable.reset_index(inplace=True)
 
     xWalkTable.loc[:, ['File name', 'Atom Info 1', 'Atom Info 2']]\
-        .to_csv('{}_{}.tsv'.format(outpath, 'xWalk'),
+        .to_csv('{}_{}.tsv'.format(hf.FSCompatiblePath(outpath), 'xWalk'),
                                    index = True,
                                    index_label = 'Index',
                                    header = True,

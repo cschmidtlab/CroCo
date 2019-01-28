@@ -3,7 +3,6 @@
 """
 Functions to write crosslink data as defined by a user-provided template.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd
@@ -29,7 +28,7 @@ def Write(xtable, outpath, customTemplatePath):
     
     """
     
-    with open(customTemplatePath, 'r') as tmpl:
+    with open(hf.FSCompatiblePath(customTemplatePath), 'r') as tmpl:
         
         headerTemp = ''
         dataTemp = ''

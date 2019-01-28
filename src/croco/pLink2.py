@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Read pLink2 files
-@author: aretaon
+Functions to read pLink2 files
 """
 
 import pandas as pd
@@ -16,7 +15,7 @@ else:
 
 def init(this_order):
     """
-    Set required variables for conversion
+    Initialises the column order when called from the GUI. No function if calling directly.
     """
     global col_order
     col_order = this_order
@@ -25,9 +24,11 @@ def plink2peptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
 
-    :param filepath: Path to a pLink results file e.g. filtered_cross-linked_peptides.csv
+    Args:
+        filepath (str): Path to a pLink results file e.g. filtered_cross-linked_peptides.csv
 
-    :returns: pandas dataframe
+    Returns:
+        pandas.DataFrame
     """
 
     with open(filepath, 'r') as fh:
@@ -92,9 +93,13 @@ def plink2peptide2pandas(filepath):
 def process_plink2_title(spec_string):
     """
     Extract rawfile name, precursor charge and scan no from pLink sequence
-    string
+    string such as 20180518_JB_jb05a_u50.11998.11998.3.dta
 
-    :returns: list of rawfile, scanno, prec_ch
+    Args:
+        spec_string: pLink2 spectrum string
+
+    Returns:
+        list: [rawfile, scanno, prec_ch]
     """
     # the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2
     # in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1
@@ -112,9 +117,11 @@ def process_plink2_sequence(row):
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
     Can differentiate between mono, loop and cross-link information
 
-    :param row: a row of a dataframe with headers 'Peptide' and 'type'
+    Args:
+        row (object): a row of a dataframe with headers 'Peptide' and 'type'
 
-    :returns: list of pepseq1, pepseq2, xpos1, xpos2, xtype
+    Returns:
+        list: [pepseq1, pepseq2, xpos1, xpos2, xtype]
     """
 
     #TODO: How to recognize heavy labels?
@@ -150,6 +157,13 @@ def process_plink2_proteins(row):
     sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/
     or (worst-case)
     Stx1A(1-262)(259)-Stx1A(1-262)(259)/
+    
+    Args:
+        row (object): a row of a dataframe with headers 'Proteins'
+
+    Returns:
+        list: [prot1, xpos1, pepseq2, xpos2]
+
     """
 
     if row['type'] == 'inter':
@@ -196,6 +210,13 @@ def calculate_abs_pos(row):
     """
     Return the absolute position of the first AA of both peptides.
     If only one peptide present (mono-link) return NaN for the second position
+    
+    Args:
+        row (object): a row of a dataframe with headers xlink(1/2) and xpos(1/2)
+
+    Returns:
+        list: [pos1, pos2] 
+    
     """
 
     pos1 = int(row['xpos1']) - int(row['xlink1']) + 1
@@ -212,9 +233,11 @@ def read_plink_modifications(filepath):
     Open a pLink modification.ini file and extract all modifications with
     their names as dict.
 
-    :params: filepath: Path to modifications.ini
+    Args:
+        filepath (str): Path to modifications.ini
 
-    :returns: mod_dict: Dict mapping names to masses
+    Returns:
+        dict: mod_dict mapping pLink modification names to masses
     """
 
     pattern = re.compile(r'^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+')
@@ -229,42 +252,55 @@ def read_plink_modifications(filepath):
 
     return mod_dict
 
-def Read(plinkdir, compact=False):
+def Read(plinkdir, col_order=None, compact=False):
     """
-    reads pLink2 report dir and returns an xtabel data array.
+    Read pLink2 report dir and return an xtabel data array.
 
     Args:
         plinkdir: plink2 reports subdir (reports)
-        keep (bool): Whether to keep the columns of the original dataframe or not
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
 
     Returns:
-        xtable: data table
+        pandas.DataFrame: data table
     """
 
     ### Collect data, convert to pandas format and merge
-    plinkResultFiles = os.listdir(plinkdir)
+    plinkResultFiles = os.listdir(hf.FSCompatiblePath(plinkdir))
 
     frames = []
 
+    foundPeptidesFile = False
+    foundSpectraFile = False
     for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
         dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
         for f in dataFiles:
             if '_peptides.csv' in f:
                 peptidesFile = f
+                foundPeptidesFile = True
+                
+                print('Reading pLink peptide file: ' + peptidesFile)
+                peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, peptidesFile)))
             if '_spectra.csv' in f:
                 spectraFile = f
-    
-        if os.path.exists(os.path.join(plinkdir, peptidesFile)):
-            print('Reading pLink peptide file: ' + peptidesFile)
-            peptide_df = plink2peptide2pandas(os.path.join(plinkdir, peptidesFile))
-            
-            print('Reading pLink spectra file: ' + spectraFile)
-            spectra_df = pd.read_csv(os.path.join(plinkdir, spectraFile))
+                foundSpectraFile = True               
+ 
+                print('Reading pLink spectra file: ' + spectraFile)
+                spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(plinkdir, spectraFile)))
+
+        if foundPeptidesFile and foundSpectraFile:
             merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
                                 spectra_df,
                                 on='Title')
-                
-            frames.append(merge_df)
+        else:
+            if foundPeptidesFile:
+                raise Exception('[pLink2 Read] Could not find spectra file.')
+            elif foundSpectraFile:
+                raise Exception('[pLink2 Read] Could not find peptide file')
+            else:
+                raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
+            
+        frames.append(merge_df)
 
     xtable = pd.concat(frames)
     
@@ -351,9 +387,9 @@ def Read(plinkdir, compact=False):
     Modifications = xtable['Modifications'].tolist()
 
     if len(pepseq1) == len(Modifications):
-        print('Len of pepseq1 and Modification match!')
+        print('[pLink2 Read] Len of pepseq1 and Modification match!')
     else:
-        print('Len of pepseq1 and Modification dont match!')
+        raise Exception('[pLink2 Read] Len of pepseq1 and Modification dont match!')
 
     modmass1 = []
     mod1 = []
