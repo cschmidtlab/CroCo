@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write xWalk data.
-
-This script is part of the CroCo cross-link converter project
+Functions to write data for the xiNET data
+    visualisation tool (http://crosslinkviewer.org)
 """
 
 import pandas as pd
@@ -15,13 +14,12 @@ else:
 
 def Write(xtable, outpath):
     """
-    Converts xtable data structure to cross-link
-    data file for xiNET data
-    visualisation tool
-    (http://crosslinkviewer.org)
+    Convert xtable data structure to xiNET
+    data file 
 
-    :params: xtable: data table structure
-    :params: outpath: path to write file
+    Args:
+        xtable: data table structure
+        outpath: path to write file
     """
     xinet = xtable.loc[:,['prot1',
                           'pos1',

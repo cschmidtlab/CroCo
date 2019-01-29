@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write DynamXL data.
+    Converts xTable data into cross-link information
+    file for the dynamXL analysis software:
 
-This script is part of the CroCo cross-link converter project
+    K189 NZ K192 NZ 18
+    K189 NZ K196 NZ 5
+    K200 NZ K192 NZ 1
+    K236 NZ K189 NZ 3
+
+    dynamxl.chem.ox.ac.uk
+
 """
 
 import pandas as pd
@@ -15,15 +22,7 @@ else:
 
 def Write(xtable, outpath):
     """
-    Converts xTable data into cross-link information
-    file for the dynamXL analysis software:
-
-    K189 NZ K192 NZ 18
-    K189 NZ K196 NZ 5
-    K200 NZ K192 NZ 1
-    K236 NZ K189 NZ 3
-
-    dynamxl.chem.ox.ac.uk
+    Convert xTable to DynamXL input file.
 
     Args:
         xtable: data table structure
@@ -34,6 +33,12 @@ def Write(xtable, outpath):
         Calculate tne amino acid and the absolute position
         of a crosslink based on the sequence of an xl-peptide,
         the relative and the absolute position of the cross-link
+        
+        Args:
+            row (object): xTable row containing pepseq, xlin, and xpos
+        Returns:
+            str: id1
+            str: id2
         """
         aa1 = row['pepseq1'][int(row['xlink1'])-1]
         id1 = str(aa1) + str(row['xpos1'])
@@ -47,6 +52,11 @@ def Write(xtable, outpath):
         """
         Return the typical cross-linked atom in PDB code
         for a specific amino-acid
+        
+        Args:
+            AA(str): Amino acid in 1-letter code
+        Returns:
+            PDB code of cross-linked atom
         """
 
         if AA == 'K':

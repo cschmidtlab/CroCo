@@ -13,14 +13,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI. No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
-
 def rawfile_and_scanno_from_Scan(scan_number_string):
     """
     Extract rawfile name and scan number from a string like
@@ -487,7 +479,7 @@ if __name__ == '__main__':
                      r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l100.csv']
 
     ssf_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\properties.ssf'
-    stvrx = Read(stavrox_files, ssf_file, compact=False)
+    stvrx = Read(stavrox_files, ssf_file, col_order=col_order, compact=False)
 
     stvrx.to_excel('test.xls',
                    index=False)

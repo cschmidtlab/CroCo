@@ -17,15 +17,7 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI.
-    No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
-def Read(kojak_files, rawfile=None, compact=False, decoy_string='REVERSE'):
+def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, compact=False):
     """
     Read Kojak results file, calculate and process missing values required
     for xTable and return the xTable.
@@ -34,6 +26,8 @@ def Read(kojak_files, rawfile=None, compact=False, decoy_string='REVERSE'):
         kojak_file (str): path or paths to Kojak results file(s)
         rawfile (str): name of the corresponding rawfile
         decoy_string (optional): string used in kojak to label decoys
+        col_order (list) – List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Compact the xTable to only the columns given in col_order or not
 
     Returns:
         pandas.DataFrame: xtable data table
@@ -134,6 +128,4 @@ if __name__ == '__main__':
                  'prot1', 'xpos1', 'prot2',
                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    init(col_order)
-
-    xtable = Read(kojak_file, rawfile='Test')
+    xtable = Read(kojak_file, col_order=col_order, rawfile='Test')

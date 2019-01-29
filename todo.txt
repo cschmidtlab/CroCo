@@ -1,9 +1,0 @@
-2018-01-08 Croco: PSM image of pLink1 ist nach Konversion weg @Uni t:2018-01-08
-(F) 2017-10-09  Croco: xtable stavrox read   @Uni t:2018-02-23
-2018-01-08 CroCo: rename xtable pos1 - etc @Uni t:2018-01-08
-2018-01-08 Croco: Kojak Warning scan number and rawfile name @Uni
-2018-03-07 CroCo: pLink1 search of test file @Uni
-2018-03-07 CroCo: Kojak search of test file @Uni
-2018-03-07 CroCo: Stavrox search of test file @Uni
-2018-03-07 CroCo: xQuest search of test file @Uni
-2018-03-11 Croco: PSM Level or Peptide Pair level or Residue pair level?  @Uni

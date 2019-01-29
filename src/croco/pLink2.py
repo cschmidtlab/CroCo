@@ -13,13 +13,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI. No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
 def plink2peptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
@@ -252,12 +245,12 @@ def read_plink_modifications(filepath):
 
     return mod_dict
 
-def Read(plinkdir, col_order=None, compact=False):
+def Read(plinkdirs, col_order=None, compact=False):
     """
     Read pLink2 report dir and return an xtabel data array.
 
     Args:
-        plinkdir: plink2 reports subdir (reports)
+        plinkdirs: plink2 reports subdir (reports)
         col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
         compact (bool): Whether to compact the xTable to only those columns listed in col_order
 
@@ -265,45 +258,59 @@ def Read(plinkdir, col_order=None, compact=False):
         pandas.DataFrame: data table
     """
 
-    ### Collect data, convert to pandas format and merge
-    plinkResultFiles = os.listdir(hf.FSCompatiblePath(plinkdir))
+    print('[pLink1 Read] This is pLink1 Reader')
 
-    frames = []
 
-    foundPeptidesFile = False
-    foundSpectraFile = False
-    for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
-        dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
-        for f in dataFiles:
-            if '_peptides.csv' in f:
-                peptidesFile = f
-                foundPeptidesFile = True
-                
-                print('Reading pLink peptide file: ' + peptidesFile)
-                peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, peptidesFile)))
-            if '_spectra.csv' in f:
-                spectraFile = f
-                foundSpectraFile = True               
- 
-                print('Reading pLink spectra file: ' + spectraFile)
-                spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(plinkdir, spectraFile)))
-
-        if foundPeptidesFile and foundSpectraFile:
-            merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
-                                spectra_df,
-                                on='Title')
-        else:
-            if foundPeptidesFile:
-                raise Exception('[pLink2 Read] Could not find spectra file.')
-            elif foundSpectraFile:
-                raise Exception('[pLink2 Read] Could not find peptide file')
-            else:
-                raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
-            
-        frames.append(merge_df)
-
-    xtable = pd.concat(frames)
+    # convert to list if the input is only a single path
+    if not isinstance(plinkdirs, list):
+        plinkdirs = [plinkdirs]
     
+    allData = list()
+
+    for file in plinkdirs:
+
+        ### Collect data, convert to pandas format and merge
+        plinkResultFiles = os.listdir(hf.FSCompatiblePath(file))
+    
+        frames = []
+    
+        foundPeptidesFile = False
+        foundSpectraFile = False
+        for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
+            dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
+            for f in dataFiles:
+                if '_peptides.csv' in f:
+                    peptidesFile = f
+                    foundPeptidesFile = True
+                    
+                    print('Reading pLink peptide file: ' + peptidesFile)
+                    peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(file, peptidesFile)))
+                if '_spectra.csv' in f:
+                    spectraFile = f
+                    foundSpectraFile = True               
+     
+                    print('Reading pLink spectra file: ' + spectraFile)
+                    spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(file, spectraFile)))
+    
+            if foundPeptidesFile and foundSpectraFile:
+                merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
+                                    spectra_df,
+                                    on='Title')
+            else:
+                if foundPeptidesFile:
+                    raise Exception('[pLink2 Read] Could not find spectra file.')
+                elif foundSpectraFile:
+                    raise Exception('[pLink2 Read] Could not find peptide file')
+                else:
+                    raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
+                
+            frames.append(merge_df)
+    
+        s = pd.concat(frames)
+    
+        allData.append(s)
+
+    xtable = pd.concat(allData)
     ### Convert data inside pandas df
 
     # split title column into three
@@ -500,4 +507,4 @@ if __name__ == '__main__':
 
     init(col_order)
 
-    xtable = Read(r'H:\pLink_task_2018.08.13.16.45.46\reports')
+    xtable = Read(r'H:\pLink_task_2018.08.13.16.45.46\reports', col_order=col_order)

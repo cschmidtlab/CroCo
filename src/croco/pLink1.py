@@ -17,13 +17,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI. No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
 def plinkprotein2pandas(filepath):
     """
     Read a pLink protein results file and return a pandas dictionary.
@@ -174,12 +167,12 @@ def process_plink_proteins(prot_string):
     match = pattern.match(prot_string)
     return match.groups()
 
-def Read(plinkdir, col_order=None, compact=False):
+def Read(plinkdirs, col_order=None, compact=False):
     """
     Read pLink report dir and return an xtabel data array.
 
     Args:
-        plinkdir: plink report subdir (e.g. sample1)
+        plinkdirs (list): plink report subdir (e.g. sample1)
         col_order (list) – List of xTable column titles that are used to sort and compress the resulting datatable
         compact (bool): Compact the xTable to only the columns given in col_order or not
 
@@ -189,64 +182,70 @@ def Read(plinkdir, col_order=None, compact=False):
 
     ### Collect data, convert to pandas format and merge
 
-    # Initialise file names as None to use implicit booleaness
-    inter_file = None
-    loop_file = None
-    mono_file = None
+    print('[pLink1 Read] This is pLink1 Reader')
 
-    for e in os.listdir(hf.FSCompatiblePath(plinkdir)):
-        if '_inter_combine.protein.xls' in e:
-            inter_file = e
+    # convert to list if the input is only a single path
+    if not isinstance(plinkdirs, list):
+        plinkdirs = [plinkdirs]
+    
+    allData = list()
 
-        if '_loop_combine.protein.xls' in e:
-            loop_file = e
+    for file in plinkdirs:
 
-        if '_mono_combine.protein.xls' in e:
-            mono_file = e
+        # Initialise file names as None to use implicit booleaness
+        inter_file = None
+        loop_file = None
+        mono_file = None
 
-    frames = []
-    # only called if inter_file is not None
-    if inter_file:
-        print('Reading pLink inter-file: ' + inter_file)
-        inter_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, inter_file)))
-        inter_df['type'] = 'inter'
-        frames.append(inter_df)
-    if loop_file:
-        print('Reading pLink loop-file: ' + loop_file)
-        loop_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, loop_file)))
-        loop_df['type'] = 'loop'
-        frames.append(loop_df)
-    if mono_file:
-        print('Reading pLink mono-file: ' + mono_file)
-        mono_df =  plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(plinkdir, mono_file)))
-        mono_df['type'] = 'mono'
-        frames.append(mono_df)
+        for e in os.listdir(hf.FSCompatiblePath(file)):
+            if '_inter_combine.protein.xls' in e:
+                inter_file = e
+    
+            if '_loop_combine.protein.xls' in e:
+                loop_file = e
+    
+            if '_mono_combine.protein.xls' in e:
+                mono_file = e
+    
+        frames = []
+        # only called if inter_file is not None
+        if inter_file:
+            print('Reading pLink inter-file: ' + inter_file)
+            inter_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(file, inter_file)))
+            inter_df['type'] = 'inter'
+            frames.append(inter_df)
+        if loop_file:
+            print('Reading pLink loop-file: ' + loop_file)
+            loop_df = plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(file, loop_file)))
+            loop_df['type'] = 'loop'
+            frames.append(loop_df)
+        if mono_file:
+            print('Reading pLink mono-file: ' + mono_file)
+            mono_df =  plinkprotein2pandas(hf.FSCompatiblePath(os.path.join(file, mono_file)))
+            mono_df['type'] = 'mono'
+            frames.append(mono_df)
+    
+        s = pd.concat(frames)
 
-    data = pd.concat(frames)
+        allData.append(s)
 
+    xtable = pd.concat(allData)
     ### Convert data inside pandas df
 
-
-    # init xtable with column containing lists of rawfile, scanno, prec_ch
-    xtable = pd.DataFrame(data['Spectrum'].apply(process_plink_spectrum))
-    # split column into three
+    # rawfile, scanno, prec_ch
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Spectrum'])
-    # drop the original column
-    xtable.drop('Spectrum',
-                axis = 1,
-                inplace=True)
+        zip(*xtable['Spectrum'].apply(process_plink_spectrum))
 
     # Directly assign the re group matches into new columns
     xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
     xtable['xlink2'], xtable['xtype'] =\
-        zip(*data['Sequence'].apply(process_plink_sequence))
+        zip(*xtable['Sequence'].apply(process_plink_sequence))
 
     xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*data['Proteins'].apply(process_plink_proteins))
+            zip(*xtable['Proteins'].apply(process_plink_proteins))
 
-    xtable['type'] = data['type']
-    xtable['score'] = data['Score']
+    xtable['type'] = xtable['type']
+    xtable['score'] = xtable['Score']
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
@@ -261,15 +260,7 @@ def Read(plinkdir, col_order=None, compact=False):
                      xtable['xlink2'].astype(int, errors='ignore') + 1
 
     # add a lobel referring to the ordering in the pLink results table
-    xtable['Order'] = data[['Order', 'Order2']].apply(lambda x: ','.join(x), axis=1)
-
-    # add a path to the plink PSM image
-    xtable['PSM image'] = os.path.join(plinkdir, 'psm') + os.path.sep +\
-                            data['Spectrum'].astype(str) + '.png'
-    # clear path slashes and assign an excel suitable hyperlink
-    xtable['PSM image'] = xtable['PSM image'].astype(str).\
-                            apply(lambda x: '=HYPERLINK("' + os.path.abspath(x) +\
-                                  '", "' + x.split(os.path.sep)[-1] + '")')
+    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(x), axis=1)
 
     # Reassign the type for inter xlink to inter/intra/homomultimeric
     xtable.loc[xtable['type'] == 'inter', 'type'] =\
@@ -298,8 +289,10 @@ def Read(plinkdir, col_order=None, compact=False):
         modifi_dir = os.path.abspath(os.path.join(file_dir,
                                                   '../data/modification.ini'))
     # ... or calling from a exe-file in a folder-setup with the data folder at top-level
-    elif os.path.exists('./data/modification.ini'):
-        modifi_dir = os.path.abspath('./data/modification.ini')
+    elif os.path.exists(os.path.join(file_dir,
+                                     './data/modification.ini')):
+        modifi_dir = os.path.abspath(os.path.join(file_dir,
+                                                  './data/modification.ini'))
     # ... or calling from within a single bundled exe-file
     else:
         try:
@@ -309,7 +302,7 @@ def Read(plinkdir, col_order=None, compact=False):
                 os.path.join(base_path, './data/modification.ini'))
         # ... or something went wrong
         except:
-            raise Exception('Modifications.ini not found')
+            raise Exception('Modifications.ini not found. CWD is ' + file_dir)
 
     # load pLink modifications.ini from data-folder
     mod_dict = read_plink_modifications(os.path.abspath(modifi_dir))
@@ -318,7 +311,7 @@ def Read(plinkdir, col_order=None, compact=False):
     pattern = re.compile(r'(\d+),.*\((.*)\)')
 
     pepseq1 = xtable['pepseq1'].tolist()
-    Modification = data['Modification'].tolist()
+    Modification = xtable['Modification'].tolist()
 
     if len(pepseq1) == len(Modification):
         print('Len of pepseq1 and Modification match!')
@@ -408,7 +401,5 @@ if __name__ == '__main__':
                   'modmass2', 'modpos2', 'mod2',
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
-    
-    init(col_order)
-    
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink1\SV_BS3_pLink1\sample1')
+        
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink1\SV_BS3_pLink1\sample1', col_order=col_order)

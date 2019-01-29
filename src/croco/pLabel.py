@@ -3,7 +3,6 @@
 """
 Functions to write pLabel data.
 
-This script is part of the CroCo cross-link converter project
 """
 
 import pandas as pd

@@ -14,14 +14,6 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI.
-    No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
 def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.

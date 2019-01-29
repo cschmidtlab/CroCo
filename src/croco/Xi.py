@@ -15,13 +15,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def init(this_order):
-    """
-    Initialises the column order when called from the GUI. No function if calling directly.
-    """
-    global col_order
-    col_order = this_order
-
 def assign_type(row):
     """
     Assign mono, loop, inter and intra link
