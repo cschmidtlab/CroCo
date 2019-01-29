@@ -22,13 +22,11 @@ starttime = timeit.default_timer()
 
 from . import Kojak
 from . import KojakPercolator
-#Kojak.init(col_order)
 print('Finished with Kojak: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
 from . import Xi
 from . import XiSearchFDR
-XiSearchFDR.init(col_order)
 print('Finished with Xi: {:4.2f} ms'.format((timeit.default_timer() - starttime) * 1000))
 starttime = timeit.default_timer()
 
@@ -47,7 +45,6 @@ from . import DynamXL
 from . import xiNET
 
 from . import xTable
-xTable.init(col_order)
 
 from . import xVis
 

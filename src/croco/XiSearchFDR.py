@@ -18,13 +18,6 @@ else:
     from . import Xi as xi
     from . import HelperFunctions as hf
 
-def init(this_order):
-    """
-    Set required variables for conversion
-    """
-    global col_order
-    col_order = this_order
-
 def Read(xifdr_file, xi_file, compact=False):
     """
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.

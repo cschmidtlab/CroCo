@@ -15,52 +15,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def assign_type(row):
-    """
-    Assign mono, loop, inter and intra link
-    based on prot1, prot2, xlink1 and xlink2 entries
-    
-    Args:
-        row (Series): a series or list containing prot1, prot2, xlink1, xlink2
-    Returns:
-        str or np.nan: type of cross-link (inter, intra, loop, mono)
-    """
-    prot1, prot2, xlink1, xlink2 = row
-
-    prot1 = str(prot1)
-    prot2 = str(prot2)
-    xlink1 = str(xlink1)
-    xlink2 = str(xlink2)
-
-    if prot2 != 'nan' and prot1 == prot2:
-        t = 'intra'
-    elif prot2 != 'nan':
-        t = 'inter'
-    elif prot2 == 'nan' and xlink2 != 'nan':
-        t = 'loop'
-    elif prot1 != 'nan' and prot2 == 'nan':
-        t = 'mono'
-    else:
-        t = None
-    return t
-
-def rawfile_from_source(source_str):
-    """
-    Exctracts filename from string like
-    E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
-    
-    Args:
-        source_str (str): Path to a rawfile
-    Returns:
-        str: filename from path
-    """
-    try:
-        return source_str.split('.')[-2].split('\\')[-1]
-    except AttributeError as e:
-        if np.isnan(float(source_str)):
-            return np.nan
-        else:
-            raise Exception(e)
 
 def Read(xi_files, col_order=None, compact=False):
     """
@@ -73,6 +27,54 @@ def Read(xi_files, col_order=None, compact=False):
     Returns:
         pandas.DataFrame: xtable data table
     """
+
+    def assign_type(row):
+        """
+        Assign mono, loop, inter and intra link
+        based on prot1, prot2, xlink1 and xlink2 entries
+        
+        Args:
+            row (Series): a series or list containing prot1, prot2, xlink1, xlink2
+        Returns:
+            str or np.nan: type of cross-link (inter, intra, loop, mono)
+        """
+        prot1, prot2, xlink1, xlink2 = row
+    
+        prot1 = str(prot1)
+        prot2 = str(prot2)
+        xlink1 = str(xlink1)
+        xlink2 = str(xlink2)
+    
+        if prot2 != 'nan' and prot1 == prot2:
+            t = 'intra'
+        elif prot2 != 'nan':
+            t = 'inter'
+        elif prot2 == 'nan' and xlink2 != 'nan':
+            t = 'loop'
+        elif prot1 != 'nan' and prot2 == 'nan':
+            t = 'mono'
+        else:
+            t = None
+        return t
+    
+    def rawfile_from_source(source_str):
+        """
+        Exctracts filename from string like
+        E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
+        
+        Args:
+            source_str (str): Path to a rawfile
+        Returns:
+            str: filename from path
+        """
+        try:
+            return source_str.split('.')[-2].split('\\')[-1]
+        except AttributeError as e:
+            if np.isnan(float(source_str)):
+                return np.nan
+            else:
+                raise Exception(e)
+
 
     # convert to list if the input is only a single path
     if not isinstance(xi_files, list):

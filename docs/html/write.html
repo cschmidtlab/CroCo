@@ -40,17 +40,24 @@
 <p>Functions to read and write xTable data.</p>
 <dl class="function">
 <dt id="croco.xTable.Read">
-<code class="descclassname">croco.xTable.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xTable_files</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xTable.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xTable_files</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read an xTable data structure from file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xTable_files</strong> – path to the xtable file(s)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xTable_files</strong> – path to the xtable file(s)</li>
+<li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
+<li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">xTable dataframe object</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">xTable dataframe object</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">xtable</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xtable</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -58,7 +65,7 @@
 
 <dl class="function">
 <dt id="croco.xTable.Write">
-<code class="descclassname">croco.xTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>keep=True</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>writes an xtable data structure to file (in xlsx format)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -67,50 +74,19 @@
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>xtable</strong> – data table structure</li>
 <li><strong>to write file</strong> (<em>outpath</em>) – </li>
-<li><strong>keep</strong> (<em>optional</em>) – whether to restrict columns to the defined xTable cols</li>
+<li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
+<li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.xTable.init">
-<code class="descclassname">croco.xTable.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set required variables for conversion</p>
 </dd></dl>
 
 </div>
 <div class="section" id="module-croco.xWalk">
 <span id="xwalk"></span><h2>xWalk<a class="headerlink" href="#module-croco.xWalk" title="Permalink to this headline">¶</a></h2>
 <p>Functions to write data as input for xWalk.</p>
-<dl class="function">
-<dt id="croco.xWalk.AA_from_sequence">
-<code class="descclassname">croco.xWalk.</code><code class="descname">AA_from_sequence</code><span class="sig-paren">(</span><em>pepseq</em>, <em>xlink</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xWalk.AA_from_sequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the 3-character amino acid label of the cross-linked AA
-from a peptide sequence
-and the relative position of the cross-linker in the sequence</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pepseq</strong> (<em>str</em>) – peptide sequence</li>
-<li><strong>xlink</strong> (<em>int</em>) – position of the cross-link within the sequence</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3-letter amino acid code for the cross-linked amino acid</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="function">
 <dt id="croco.xWalk.Write">
 <code class="descclassname">croco.xWalk.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>pdb</em>, <em>offset</em>, <em>chains</em>, <em>atom</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xWalk.Write" title="Permalink to this definition">¶</a></dt>

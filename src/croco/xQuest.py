@@ -16,69 +16,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def process_xQuest_spectrum(spec_string):
-    """
-    Extract rawfile name, precursor charge and scan no from xQuest spectrum
-    string
-
-    Args:
-        spec_string: xQuest spectrum string
-    Returns:
-        str or np.nan: rawfile name
-        int or np.nan: scan number
-        int or np.nan: precursor charge
-    """
-    spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
-    if spectrum_pattern.match(spec_string):
-        match = spectrum_pattern.match(spec_string)
-        # rawfile, scanno, prec_ch
-        return match.groups()
-    else:
-        return np.nan
-
-def process_xQuest_Id(Id_string):
-    """
-    Extract peptide sequence of the alpha (longer) and the beta (shorter)
-    peptide as well as the relative positions of the cross-links within
-    these sequences from an xQuest Id-string
-    
-    Args:
-        ID_string (str): an xQuest Id-String
-    Returns:
-        str or np.nan: pepseq1
-        str or np.nan: pepseq2
-        int or np.nan: xlink1
-        int or np.nan: xlink2
-    """
-    Id_pattern = re.compile('(\w+)-(\w+)-a(\d+)-b(\d+)')
-    if Id_pattern.match(Id_string):
-        match = Id_pattern.match(Id_string)
-        # pepseq1, pepseq2, xlink1, xlink2
-        pepseq1, pepseq2, xlink1, xlink2 = match.groups()
-
-        return pepseq1, pepseq2, int(xlink1), int(xlink2)
-    else:
-        return np.nan
-
-def categorizexQuestType(XQType):
-    """
-    Extract protein name and absolute cross-link position from
-    xQuest type string (xlink, loop, mono)
-    
-    Args:
-        XQType (str): xquest type string
-    Returns:
-        str or np.nan: type of cross-link (inter, loop, mono)
-    """
-
-    if XQType == 'xlink':
-        return 'inter'
-    elif XQType in ['loop', 'looplink']:
-        return 'loop'
-    elif XQType in ['mono', 'monolink']:
-        return 'mono'
-    else:
-        return np.nan
 
 def Read(xQuest_files, col_order=None, compact=False):
     """
@@ -92,6 +29,71 @@ def Read(xQuest_files, col_order=None, compact=False):
     Returns:
         pandas.DataFrame: xTable data table
     """
+
+    def process_xQuest_spectrum(spec_string):
+        """
+        Extract rawfile name, precursor charge and scan no from xQuest spectrum
+        string
+    
+        Args:
+            spec_string: xQuest spectrum string
+        Returns:
+            str or np.nan: rawfile name
+            int or np.nan: scan number
+            int or np.nan: precursor charge
+        """
+        spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
+        if spectrum_pattern.match(spec_string):
+            match = spectrum_pattern.match(spec_string)
+            # rawfile, scanno, prec_ch
+            return match.groups()
+        else:
+            return np.nan
+    
+    def process_xQuest_Id(Id_string):
+        """
+        Extract peptide sequence of the alpha (longer) and the beta (shorter)
+        peptide as well as the relative positions of the cross-links within
+        these sequences from an xQuest Id-string
+        
+        Args:
+            ID_string (str): an xQuest Id-String
+        Returns:
+            str or np.nan: pepseq1
+            str or np.nan: pepseq2
+            int or np.nan: xlink1
+            int or np.nan: xlink2
+        """
+        Id_pattern = re.compile('(\w+)-(\w+)-a(\d+)-b(\d+)')
+        if Id_pattern.match(Id_string):
+            match = Id_pattern.match(Id_string)
+            # pepseq1, pepseq2, xlink1, xlink2
+            pepseq1, pepseq2, xlink1, xlink2 = match.groups()
+    
+            return pepseq1, pepseq2, int(xlink1), int(xlink2)
+        else:
+            return np.nan
+    
+    def categorizexQuestType(XQType):
+        """
+        Extract protein name and absolute cross-link position from
+        xQuest type string (xlink, loop, mono)
+        
+        Args:
+            XQType (str): xquest type string
+        Returns:
+            str or np.nan: type of cross-link (inter, loop, mono)
+        """
+    
+        if XQType == 'xlink':
+            return 'inter'
+        elif XQType in ['loop', 'looplink']:
+            return 'loop'
+        elif XQType in ['mono', 'monolink']:
+            return 'mono'
+        else:
+            return np.nan
+
 
     # convert to list if the input is only a single path
     if not isinstance(xQuest_files, list):
