@@ -45,7 +45,7 @@ A detailed workflow how to obtain the FDR-filtered table can be found at <a clas
 search engine.</p>
 <dl class="function">
 <dt id="croco.Kojak.Read">
-<code class="descclassname">croco.Kojak.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>kojak_files</em>, <em>rawfile=None</em>, <em>compact=False</em>, <em>decoy_string='REVERSE'</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.Kojak.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.Kojak.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>kojak_files</em>, <em>rawfile=None</em>, <em>decoy_string='REVERSE'</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.Kojak.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read Kojak results file, calculate and process missing values required
 for xTable and return the xTable.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -56,6 +56,8 @@ for xTable and return the xTable.</p>
 <li><strong>kojak_file</strong> (<em>str</em>) – path or paths to Kojak results file(s)</li>
 <li><strong>rawfile</strong> (<em>str</em>) – name of the corresponding rawfile</li>
 <li><strong>decoy_string</strong> (<em>optional</em>) – string used in kojak to label decoys</li>
+<li><strong>col_order</strong> (<em>list</em>) – </li>
+<li><strong>compact</strong> (<em>bool</em>) – Compact the xTable to only the columns given in col_order or not</li>
 </ul>
 </td>
 </tr>
@@ -67,13 +69,6 @@ for xTable and return the xTable.</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.Kojak.init">
-<code class="descclassname">croco.Kojak.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.Kojak.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI.
-No function if calling directly.</p>
 </dd></dl>
 
 </div>
@@ -106,13 +101,6 @@ No function if calling directly.</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.KojakPercolator.init">
-<code class="descclassname">croco.KojakPercolator.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.KojakPercolator.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI.
-No function if calling directly.</p>
 </dd></dl>
 
 </div>
@@ -258,14 +246,14 @@ protein name or not</p>
 <p>Functions to read pLink1 data.</p>
 <dl class="function">
 <dt id="croco.pLink1.Read">
-<code class="descclassname">croco.pLink1.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdir</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink1.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.pLink1.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdirs</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink1.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read pLink report dir and return an xtabel data array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>plinkdir</strong> – plink report subdir (e.g. sample1)</li>
+<li><strong>plinkdirs</strong> (<em>list</em>) – plink report subdir (e.g. sample1)</li>
 <li><strong>col_order</strong> (<em>list</em>) – </li>
 <li><strong>compact</strong> (<em>bool</em>) – Compact the xTable to only the columns given in col_order or not</li>
 </ul>
@@ -279,12 +267,6 @@ protein name or not</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.pLink1.init">
-<code class="descclassname">croco.pLink1.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink1.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI. No function if calling directly.</p>
 </dd></dl>
 
 <dl class="function">
@@ -386,14 +368,14 @@ their names as dict.</p>
 <p>Functions to read pLink2 files</p>
 <dl class="function">
 <dt id="croco.pLink2.Read">
-<code class="descclassname">croco.pLink2.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdir</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink2.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.pLink2.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>plinkdirs</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink2.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read pLink2 report dir and return an xtabel data array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>plinkdir</strong> – plink2 reports subdir (reports)</li>
+<li><strong>plinkdirs</strong> – plink2 reports subdir (reports)</li>
 <li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
 <li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
 </ul>
@@ -426,12 +408,6 @@ If only one peptide present (mono-link) return NaN for the second position</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.pLink2.init">
-<code class="descclassname">croco.pLink2.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLink2.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI. No function if calling directly.</p>
 </dd></dl>
 
 <dl class="function">
@@ -648,12 +624,6 @@ specific protein2-terms like H20 and intrapeptidal</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="croco.StavroX.init">
-<code class="descclassname">croco.StavroX.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.StavroX.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI. No function if calling directly.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="croco.StavroX.mods_from_peptides">
 <code class="descclassname">croco.StavroX.</code><code class="descname">mods_from_peptides</code><span class="sig-paren">(</span><em>peptide1</em>, <em>peptide2</em>, <em>mod2name</em>, <em>mod2mass</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.StavroX.mods_from_peptides" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract modification position and name from two StavroX peptide strings.
@@ -808,12 +778,6 @@ based on prot1, prot2, xlink1 and xlink2 entries</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="croco.Xi.init">
-<code class="descclassname">croco.Xi.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.Xi.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI. No function if calling directly.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="croco.Xi.rawfile_from_source">
 <code class="descclassname">croco.Xi.</code><code class="descname">rawfile_from_source</code><span class="sig-paren">(</span><em>source_str</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.Xi.rawfile_from_source" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exctracts filename from string like
@@ -915,12 +879,6 @@ xQuest type string (xlink, loop, mono)</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="croco.xQuest.init">
-<code class="descclassname">croco.xQuest.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xQuest.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the column order when called from the GUI. No function if calling directly.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="croco.xQuest.process_xQuest_Id">
 <code class="descclassname">croco.xQuest.</code><code class="descname">process_xQuest_Id</code><span class="sig-paren">(</span><em>Id_string</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xQuest.process_xQuest_Id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract peptide sequence of the alpha (longer) and the beta (shorter)
@@ -973,6 +931,30 @@ int or np.nan: precursor charge</td>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Modules to Read cross-link datafiles</a><ul>
@@ -1002,13 +984,6 @@ int or np.nan: precursor charge</td>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/read.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -1029,14 +1004,14 @@ int or np.nan: precursor charge</td>
       &copy;2019, Julian Bender.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
       <a href="_sources/read.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
     
 
     
