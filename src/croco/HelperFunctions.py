@@ -50,22 +50,22 @@ def applyColOrder(xtable, col_order, compact):
     minimal xTable
     """
     compact = bool(compact)
-    
-    if compact is False:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + sorted(remaining_cols)
-    
-        xtable = xtable[new_order]
-    elif compact is True:
-        try:
-            xtable = xtable[col_order]
-        except Exception as e:
-            raise Exception('[ApplyColOrder] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
-    else:
-        raise Exception('Compact argument passed to applyColOrder must be either True or False')
-    
+    if col_order is not None:
+        if compact is False:
+            # reorder columns to start with the xtable columns
+            all_cols = list(xtable.columns.values)
+            remaining_cols = [x for x in all_cols if x not in col_order]
+            new_order = col_order + sorted(remaining_cols)
+        
+            xtable = xtable[new_order]
+        elif compact is True:
+            try:
+                xtable = xtable[col_order]
+            except Exception as e:
+                raise Exception('[ApplyColOrder] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
+        else:
+            raise Exception('Compact argument passed to applyColOrder must be either True or False')
+        
     return xtable
 
 def generateID(type, prot1, xpos1, prot2, xpos2):

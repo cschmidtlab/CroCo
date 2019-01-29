@@ -452,10 +452,10 @@ class CroCoMainFrame(wx.Frame):
             try:
                 if len(self.inputArgs) > 0 :
                     print('[onRun] Found input args: "{}"'.format(self.inputArgs))
-                    xtable = self.availReads[self.theReadFormat][0](f, *self.inputArgs)
+                    xtable = self.availReads[self.theReadFormat][0](f, *self.inputArgs, col_order=self.col_order)
                 else:
                     print('[onRun] No extra input arguments provided.')
-                    xtable = self.availReads[self.theReadFormat][0](f)
+                    xtable = self.availReads[self.theReadFormat][0](f, col_order=self.col_order)
                 print('[onRun] Table(s) successfully read: {}'.format(', '.join(f)))
             except Exception as e:
                 self.Warning('Error while reading Input-file: ' + str(e))
