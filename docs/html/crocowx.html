@@ -152,19 +152,19 @@ structure see availReads.</p>
 <dl class="attribute">
 <dt id="croco_wx.CroCoMainFrame.compactTableCheck">
 <code class="descname">compactTableCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.compactTableCheck" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – whether to compact the table before passing to output function</p>
+<dd><p><em>wx.CheckBox</em> – whether to compact the table before passing to output function</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="croco_wx.CroCoMainFrame.mergeTableCheck">
 <code class="descname">mergeTableCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.mergeTableCheck" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – Whether to merge multiple files (pass paths in loop)</p>
+<dd><p><em>wx.CheckBox</em> – Whether to merge multiple files (pass paths in loop)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="croco_wx.CroCoMainFrame.multipleSettingsCheck">
 <code class="descname">multipleSettingsCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.multipleSettingsCheck" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – whether to apply the same settings to all files or call separately</p>
+<dd><p><em>wx.CheckBox</em> – whether to apply the same settings to all files or call separately</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -353,7 +353,10 @@ compute the window layout</p>
 <dl class="attribute">
 <dt id="croco_wx.CroCoOptionsFrame.textCtrls">
 <code class="descname">textCtrls</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.textCtrls" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> – mapping text labels to input text fields</p>
+<dd><p><em>dict</em> – mapping text labels to input text fields.
+all inputs done by extra dialog widgets (file and paths) are
+stored upon closing the dialogs. Text and checkbox inputs have to be evaaluated
+when the okay-Button has been pressed</p>
 </dd></dl>
 
 </dd></dl>

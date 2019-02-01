@@ -15,4 +15,3 @@ The CroCoWX Class
    :members:
    :private-members:
    :show-inheritance:
-

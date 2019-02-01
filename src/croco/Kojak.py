@@ -23,7 +23,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
     for xTable and return the xTable.
 
     Args:
-        kojak_file (str): path or paths to Kojak results file(s)
+        kojak_files (list): path or paths to Kojak results file(s)
         rawfile (str): name of the corresponding rawfile
         decoy_string (optional): string used in kojak to label decoys
         col_order (list) – List of xTable column titles that are used to sort and compress the resulting datatable
@@ -42,11 +42,11 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
     for file in kojak_files:
 
 
-        print('Reading Kojak-file: ' + kojak_file)
+        print('Reading Kojak-file: ' + file)
 
         # only called if kojak_file is not None
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(kojak_file),
+            s = pd.read_csv(hf.FSCompatiblePath(file),
                                  skiprows = 1, # skip the Kojak version
                                  delimiter='\t')
             allData.append(s)

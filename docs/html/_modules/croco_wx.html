@@ -192,9 +192,9 @@
 <span class="sd">        </span>
 <span class="sd">        Attributes:</span>
 
-<span class="sd">            compactTableCheck (bool): whether to compact the table before passing to output function</span>
-<span class="sd">            mergeTableCheck (bool): Whether to merge multiple files (pass paths in loop)</span>
-<span class="sd">            multipleSettingsCheck (bool): whether to apply the same settings to all files or call separately</span>
+<span class="sd">            compactTableCheck (wx.CheckBox): whether to compact the table before passing to output function</span>
+<span class="sd">            mergeTableCheck (wx.CheckBox): Whether to merge multiple files (pass paths in loop)</span>
+<span class="sd">            multipleSettingsCheck (wx.CheckBox): whether to apply the same settings to all files or call separately</span>
 <span class="sd">            writeFormat (str): the format to write data to (from availWrites)</span>
 <span class="sd">            readFormat (str): the format to read data from (from availReads)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -678,39 +678,57 @@
 <span class="sd">        Attributes:</span>
 <span class="sd">            inputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
 <span class="sd">            outputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
-<span class="sd">            textCtrls (dict): mapping text labels to input text fields</span>
+<span class="sd">            textCtrls (dict): mapping text labels to input text fields. </span>
+<span class="sd">                              all inputs done by extra dialog widgets (file and paths) are </span>
+<span class="sd">                              stored upon closing the dialogs. Text and checkbox inputs have to be evaaluated</span>
+<span class="sd">                              when the okay-Button has been pressed</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">,</span> <span class="n">listofOptions</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">,</span> <span class="n">listofOptions</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
             <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Creates and options widget comprising a label and an input field</span>
+<span class="sd">            (either a button for a file or dir dialog or a free text input)</span>
+<span class="sd">            </span>
 <span class="sd">            Args:</span>
-<span class="sd">                option: tuple with (label, type of input)</span>
-<span class="sd">                listOfOptions: a list object to append to user-input to</span>
+<span class="sd">                option (tuple): (label, type of input)</span>
+<span class="sd">                listOfOptions (list): a list object to append to user-input to</span>
+<span class="sd">                filename (str): if the same options are processed for multiple</span>
+<span class="sd">                                files, add the filename to the options label</span>
 <span class="sd">            Returns:</span>
 <span class="sd">                optionContainer: wx.BoxSizer object</span>
 <span class="sd">            &quot;&quot;&quot;</span>
 
+            <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
+                <span class="c1"># append space to filename to simplify code</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;: &#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># set the filename to an empty string</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="n">label</span> <span class="o">=</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
             <span class="n">optionLabel</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span>
                                         <span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span>
-                                        <span class="n">label</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                        <span class="c1"># name for the label preceding the buttons</span>
+                                        <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
                                         <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span><span class="p">)</span>
             <span class="n">optionLabel</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
                              <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
-                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Load file&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Load file&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
                 <span class="c1"># Bind using a lambda function to be able to pass multiple args</span>
                 <span class="c1"># to the called function</span>
                 <span class="c1"># see: https://wiki.wxpython.org/Passing%20Arguments%20to%20Callbacks</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span>
-                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenFile</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenFile</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
                                   <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
 
             <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;dir&#39;</span><span class="p">:</span>
-                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Open directory&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Open directory&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span>
-                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenDir</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenDir</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
                                   <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
             <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">:</span>
@@ -721,18 +739,18 @@
                     <span class="n">defValue</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">defValue</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">defValue</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">optionButton</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">defValue</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">optionButton</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
                                   <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
             <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">:</span>
-                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">optionButton</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">optionButton</span>
                 <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
                                   <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[createOptionsContainer] Wrong options format for option: </span><span class="si">{}</span><span class="s1">&#39;</span>\
-                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
 
             <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
             <span class="n">optionContainer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">optionLabel</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
@@ -752,18 +770,36 @@
         <span class="n">InputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">OutputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
-
-            <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                                     <span class="n">option</span><span class="p">,</span>
-                                                     <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">)</span>
-            <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-
-        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
-            <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                                     <span class="n">option</span><span class="p">,</span>
-                                                     <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">)</span>
-            <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
+        
+                    <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                             <span class="n">option</span><span class="p">,</span>
+                                                             <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">,</span>
+                                                             <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        
+                <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
+                    <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                             <span class="n">option</span><span class="p">,</span>
+                                                             <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">,</span>
+                                                             <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
+    
+                <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">option</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">)</span>
+                <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
+                <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">option</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">)</span>
+                <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
         <span class="c1">### createWidgets</span>
 
