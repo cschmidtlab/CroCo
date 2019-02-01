@@ -1,5 +1,7 @@
-Modules to Read cross-link datafiles
-************************************
+.. _crocoread:
+
+Modules to Read cross-link data files
+=====================================
 
 .. toctree::
    :maxdepth: 2

@@ -1,5 +1,7 @@
+.. _crocowrite:
+
 Modules to generate files from xTables
-**************************************
+======================================
 
 .. toctree::
    :maxdepth: 2

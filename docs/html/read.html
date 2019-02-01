@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Modules to Read cross-link datafiles &#8212; CroCo  documentation</title>
+    <title>Modules to Read cross-link data files &#8212; CroCo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -31,16 +31,17 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="modules-to-read-cross-link-datafiles">
-<h1>Modules to Read cross-link datafiles<a class="headerlink" href="#modules-to-read-cross-link-datafiles" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="modules-to-read-cross-link-data-files">
+<span id="crocoread"></span><h1>Modules to Read cross-link data files<a class="headerlink" href="#modules-to-read-cross-link-data-files" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
+</div>
 <div class="section" id="kojak">
-<h2>Kojak<a class="headerlink" href="#kojak" title="Permalink to this headline">¶</a></h2>
+<h1>Kojak<a class="headerlink" href="#kojak" title="Permalink to this headline">¶</a></h1>
 <p>CroCo contains modules for reading data from the direct output of the Kojak search engine (<a class="reference external" href="http://www.kojak-ms.org">http://www.kojak-ms.org</a>) as well as for FDR-filtered results obtained by using Percolator.
 A detailed workflow how to obtain the FDR-filtered table can be found at <a class="reference external" href="http://www.kojak-ms.org/docs/validation.html">http://www.kojak-ms.org/docs/validation.html</a>.</p>
 <div class="section" id="module-croco.Kojak">
-<span id="kojak-only"></span><h3>Kojak only<a class="headerlink" href="#module-croco.Kojak" title="Permalink to this headline">¶</a></h3>
+<span id="kojak-only"></span><h2>Kojak only<a class="headerlink" href="#module-croco.Kojak" title="Permalink to this headline">¶</a></h2>
 <p>Functions to read and process data generated with the Kojak cross-link
 search engine.</p>
 <dl class="function">
@@ -73,7 +74,7 @@ for xTable and return the xTable.</p>
 
 </div>
 <div class="section" id="module-croco.KojakPercolator">
-<span id="kojak-and-percolator"></span><h3>Kojak and Percolator<a class="headerlink" href="#module-croco.KojakPercolator" title="Permalink to this headline">¶</a></h3>
+<span id="kojak-and-percolator"></span><h2>Kojak and Percolator<a class="headerlink" href="#module-croco.KojakPercolator" title="Permalink to this headline">¶</a></h2>
 <p>Functions to read Percolator processed Kojak data.</p>
 <dl class="function">
 <dt id="croco.KojakPercolator.Read">
@@ -105,7 +106,7 @@ for xTable and return the xTable.</p>
 
 </div>
 <div class="section" id="module-croco.KojakFunctions">
-<span id="kojak-helper-functions"></span><h3>Kojak Helper Functions<a class="headerlink" href="#module-croco.KojakFunctions" title="Permalink to this headline">¶</a></h3>
+<span id="kojak-helper-functions"></span><h2>Kojak Helper Functions<a class="headerlink" href="#module-croco.KojakFunctions" title="Permalink to this headline">¶</a></h2>
 <p>Functions that are collectively used by croco.Kojak and croco.KojakPercolator.</p>
 <dl class="function">
 <dt id="croco.KojakFunctions.assign_ID_and_type">
@@ -239,10 +240,10 @@ protein name or not</p>
 </div>
 </div>
 <div class="section" id="plink">
-<h2>pLink<a class="headerlink" href="#plink" title="Permalink to this headline">¶</a></h2>
+<h1>pLink<a class="headerlink" href="#plink" title="Permalink to this headline">¶</a></h1>
 <p>CroCo can read data from the search engine pLink2 (<a class="reference external" href="http://pfind.ict.ac.cn/software/pLink1/index.html">http://pfind.ict.ac.cn/software/pLink1/index.html</a>) as well as from its predecessor pLink1. Even though the latter is deprecated since 2018, we provide the parser for compatibility to old analyses.</p>
 <div class="section" id="module-croco.pLink1">
-<span id="plink1"></span><h3>pLink1<a class="headerlink" href="#module-croco.pLink1" title="Permalink to this headline">¶</a></h3>
+<span id="plink1"></span><h2>pLink1<a class="headerlink" href="#module-croco.pLink1" title="Permalink to this headline">¶</a></h2>
 <p>Functions to read pLink1 data.</p>
 <dl class="function">
 <dt id="croco.pLink1.Read">
@@ -271,7 +272,7 @@ protein name or not</p>
 
 </div>
 <div class="section" id="module-croco.pLink2">
-<span id="plink2"></span><h3>pLink2<a class="headerlink" href="#module-croco.pLink2" title="Permalink to this headline">¶</a></h3>
+<span id="plink2"></span><h2>pLink2<a class="headerlink" href="#module-croco.pLink2" title="Permalink to this headline">¶</a></h2>
 <p>Functions to read pLink2 files</p>
 <dl class="function">
 <dt id="croco.pLink2.Read">
@@ -301,7 +302,7 @@ protein name or not</p>
 </div>
 </div>
 <div class="section" id="stavrox">
-<h2>StavroX<a class="headerlink" href="#stavrox" title="Permalink to this headline">¶</a></h2>
+<h1>StavroX<a class="headerlink" href="#stavrox" title="Permalink to this headline">¶</a></h1>
 <p>Currently CroCo can only handle data from the cross-link search engine StavroX (<a class="reference external" href="https://www.stavrox.com/">https://www.stavrox.com/</a>) that cannot target MS-cleavable cross-linkers.
 Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) may be supported in future versions of CroCo.</p>
 <span class="target" id="module-croco.StavroX"></span><p>Functions to read StavroX processed crosslink data.</p>
@@ -333,7 +334,7 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 
 </div>
 <div class="section" id="xi">
-<h2>Xi<a class="headerlink" href="#xi" title="Permalink to this headline">¶</a></h2>
+<h1>Xi<a class="headerlink" href="#xi" title="Permalink to this headline">¶</a></h1>
 <p>Results from the Xi cross-link search engine (<a class="reference external" href="http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/">http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/</a>) can also be parsed by CroCo.</p>
 <span class="target" id="module-croco.Xi"></span><p>Functions to read Xi processed crosslink data.</p>
 <dl class="function">
@@ -390,7 +391,7 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 
 </div>
 <div class="section" id="xquest">
-<h2>xQuest<a class="headerlink" href="#xquest" title="Permalink to this headline">¶</a></h2>
+<h1>xQuest<a class="headerlink" href="#xquest" title="Permalink to this headline">¶</a></h1>
 <p>xQuest (<a class="reference external" href="http://prottools.ethz.ch/orinner/public/htdocs/xquest/">http://prottools.ethz.ch/orinner/public/htdocs/xquest/</a>) results are also supported by CroCo.</p>
 <span class="target" id="module-croco.xQuest"></span><p>Functions to read xQuest data.</p>
 <dl class="function">
@@ -418,7 +419,6 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 </table>
 </dd></dl>
 
-</div>
 </div>
 
 
@@ -453,7 +453,7 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Modules to Read cross-link datafiles</a><ul>
+<li><a class="reference internal" href="#">Modules to Read cross-link data files</a></li>
 <li><a class="reference internal" href="#kojak">Kojak</a><ul>
 <li><a class="reference internal" href="#module-croco.Kojak">Kojak only</a></li>
 <li><a class="reference internal" href="#module-croco.KojakPercolator">Kojak and Percolator</a></li>
@@ -468,8 +468,6 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 <li><a class="reference internal" href="#stavrox">StavroX</a></li>
 <li><a class="reference internal" href="#xi">Xi</a></li>
 <li><a class="reference internal" href="#xquest">xQuest</a></li>
-</ul>
-</li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

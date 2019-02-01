@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>The CroCo graphical User-Interface &#8212; CroCo  documentation</title>
+    <title>The graphical User-Interface &#8212; CroCo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -30,8 +30,62 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="the-croco-graphical-user-interface">
-<span id="introgui"></span><h1>The CroCo graphical User-Interface<a class="headerlink" href="#the-croco-graphical-user-interface" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="the-graphical-user-interface">
+<span id="introgui"></span><h1>The graphical User-Interface<a class="headerlink" href="#the-graphical-user-interface" title="Permalink to this headline">¶</a></h1>
+<p>A portable GUI to easily transfer cross-link data files and help users focusing on experimental work is the main idea behind CroCo.
+However, usage of the modules inside Python-scripts is possible (and documented at <a class="reference internal" href="read.html#crocoread"><span class="std std-ref">Modules to Read cross-link data files</span></a> and <a class="reference internal" href="write.html#crocowrite"><span class="std std-ref">Modules to generate files from xTables</span></a>).</p>
+</div>
+<div class="section" id="general-usage">
+<h1>General usage<a class="headerlink" href="#general-usage" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Download the compiled GUI from <a class="reference external" href="https://github.com/cschmidtlab/CroCo/releases/latest">https://github.com/cschmidtlab/CroCo/releases/latest</a></dt>
+<dd><ul class="first last">
+<li>If your OS is not supported you can still try <a class="reference internal" href="#starting-the-croco-gui-from-python">Starting the CroCo GUI from Python</a>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Start the programme</dt>
+<dd><ul class="first last">
+<li>If Windows complains about the non-verified origin of the programme, acknowledge and continue</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>You should see something like the following</li>
+</ul>
+<div class="figure align-center" id="id1">
+<img alt="The CroCO GUI" src="_images/crocoGUI.png" />
+<p class="caption"><span class="caption-text">The CroCo GUI</span></p>
+</div>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>In the Input and output dropdown menus, choose a format and select a directory or one or multiple files (see <a class="reference internal" href="#detailed-descriptions-for-the-formats">Detailed descriptions for the formats</a>.</dt>
+<dd><ul class="first last">
+<li>the Start button will only be available once both formats are set and files are selected</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>If you selected multiple files for input, you can merge them by activating the <code class="docutils literal notranslate"><span class="pre">Merge</span> <span class="pre">files</span></code> checkbox</li>
+<li>CroCo transfers all information found in the input files into the generated xTable files. If you want to restrict the xTable headers to the minimum columns necessary, you can choose <code class="docutils literal notranslate"><span class="pre">Compact</span> <span class="pre">xTable</span></code></li>
+<li>Click on Start</li>
+<li><dl class="first docutils">
+<dt>Depending on your choice of input and output formats, CroCo may require additional information. This will pop up in a second window.</dt>
+<dd><ul class="first last">
+<li>Detailed information on how to enter format-specific information can be found at <a class="reference internal" href="#detailed-descriptions-for-the-formats">Detailed descriptions for the formats</a>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="detailed-descriptions-for-the-formats">
+<h1>Detailed descriptions for the formats<a class="headerlink" href="#detailed-descriptions-for-the-formats" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="input-formats">
 <h2>Input formats<a class="headerlink" href="#input-formats" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="kojak">
@@ -40,6 +94,7 @@
 <li><strong>Load file(s)</strong>: e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.kojak.txt</span></code></li>
 <li>Provide: Rawfile title (e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.raw</span></code>)</li>
 </ul>
+<p>Kojak does not store the rawfile inside the output but it is required inside the xTable.</p>
 </div>
 <div class="section" id="kojak-percolator">
 <h3>Kojak &amp; Percolator<a class="headerlink" href="#kojak-percolator" title="Permalink to this headline">¶</a></h3>
@@ -112,10 +167,116 @@ percolated file.</p>
 </ul>
 <div class="section" id="customtable-format">
 <h4>customTable Format<a class="headerlink" href="#customtable-format" title="Permalink to this headline">¶</a></h4>
-<p>``` [header] Protein 1, Protein 2 [data] [prot1], [pr</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">header</span><span class="p">]</span>
+<span class="n">Protein</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Protein</span> <span class="mi">2</span>
+<span class="p">[</span><span class="n">data</span><span class="p">]</span>
+<span class="p">[</span><span class="n">prot1</span><span class="p">],</span> <span class="p">[</span><span class="n">prot2</span><span class="p">]</span>
+<span class="p">[</span><span class="n">footer</span><span class="p">]</span>
+<span class="n">This</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">footer</span> <span class="n">of</span> <span class="n">the</span> <span class="n">file</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Everything between [header] and [data] is considered the header and
+is printed once on top of the output file</li>
+<li>In the [data] block columns identified by their xTable header are
+written in substitution of the header name.<ul>
+<li>E.g. instead of <code class="docutils literal notranslate"><span class="pre">[prot1],</span> <span class="pre">[prot2]</span></code> a line like
+<code class="docutils literal notranslate"><span class="pre">SPA_STAAU,</span>&#160; <span class="pre">IgG4_heavy</span></code> is written for every line in the xTable
+file</li>
+<li>Everything <strong>not</strong> enclosed in brackets will be written as is</li>
+<li>If an invalid header name is given in brackets, the program will
+stop</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="plabel">
+<h3>pLabel<a class="headerlink" href="#plabel" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save the pLabel file</li>
+<li>Provide: Directory containing the corresponding mgf-files<ul>
+<li>The mgf filenames <strong>must</strong> match the rawfile names given in the
+xTable</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="xtable">
+<h3>xTable<a class="headerlink" href="#xtable" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xTable file</li>
+</ul>
+</div>
+<div class="section" id="xvis">
+<h3>xVis<a class="headerlink" href="#xvis" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xVis file</li>
+</ul>
+</div>
+<div class="section" id="xwalk">
+<h3>xWalk<a class="headerlink" href="#xwalk" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xWalk file</li>
+<li>Provide:<ul>
+<li>PDB to map xlinks: Name of a PDB file that should be analysed by
+xWalk</li>
+<li>PDB Atom code (Text): A PDB atom code (e.g. CB) that should be
+used for distance calculation</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="xinet">
+<h3>xiNet<a class="headerlink" href="#xinet" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xiNet file</li>
+</ul>
+<p><strong>0.5</strong></p>
+<ul class="simple">
+<li>customTable support</li>
+</ul>
+<p id="section-1"><strong>0.4</strong></p>
+<ul class="simple">
+<li>Added pLabel support</li>
+<li>Options Window on GUI</li>
+</ul>
 </div>
 </div>
 </div>
+<div class="section" id="starting-the-croco-gui-from-python">
+<span id="pythongui"></span><h1>Starting the CroCo GUI from Python<a class="headerlink" href="#starting-the-croco-gui-from-python" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Clone the CroCo repository from <a class="reference external" href="https://github.com/cschmidtlab/CroCo.git">https://github.com/cschmidtlab/CroCo.git</a></dt>
+<dd><ul class="first last">
+<li>If you’re not familiar with github, download and extract the latest version of the CroCo source code from <a class="reference external" href="https://github.com/cschmidtlab/CroCo/archive/master.zip">https://github.com/cschmidtlab/CroCo/archive/master.zip</a></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Install Python 3+</dt>
+<dd><ul class="first last">
+<li>The easiest way is usually to use anaconda Python (<a class="reference external" href="https://www.anaconda.com/distribution/">https://www.anaconda.com/distribution/</a>)</li>
+<li>Install the required python packages for CroCo (see requirements.txt in the CroCo root directory) either via <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PACKAGE</span></code> or via <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">PACKAGE</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Open a Python-aware command-line</dt>
+<dd><ul class="first last">
+<li>On Windows, use Anaconda Prompt or cmd.exe if you exported Python to your OS PATH-Variable</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>Navigate to <code class="docutils literal notranslate"><span class="pre">CroCo/src</span></code></li>
+<li>Start the GUI by typing <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">croco_wx.py</span></code></li>
+</ul>
+</div></blockquote>
 </div>
 
 
@@ -150,7 +311,9 @@ percolated file.</p>
 
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">The CroCo graphical User-Interface</a><ul>
+<li><a class="reference internal" href="#">The graphical User-Interface</a></li>
+<li><a class="reference internal" href="#general-usage">General usage</a></li>
+<li><a class="reference internal" href="#detailed-descriptions-for-the-formats">Detailed descriptions for the formats</a><ul>
 <li><a class="reference internal" href="#input-formats">Input formats</a><ul>
 <li><a class="reference internal" href="#kojak">Kojak</a></li>
 <li><a class="reference internal" href="#kojak-percolator">Kojak &amp; Percolator</a></li>
@@ -168,10 +331,16 @@ percolated file.</p>
 <li><a class="reference internal" href="#customtable-format">customTable Format</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#plabel">pLabel</a></li>
+<li><a class="reference internal" href="#xtable">xTable</a></li>
+<li><a class="reference internal" href="#xvis">xVis</a></li>
+<li><a class="reference internal" href="#xwalk">xWalk</a></li>
+<li><a class="reference internal" href="#xinet">xiNet</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li><a class="reference internal" href="#starting-the-croco-gui-from-python">Starting the CroCo GUI from Python</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
