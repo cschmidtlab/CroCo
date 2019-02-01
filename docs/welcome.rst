@@ -1,6 +1,34 @@
 **CroCo** converts multiple data format from cross-linking mass
-spectrometry software tools to xTable format (in csv format). Currently
-the following input formats are supported:
+spectrometry software tools to xTable format (in csv format).
+It is distributed as graphical programme to be run from an executable
+and as a Python module to be integrated into workflows.
+
+System requirements
+-------------------
+
+For the GUI:
+~~~~~~~~~~~~
+-  Windows 7/8/10
+
+For the Python module: 
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../requirements.txt
+
+Usage of the GUI
+----------------
+
+For the conversion of data of every input program, a slightly different
+usage is required for gathering all data that are required for xTable.
+In general, information that is not present in the input files will be
+asked from the user.
+
+For detailed information how to use the GUI, see :ref:`introGUI`.
+
+Supported formats
+-----------------
+
+Currently the following input formats are supported:
 
 -  `Kojak`_
 -  `Kojak with Percolator`_
@@ -23,29 +51,6 @@ analysis of cross-linking data (e.g. visualisation, spectra annotation,
 -  `xVis`_
 -  `xWalk`_
 -  `xiNet`_
-
-CroCo is distributed as graphical program to be run from an executable
-and as a Python module to be integrated into workflows.
-
-System requirements
--------------------
-
-*For the GUI*: Windows 10
-
-*For the Python module*:  Python3 with the following modules installed
-  - pandas
-  - numpy
-  - re
-
-Usage of the GUI
-----------------
-
-For the conversion of data of every input program, a slightly different
-usage is required for gathering all data that are required for xTable.
-In general, information that is not present in the input files will be
-asked from the user.
-
-For detailed information how to use the GUI, see :ref:`introGUI`.
 
 .. _Kojak: http://www.kojak-ms.org/
 .. _Kojak with Percolator: https://github.com/percolator

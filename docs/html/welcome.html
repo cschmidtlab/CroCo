@@ -30,8 +30,38 @@
           <div class="body" role="main">
             
   <p><strong>CroCo</strong> converts multiple data format from cross-linking mass
-spectrometry software tools to xTable format (in csv format). Currently
-the following input formats are supported:</p>
+spectrometry software tools to xTable format (in csv format).
+It is distributed as graphical programme to be run from an executable
+and as a Python module to be integrated into workflows.</p>
+<div class="section" id="system-requirements">
+<h1>System requirements<a class="headerlink" href="#system-requirements" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="for-the-gui">
+<h2>For the GUI:<a class="headerlink" href="#for-the-gui" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Windows 7/8/10</li>
+</ul>
+</div>
+<div class="section" id="for-the-python-module">
+<h2>For the Python module:<a class="headerlink" href="#for-the-python-module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Python</span><span class="o">==</span><span class="mf">3.6</span><span class="o">.</span><span class="mi">5</span>
+<span class="n">numpy</span><span class="o">==</span><span class="mf">1.14</span><span class="o">.</span><span class="mi">2</span>
+<span class="n">wxPython</span><span class="o">==</span><span class="mf">4.0</span><span class="o">.</span><span class="mi">2</span><span class="n">a1</span><span class="o">.</span><span class="n">dev3717</span><span class="o">+</span><span class="n">d4bd2fe</span>
+<span class="n">pandas</span><span class="o">==</span><span class="mf">0.22</span><span class="o">.</span><span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="usage-of-the-gui">
+<h1>Usage of the GUI<a class="headerlink" href="#usage-of-the-gui" title="Permalink to this headline">¶</a></h1>
+<p>For the conversion of data of every input program, a slightly different
+usage is required for gathering all data that are required for xTable.
+In general, information that is not present in the input files will be
+asked from the user.</p>
+<p>For detailed information how to use the GUI, see <a class="reference internal" href="GUI_intro.html#introgui"><span class="std std-ref">The graphical User-Interface</span></a>.</p>
+</div>
+<div class="section" id="supported-formats">
+<h1>Supported formats<a class="headerlink" href="#supported-formats" title="Permalink to this headline">¶</a></h1>
+<p>Currently the following input formats are supported:</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.kojak-ms.org/">Kojak</a></li>
 <li><a class="reference external" href="https://github.com/percolator">Kojak with Percolator</a></li>
@@ -55,28 +85,6 @@ analysis of cross-linking data (e.g. visualisation, spectra annotation,
 <li><a class="reference external" href="http://www.xwalk.org/cgi-bin/home.cgi">xWalk</a></li>
 <li><a class="reference external" href="http://crosslinkviewer.org/">xiNet</a></li>
 </ul>
-<p>CroCo is distributed as graphical program to be run from an executable
-and as a Python module to be integrated into workflows.</p>
-<div class="section" id="system-requirements">
-<h1>System requirements<a class="headerlink" href="#system-requirements" title="Permalink to this headline">¶</a></h1>
-<p><em>For the GUI</em>: Windows 10</p>
-<dl class="docutils">
-<dt><em>For the Python module</em>:  Python3 with the following modules installed</dt>
-<dd><ul class="first last simple">
-<li>pandas</li>
-<li>numpy</li>
-<li>re</li>
-</ul>
-</dd>
-</dl>
-</div>
-<div class="section" id="usage-of-the-gui">
-<h1>Usage of the GUI<a class="headerlink" href="#usage-of-the-gui" title="Permalink to this headline">¶</a></h1>
-<p>For the conversion of data of every input program, a slightly different
-usage is required for gathering all data that are required for xTable.
-In general, information that is not present in the input files will be
-asked from the user.</p>
-<p>For detailed information how to use the GUI, see <a class="reference internal" href="GUI_intro.html#introgui"><span class="std std-ref">The graphical User-Interface</span></a>.</p>
 </div>
 
 
@@ -111,8 +119,13 @@ asked from the user.</p>
 
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">System requirements</a></li>
+<li><a class="reference internal" href="#">System requirements</a><ul>
+<li><a class="reference internal" href="#for-the-gui">For the GUI:</a></li>
+<li><a class="reference internal" href="#for-the-python-module">For the Python module:</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#usage-of-the-gui">Usage of the GUI</a></li>
+<li><a class="reference internal" href="#supported-formats">Supported formats</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
