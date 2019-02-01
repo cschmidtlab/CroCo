@@ -1,0 +1,289 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.xQuest &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco.xQuest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to read xQuest data.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+
+<div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.xQuest.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">xQuest_files</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read xQuest results file and return file in xTable format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        xQuest_files (list): path to xQuest results file(s)</span>
+<span class="sd">        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable</span>
+<span class="sd">        compact (bool): Whether to compact the xTable to only those columns listed in col_order</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame: xTable data table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">process_xQuest_spectrum</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract rawfile name, precursor charge and scan no from xQuest spectrum</span>
+<span class="sd">        string</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            spec_string: xQuest spectrum string</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str or np.nan: rawfile name</span>
+<span class="sd">            int or np.nan: scan number</span>
+<span class="sd">            int or np.nan: precursor charge</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">spectrum_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">spectrum_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">spectrum_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">)</span>
+            <span class="c1"># rawfile, scanno, prec_ch</span>
+            <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    
+    <span class="k">def</span> <span class="nf">process_xQuest_Id</span><span class="p">(</span><span class="n">Id_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract peptide sequence of the alpha (longer) and the beta (shorter)</span>
+<span class="sd">        peptide as well as the relative positions of the cross-links within</span>
+<span class="sd">        these sequences from an xQuest Id-string</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            ID_string (str): an xQuest Id-String</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str or np.nan: pepseq1</span>
+<span class="sd">            str or np.nan: pepseq2</span>
+<span class="sd">            int or np.nan: xlink1</span>
+<span class="sd">            int or np.nan: xlink2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Id_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(\w+)-(\w+)-a(\d+)-b(\d+)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Id_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">Id_string</span><span class="p">):</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">Id_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">Id_string</span><span class="p">)</span>
+            <span class="c1"># pepseq1, pepseq2, xlink1, xlink2</span>
+            <span class="n">pepseq1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    
+            <span class="k">return</span> <span class="n">pepseq1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    
+    <span class="k">def</span> <span class="nf">categorizexQuestType</span><span class="p">(</span><span class="n">XQType</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract protein name and absolute cross-link position from</span>
+<span class="sd">        xQuest type string (xlink, loop, mono)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            XQType (str): xquest type string</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str or np.nan: type of cross-link (inter, loop, mono)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">if</span> <span class="n">XQType</span> <span class="o">==</span> <span class="s1">&#39;xlink&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;inter&#39;</span>
+        <span class="k">elif</span> <span class="n">XQType</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;loop&#39;</span><span class="p">,</span> <span class="s1">&#39;looplink&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="s1">&#39;loop&#39;</span>
+        <span class="k">elif</span> <span class="n">XQType</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">,</span> <span class="s1">&#39;monolink&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="s1">&#39;mono&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+
+    <span class="c1"># convert to list if the input is only a single path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xQuest_files</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">xQuest_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">xQuest_files</span><span class="p">]</span>
+
+    <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">xQuest_files</span><span class="p">:</span>
+
+        <span class="c1">### Collect data and convert to pandas format</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading xQuest-file: &#39;</span> <span class="o">+</span> <span class="n">file</span><span class="p">)</span>
+
+        <span class="c1"># only called if inter_file is not None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">file</span><span class="p">),</span>
+                            <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xQuest Read] Failed opening file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+
+    <span class="n">rename_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;z&#39;</span><span class="p">:</span><span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;AbsPos1&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;AbsPos2&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;ld-Score&#39;</span><span class="p">:</span> <span class="s1">&#39;score&#39;</span><span class="p">}</span>
+
+    <span class="c1"># Copy and rename selected columns to new xquest df</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">xtable</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                      <span class="n">columns</span><span class="o">=</span><span class="n">rename_dict</span><span class="p">,</span>
+                      <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Error during xQuest header renaming: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+
+    <span class="c1"># Extract rawfile, scanno and precursor charge from the mgf header string</span>
+    <span class="c1"># used as Spectrum by xQuest</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;scanno&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prec_ch&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_xQuest_spectrum</span><span class="p">))</span>
+
+    <span class="c1"># Extract peptide sequences and relative cross-link positions form the</span>
+    <span class="c1"># xQuest ID-string</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_xQuest_Id</span><span class="p">))</span>
+
+    <span class="c1"># Modifications are not defined in xQuest</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="c1"># calculate the absolute position of the first amino acide of the resp</span>
+    <span class="c1"># peptides</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Assign mono</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">categorizexQuestType</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+
+    <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># xQuest does not incorporate decoy entries in the results table</span>
+    <span class="c1"># but protein names can contain identifiers as reverse or decoy</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;decoy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s1">&#39;reverse&#39;</span><span class="p">)</span> <span class="o">|</span>\
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s1">&#39;decoy&#39;</span><span class="p">)</span>
+
+    <span class="c1"># the following properties cannot directly be inferred from the</span>
+    <span class="c1"># xQuest results file</span>
+    <span class="c1"># to avoid confusion with missing valued like np.nan, they are set to</span>
+    <span class="c1"># UNKNOWN</span>
+    <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;xtype&#39;</span><span class="p">,</span> <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">]:</span>
+        <span class="n">xtable</span><span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;UNKNOWN&#39;</span>
+
+    <span class="c1"># reassign dtypes for every element in the df</span>
+    <span class="c1"># errors ignore leaves the dtype as object for every</span>
+    <span class="c1"># non-numeric element</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+
+    <span class="c1">### Return df</span>
+    <span class="k">return</span> <span class="n">xtable</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

@@ -20,8 +20,25 @@ import croco
 
 
 class CroCoMainFrame(wx.Frame):
+    """ The wx window class for the croco cross-link converter GUI
+
+    Attributes:
+        availReads (dict): Dictionary with writing operation to list: [function to call (func), options for displaying a related widget (list)].
+                           Structure of options list:
+                           (Label for the widget (str)),
+                           type of the widget (can be 'file'/'dir'/'input'/'check'),
+                           Help text (str),
+                           Optional multi-purpose field: e.g. default value for input fields)
+        availWrites (dict):  Dictionary with writing operation to list. For
+                             structure see availReads.
+        currentPath (str): set starting path for folder selection GUI
+        col_order (list of str): defines the column headers required for xtable output
+    """
 
     def __init__(self):
+        """
+        Initialises parameters for the MainFrame
+        """
         # ensure the parent's __init__ is called
         wx.Frame.__init__(self,
                           None,
@@ -29,7 +46,6 @@ class CroCoMainFrame(wx.Frame):
                           style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX,
                           title='The CroCo cross-link converter')
 
-        # create a panel in the frame
         self.panel = wx.Panel(self)
 
         ## setting the icon for the frame
@@ -57,11 +73,10 @@ class CroCoMainFrame(wx.Frame):
         icon = wx.Icon(iconFile, wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
-        # set starting path for folder selection GUI
         self.currentPath = os.getcwd()
 
         # define the croco read and write options and link to the modules
-        # each value of a dict is a list of [options, functionToCall]
+        # each value of a dict is a list of [ functionToCall, options]
         self.availReads = {'pLink1': [croco.pLink1.Read, []],
                            'pLink2': [croco.pLink2.Read, []],
                            'Kojak': [croco.Kojak.Read, [('Kojak rawfile',
@@ -78,16 +93,6 @@ class CroCoMainFrame(wx.Frame):
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 
-        """
-        availWrites is a dict with lists as values for every possible writing
-        operation as key. The lists are structured as follows
-        1: function to call
-        2: options for displaying a related widget (is a list of tuples)
-            1: Label for the widget
-            2. type of the widget (file/dir/input/check)
-            3. Help text
-            4. Optional multu-purpose field: e.g. default value for input fields
-        """
         self.availWrites =  {'xTable': [croco.xTable.Write, []],
                              'xVis': [croco.xVis.Write, []],
                              'xiNet': [croco.xiNET.Write, []],
@@ -124,7 +129,6 @@ class CroCoMainFrame(wx.Frame):
                                                                          'file',
                                                                          'Provide tample file for parsing')]]}
 
-        # defines the column headers required for xtable output
         self.col_order = ['rawfile', 'scanno', 'prec_ch',
                           'pepseq1', 'xlink1',
                           'pepseq2', 'xlink2', 'xtype',
@@ -133,8 +137,9 @@ class CroCoMainFrame(wx.Frame):
                           'prot1', 'xpos1', 'prot2',
                           'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-        # set triggers allowing the start button to unhide
+        #: bool: True if the read format is set
         self.readSet = False
+        #: bool: True if the write format is set
         self.writeSet = False
 
         # create a menu bar
@@ -144,14 +149,25 @@ class CroCoMainFrame(wx.Frame):
         # ALWAYS AFTER LOADING MENU AND STATUS BAR!!!!
         self.createWidgets()
 
-        # arguments to pass at function call
-        self.inputArgs = ''
-        self.outputArgs = ''
+        #: list: arguments to pass at input function call
+        self.inputArgs = []
+        #: list: arguments to pass at output function call
+        self.outputArgs = []
 
     def createWidgets(self):
+        """
+        Create the widgets for the croco MainFrame
+        
+        Attributes:
+
+            compactTableCheck (bool): whether to compact the table before passing to output function
+            mergeTableCheck (bool): Whether to merge multiple files (pass paths in loop)
+            multipleSettingsCheck (bool): whether to apply the same settings to all files or call separately
+            writeFormat (str): the format to write data to (from availWrites)
+            readFormat (str): the format to read data from (from availReads)
+        """
 
         ## define the widgets
-
         # define the contents of the first sizer
 
         input_lbl = wx.StaticText(self.panel,wx.ID_ANY, label='Input', style=wx.ALIGN_CENTER )
@@ -166,15 +182,13 @@ class CroCoMainFrame(wx.Frame):
 
         self.compactTableCheck = wx.CheckBox(self.panel, label='Compact xTable')
         self.mergeTableCheck = wx.CheckBox(self.panel, label='Merge files')
+        self.multipleSettingsCheck = wx.CheckBox(self.panel, label='Same settings for all files')
 
         self.controlStart = wx.Button(self.panel, label='Start')
         self.controlStart.Enable(False)
         controlQuit = wx.Button(self.panel, label='Quit')
 
         helpButton = wx.ContextHelpButton(self.panel)
-
-        # progress bar
-        # gauge = wx.Gauge(self.panel, range=100)
 
         ## create Connects
 
@@ -201,6 +215,9 @@ class CroCoMainFrame(wx.Frame):
                                lambda evt: self.Info('Only add minimal columns to xTable', caption='Help'))
         self.mergeTableCheck.Bind(wx.EVT_HELP,
                                lambda evt: self.Info('Merge the data from multiple input files into one. Does not work for pLink or xi+xiFDR.', caption='Help'))
+        self.multipleSettingsCheck.Bind(wx.EVT_HELP,
+                               lambda evt: self.Info('Use the same settings for all processed files.', caption='Help'))
+
 
         ## define the layout
         # define the sizers (main widget layouts) used in the app
@@ -226,6 +243,7 @@ class CroCoMainFrame(wx.Frame):
         # Set checkboxes
         checkSizer.Add(self.compactTableCheck, 1, wx.ALL|wx.EXPAND, 5)
         checkSizer.Add(self.mergeTableCheck, 1, wx.ALL|wx.EXPAND, 5)
+        checkSizer.Add(self.multipleSettingsCheck, 1, wx.ALL|wx.EXPAND, 5)
 
         # Set start and quit buttons
         controlSizer.Add(self.controlStart, 1, wx.RIGHT, 5)
@@ -246,9 +264,7 @@ class CroCoMainFrame(wx.Frame):
 
     def makeMenuBar(self):
         """
-        A menu bar is composed of menus, which are composed of menu items.
-        This method builds a set of menus and binds handlers to be called
-        when the menu item is selected.
+        Create the top menu for the CroCo MainFrame
         """
 
         # Make a file menu
@@ -289,41 +305,69 @@ class CroCoMainFrame(wx.Frame):
     ## GUI Functions
 
     def OnReadFormat(self, event):
+        """
+        function to enable the file input button only after an input format was chosen
+
+        Args:
+            event (wx.Event)
+        """
         self.theReadFormat = self.readFormat.GetString(self.readFormat.GetSelection())
         print('[onReadFormat] Reading {} format'.\
             format(self.theReadFormat))
         self.inputButton.Enable(True)
 
     def OnWriteFormat(self, event):
+        """
+        function to enable the file output button only after an input format was chosen
+
+        Args:
+            event (wx.Event)
+        """
         self.theWriteFormat = self.writeFormat.GetString(self.writeFormat.GetSelection())
         print('[onWriteFormat] Writing {} format'.\
             format(self.theWriteFormat))
         self.outputButton.Enable(True)
 
     def OnOpenSwitch(self, event):
+        """
+        Open a dir-opening dialog if pLink was selected, else file-opening
+
+        Args:
+            event (wx.Event)
+        """
         if 'pLink' in self.theReadFormat:
             self.onInputDir()
         else:
             self.onInputFile()
 
     def onInputFile(self):
-       dlg = wx.FileDialog(self,
-                           message="Choose one or multiple files for input",
-                           defaultDir=self.currentPath,
-                           defaultFile="",
-                           wildcard="*.*",
-                           style=wx.FD_MULTIPLE)
-       if dlg.ShowModal() == wx.ID_OK:
+        """
+        Open a file dialaog and set the paths
+        
+        Attributes: 
+            theInput (list of str): selected input paths
+            
+        """
+        dlg = wx.FileDialog(self,
+                            message="Choose one or multiple files for input",
+                            defaultDir=self.currentPath,
+                            defaultFile="",
+                            wildcard="*.*",
+                            style=wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
             self.theInput = dlg.GetPaths()
             self.currentPath = os.path.dirname(self.theInput[0])
             print('[onInputFile] Loaded {}'.format(', '.join(self.theInput)))
-       dlg.Destroy()
+        dlg.Destroy() 
 
-       self.readSet = True
-       if self.writeSet:
-           self.controlStart.Enable(True)
+        self.readSet = True
+        if self.writeSet:
+            self.controlStart.Enable(True)
 
     def onInputDir(self):
+        """
+        Open a dir dialaog and set the paths
+        """
         dlg = wx.DirDialog(self,
                            message="Choose one or multiple directories for Input:",
                            defaultPath=self.currentPath,
@@ -342,6 +386,12 @@ class CroCoMainFrame(wx.Frame):
             self.controlStart.Enable(True)
 
     def onOutputDir(self, event):
+        """
+        Open a dialog to select an output dir
+        
+        Attributes:
+            theOutput (str): Path to write output
+        """
         dlg = wx.DirDialog(self,
                            message="Choose a directory:",
                            defaultPath=self.currentPath,
@@ -370,6 +420,7 @@ class CroCoMainFrame(wx.Frame):
         self.closeProgram()
 
     def onAbout(self, event):
+        """Show the about dialog"""
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
@@ -384,6 +435,13 @@ class CroCoMainFrame(wx.Frame):
         wx.adv.AboutBox(aboutInfo)
 
     def Warning(self, message, caption = 'Warning!'):
+        """
+        Issue a warning on the console and as a wx window
+        
+        Args:
+            message (str): Message to send
+            caption (str): Title for the wx-window
+        """
         print('[WARN] {}'.format(message))
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_WARNING)
         del self.wait
@@ -391,6 +449,13 @@ class CroCoMainFrame(wx.Frame):
         dlg.Destroy()
 
     def Info(self, message, caption = 'CroCo'):
+        """
+        Generate a message dialog
+        
+        Args:
+            message (str): Message to send
+            caption (str): Title for the wx-window
+        """
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
@@ -420,8 +485,8 @@ class CroCoMainFrame(wx.Frame):
 
         else:
             # reset args lists
-            self.inputArgs = ''
-            self.outputArgs = ''
+            self.inputArgs = []
+            self.outputArgs = []
 
             self.onRun(event)
 
@@ -429,6 +494,9 @@ class CroCoMainFrame(wx.Frame):
         """
         Collect all necessary information from self and start the
         conversion by calling the actual conversion script
+        
+        Args:
+            event (wx.Event)
         """
 
         print('[onRun] Going to convert {} from {} '.format(', '.join(self.theInput),
@@ -445,9 +513,9 @@ class CroCoMainFrame(wx.Frame):
             Relies on many variables in self
 
             Args:
-                f: list of files to call CroCo on
+                f (list): list of files to call CroCo on
             Returns:
-                outpath: path where the files are written
+                outpath (str): path where the files are written
             """
             try:
                 if len(self.inputArgs) > 0 :
@@ -509,11 +577,23 @@ class CroCoMainFrame(wx.Frame):
 
 class CroCoOptionsFrame(wx.Frame):
     """
-    This is a Child Frame to CroCoMainWindow asking the user for input
-    regarding the possible optinos of a submodule
+    Child Frame to CroCoMainWindow asking the user for input
+    regarding the possible options of a submodule
+    
+    Attributes:
+        parent (wx.Frame): parent frame
+        currentPath (str): current working directory
+        InputOptionsToAsk (list): Input options from CroCoMainWindow
+        InputOptionsToAsk (list): Output options from CroCoMainWindow
     """
 
     def __init__(self, parent):
+        """
+        Initialise the wxFrame
+        
+        Args:
+            parent: parent object
+        """
         wx.Frame.__init__(self,
                           wx.GetApp().TopWindow,
                           wx.ID_ANY,
@@ -555,10 +635,19 @@ class CroCoOptionsFrame(wx.Frame):
         self.currentPath = os.getcwd()
 
         # in these variables the options from CroCoMainWindow will be written
-        self.InputOptionsToAsk = ''
-        self.OutputOptionsToAsk = ''
+        self.InputOptionsToAsk = []
+        self.OutputOptionsToAsk = []
 
     def updateOptions(self):
+        """
+        Collect the variables that determine the layout of the options window and 
+        compute the window layout
+        
+        Attributes:
+            inputOptionsToUserInput (dict): mapping the label names to the user-provided input
+            outputOptionsToUserInput (dict): mapping the label names to the user-provided input
+            textCtrls (dict): mapping text labels to input text fields
+        """
 
         def CreateOptionsContainer(self, option, listofOptions):
             """
@@ -684,6 +773,11 @@ class CroCoOptionsFrame(wx.Frame):
         self.Close()
 
     def onOkay(self, event):
+        """
+        If the user clicks okay, all inputs will be evaluated, returned to
+        the parent classe and the onRun method of the parent class will
+        be called
+        """
 
         inputArgs = []
         outputArgs = []
@@ -724,18 +818,20 @@ class CroCoOptionsFrame(wx.Frame):
         self.Close()
 
     def onOpenFile(self, event, dictToAppend, label):
-       dlg = wx.FileDialog(self,
-                           message="Choose a file for input",
-                           defaultDir=self.currentPath,
-                           defaultFile="",
-                           wildcard="*.*",
-                           style=wx.FD_MULTIPLE)
-       if dlg.ShowModal() == wx.ID_OK:
-            self.currentPath = dictToAppend[label] = dlg.GetPath()
-            print('[onOpenFile] Loaded {}'.format(self.currentPath))
-       dlg.Destroy()
+        """File opening method of CroCoOptionsWindow"""
+        dlg = wx.FileDialog(self,
+                            message="Choose a file for input",
+                            defaultDir=self.currentPath,
+                            defaultFile="",
+                            wildcard="*.*",
+                            style=wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
+             self.currentPath = dictToAppend[label] = dlg.GetPath()
+             print('[onOpenFile] Loaded {}'.format(self.currentPath))
+        dlg.Destroy()
 
     def onOpenDir(self, event, dictToAppend, label):
+        """Dir opening method of CroCoOptionsWindow"""
         dlg = wx.DirDialog(self,
                            message="Choose one directory for Input:",
                            defaultPath=self.currentPath,
@@ -747,6 +843,7 @@ class CroCoOptionsFrame(wx.Frame):
         dlg.Destroy()
 
     def Info(self, message, caption = 'CroCo'):
+        """Info dialog method of CroCoOptionsWindow"""
         dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
