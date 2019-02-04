@@ -50,7 +50,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
                                  skiprows = 1, # skip the Kojak version
                                  delimiter='\t')
             allData.append(s)
-        except:
+        except Exception as e:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
 
     xtable = pd.concat(allData)

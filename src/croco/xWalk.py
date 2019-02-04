@@ -29,8 +29,8 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     Args:
         xtable (pandas.DataFrame): data table structure
         pdb (str): PDB-file name
-        offset (int): shift between PDB AA indices and the xTable
-        chains: (str) comma separated list protein:chain allocations
+        offset (list or str): shift between PDB AA indices and the xTable
+        chains: (dict or str) comma separated list protein:chain allocations
         atom (str): Atom identifier (e.g. CB)
         outpath (str): path to write file
     """
@@ -76,9 +76,6 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     
         return AA
 
-
-    print(outpath, pdb, offset, chains, atom)
-
     pdbBase = os.path.basename(pdb)
 
     if not pdbBase.endswith('.pdb'):
@@ -92,14 +89,18 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xtable['atom'] = str(atom).upper()
 
     chainDict = dict()
-    try:
-        for annotation in chains.split(','):
-            protein, chain = annotation.strip().split(':')
-            # by generating a list of the string, all characters will be represented
-            # as single chain identifiers
-            chainDict[protein] = list(chain.upper())
-    except:
-        raise Exception('[xWalk Write] Please specify protein:chain in an comma-separated list')
+    
+    if not isinstance(chains, dict):
+        if isinstance(chains, str):
+            chains = [x.strip() for x in chains.split(',')]
+        try:
+            for annotation in chains:
+                protein, chain = annotation.strip().split(':')
+                # by generating a list of the string, all characters will be represented
+                # as single chain identifiers
+                chainDict[protein] = list(chain.upper())
+        except:
+            raise Exception('[xWalk Write] Please specify protein:chain in an comma-separated list from the GUI or as a dict')
 
     # drop duplicates on the cross-link position as only the absolute position
     # is relevant to xWalk
@@ -141,14 +142,45 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
 
     xWalkTable = pd.concat(allChainTables)
 
-    # convert the offset user-input into an integer as requried for pandas below
-    try:
-        offset = int(offset)
-    except:
-        raise Exception('[xWalk Write] Please provide an integer offset!')
-
-    xWalkTable['xpos1'] += offset
-    xWalkTable['xpos2'] += offset
+    # to assign offsets to every protein, a single integer (one for all) or a 
+    # dict mapping protein names to offsets is required
+    if not isinstance(offset, dict):
+        # convert the offset user-input into an integer as requried for pandas below
+        try:
+            # the input is a single integer
+            offset = int(offset)
+        except:
+            # the input is a list of protein:offset pair strings
+            try:
+                offset = [x.strip() for x in offset.split(',')]
+            except:
+                raise Exception('[xWalk Write] Please provide an integer offset for all chains or a list of protein:offset assignments!')
+    
+    # if the offset is an integer, use it for all protein positions
+    if isinstance(offset, int):
+        xWalkTable['xpos1'] += offset
+        xWalkTable['xpos2'] += offset
+    else:
+        # if it is a list (see above) the protein:offset pairs are parted
+        if isinstance(offset, list):
+            offsetDict = dict()
+            try:
+                for annotation in offset:
+                    protein, offset = annotation.strip().split(':')
+                    offsetDict[protein] = int(offset)
+            except:
+                raise Exception('[xWalk Write] Please specify protein:offset in an comma-separated list from the GUI or as a dict')
+        # if it si a dict, it can directly be used
+        if isinstance(offset, dict):
+            offsetDict = offset
+    
+        try:
+            print(offsetDict)
+            for pr, of in offsetDict.items():
+                xWalkTable.loc[xWalkTable['prot1'] == pr, 'xpos1'] += of
+                xWalkTable.loc[xWalkTable['prot2'] == pr, 'xpos2'] += of
+        except:
+            raise Exception('[xWalk Write] error during assignment of offsets to proteins')
 
     atomInfo1 = list()
     atomInfo2 = list()
@@ -184,9 +216,10 @@ if __name__ == '__main__':
 
     pdb = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\1aqf.pdb'
     atom = 'CB'
-    out = r'C:\Users\User\Downloads\test'
+    out = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\xWalk'
     chains = 'SPA_STAAU:AD, IgG4_heavy:BC'
+    offset = 'SPA_STAAU:1, IgG4_heavy:0'
 
-    xtable = Read(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\pLink2_reports_xtable.xlsx')
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\pLink1_xtable_xTable_to_xTable.xlsx')
 
-    xtable = Write(xtable=xtable, outpath=out, pdb=pdb, offset=0, chains=chains, atom=atom)
+    xtable = Write(xtable=xtable, outpath=out, pdb=pdb, offset=offset, chains=chains, atom=atom)

@@ -45,6 +45,7 @@
 
 <span class="kn">import</span> <span class="nn">wx</span>
 <span class="kn">import</span> <span class="nn">wx.adv</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">import</span> <span class="nn">croco</span>
 <span class="c1">#from pandas import read_csv</span>
@@ -65,6 +66,9 @@
 <span class="sd">                             structure see availReads.</span>
 <span class="sd">        currentPath (str): set starting path for folder selection GUI</span>
 <span class="sd">        col_order (list of str): defines the column headers required for xtable output</span>
+<span class="sd">        inputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
+<span class="sd">        outputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -181,15 +185,14 @@
         <span class="c1"># ALWAYS AFTER LOADING MENU AND STATUS BAR!!!!</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">createWidgets</span><span class="p">()</span>
 
-        <span class="c1">#: list: arguments to pass at input function call</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputArgs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1">#: list: arguments to pass at output function call</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">outputArgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Dicts mapping the label names to the user-provided input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="CroCoMainFrame.createWidgets"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.createWidgets">[docs]</a>    <span class="k">def</span> <span class="nf">createWidgets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create the widgets for the croco MainFrame</span>
-<span class="sd">        </span>
+
 <span class="sd">        Attributes:</span>
 
 <span class="sd">            compactTableCheck (wx.CheckBox): whether to compact the table before passing to output function</span>
@@ -375,10 +378,10 @@
 <div class="viewcode-block" id="CroCoMainFrame.onInputFile"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onInputFile">[docs]</a>    <span class="k">def</span> <span class="nf">onInputFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Open a file dialaog and set the paths</span>
-<span class="sd">        </span>
-<span class="sd">        Attributes: </span>
+
+<span class="sd">        Attributes:</span>
 <span class="sd">            theInput (list of str): selected input paths</span>
-<span class="sd">            </span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                             <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose one or multiple files for input&quot;</span><span class="p">,</span>
@@ -390,7 +393,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">theInput</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPaths</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onInputFile] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">)))</span>
-        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span> 
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">readSet</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">writeSet</span><span class="p">:</span>
@@ -420,7 +423,7 @@
 <div class="viewcode-block" id="CroCoMainFrame.onOutputDir"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onOutputDir">[docs]</a>    <span class="k">def</span> <span class="nf">onOutputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Open a dialog to select an output dir</span>
-<span class="sd">        </span>
+
 <span class="sd">        Attributes:</span>
 <span class="sd">            theOutput (str): Path to write output</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -469,7 +472,7 @@
 <div class="viewcode-block" id="CroCoMainFrame.Warning"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.Warning">[docs]</a>    <span class="k">def</span> <span class="nf">Warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s1">&#39;Warning!&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Issue a warning on the console and as a wx window</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            message (str): Message to send</span>
 <span class="sd">            caption (str): Title for the wx-window</span>
@@ -483,7 +486,7 @@
 <div class="viewcode-block" id="CroCoMainFrame.Info"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.Info">[docs]</a>    <span class="k">def</span> <span class="nf">Info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s1">&#39;CroCo&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a message dialog</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            message (str): Message to send</span>
 <span class="sd">            caption (str): Title for the wx-window</span>
@@ -516,9 +519,9 @@
             <span class="n">OptionsFrame</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># reset args lists</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputArgs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">outputArgs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># reset args dicts</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">onRun</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
 
@@ -526,7 +529,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Collect all necessary information from self and start the</span>
 <span class="sd">        conversion by calling the actual conversion script</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            event (wx.Event)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -545,16 +548,39 @@
 <span class="sd">            Relies on many variables in self</span>
 
 <span class="sd">            Args:</span>
-<span class="sd">                f (list): list of files to call CroCo on</span>
+<span class="sd">                f (list): list of filepaths to call CroCo on</span>
 <span class="sd">            Returns:</span>
 <span class="sd">                outpath (str): path where the files are written</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputArgs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found input args: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputArgs</span><span class="p">))</span>
-                    <span class="n">xtable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">inputArgs</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+
+                        <span class="c1"># init a list of xtables because every single call to</span>
+                        <span class="c1"># croco with a different set of options will</span>
+                        <span class="c1"># generate another table</span>
+                        <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+                            <span class="c1"># Collect the input options for this file by concatenating</span>
+                            <span class="c1"># the options label with the file name</span>
+                            <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                                <span class="n">label</span> <span class="o">=</span> <span class="n">fname</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found input args for file </span><span class="si">{}</span><span class="s1">: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+                            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
+                            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+                        <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found input args for file </span><span class="si">{}</span><span class="s1">: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+                        <span class="n">xtable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra input arguments provided.&#39;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra input arguments required.&#39;</span><span class="p">)</span>
                     <span class="n">xtable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Table(s) successfully read: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="p">)))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -582,11 +608,12 @@
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Writing table in </span><span class="si">{}</span><span class="s1"> format to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">,</span> <span class="n">outpath</span><span class="p">))</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputArgs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found output args: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputArgs</span><span class="p">))</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">outputArgs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found output args: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra input arguments provided.&#39;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra output arguments required.&#39;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Table successfully written!&#39;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -611,7 +638,7 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Child Frame to CroCoMainWindow asking the user for input</span>
 <span class="sd">    regarding the possible options of a submodule</span>
-<span class="sd">    </span>
+
 <span class="sd">    Attributes:</span>
 <span class="sd">        parent (wx.Frame): parent frame</span>
 <span class="sd">        currentPath (str): current working directory</span>
@@ -622,7 +649,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialise the wxFrame</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            parent: parent object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -672,14 +699,12 @@
 
 <div class="viewcode-block" id="CroCoOptionsFrame.updateOptions"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.updateOptions">[docs]</a>    <span class="k">def</span> <span class="nf">updateOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Collect the variables that determine the layout of the options window and </span>
+<span class="sd">        Collect the variables that determine the layout of the options window and</span>
 <span class="sd">        compute the window layout</span>
-<span class="sd">        </span>
+
 <span class="sd">        Attributes:</span>
-<span class="sd">            inputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
-<span class="sd">            outputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
-<span class="sd">            textCtrls (dict): mapping text labels to input text fields. </span>
-<span class="sd">                              all inputs done by extra dialog widgets (file and paths) are </span>
+<span class="sd">            textCtrls (dict): mapping text labels to input text fields.</span>
+<span class="sd">                              all inputs done by extra dialog widgets (file and paths) are</span>
 <span class="sd">                              stored upon closing the dialogs. Text and checkbox inputs have to be evaaluated</span>
 <span class="sd">                              when the okay-Button has been pressed</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -688,7 +713,7 @@
             <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Creates and options widget comprising a label and an input field</span>
 <span class="sd">            (either a button for a file or dir dialog or a free text input)</span>
-<span class="sd">            </span>
+
 <span class="sd">            Args:</span>
 <span class="sd">                option (tuple): (label, type of input)</span>
 <span class="sd">                listOfOptions (list): a list object to append to user-input to</span>
@@ -700,11 +725,14 @@
 
             <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
                 <span class="c1"># append space to filename to simplify code</span>
-                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;: &#39;</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39; - &#39;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># set the filename to an empty string</span>
                 <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
+            <span class="c1"># when using separate options for multiple files, the filename</span>
+            <span class="c1"># is added to the option to ask for and the combined label</span>
+            <span class="c1"># serves as key for later retrieving the inputs</span>
             <span class="n">label</span> <span class="o">=</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
             <span class="n">optionLabel</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span>
@@ -758,10 +786,6 @@
 
             <span class="k">return</span> <span class="n">optionContainer</span>
 
-        <span class="c1"># Dicts mapping the label names to the user-provided input</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
-
         <span class="c1"># dict mapping text labels to input text fields</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -770,36 +794,31 @@
         <span class="n">InputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">OutputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
-                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
-        
-                    <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                                             <span class="n">option</span><span class="p">,</span>
-                                                             <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">,</span>
-                                                             <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-                    <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-        
-                <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
-                    <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                                             <span class="n">option</span><span class="p">,</span>
-                                                             <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">,</span>
-                                                             <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-                    <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">GenerateOutputOptionContainers</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wrapper for routine to generate label/input containers for either</span>
+<span class="sd">            a set of filename/options combinations or for a single</span>
+<span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
-    
                 <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                                                          <span class="n">option</span><span class="p">,</span>
-                                                         <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">)</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">,</span>
+                                                         <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
                 <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-    
+
             <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
                 <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                                                          <span class="n">option</span><span class="p">,</span>
-                                                         <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">)</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">,</span>
+                                                         <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
                 <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">GenerateOutputOptionContainers</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">GenerateOutputOptionContainers</span><span class="p">()</span>
 
         <span class="c1">### createWidgets</span>
 
@@ -847,38 +866,51 @@
 <span class="sd">        be called</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">inputArgs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">outputArgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">def</span> <span class="nf">CollectUserOptionsInput</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wrapper for collecting the user input stored as attributes of</span>
+<span class="sd">            CroCoOptionsWindow and return it to the parent class</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="c1"># label, type, help, optional</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
 
-        <span class="c1"># label, type, help, optional</span>
-        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
-            <span class="c1"># all inputs done by extra dialog widgets (file and paths) are</span>
-            <span class="c1"># stored upon closing</span>
-            <span class="c1"># the dialogs. Text and checkbox inputs have to be evaaluated</span>
-            <span class="c1"># when the okay-Button has been pressed</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
-                <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">userInput</span>
-            <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-            <span class="n">outputArgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>                
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># all inputs done by extra dialog widgets (file and paths) are</span>
+                <span class="c1"># stored upon closing</span>
+                <span class="c1"># the dialogs. Text and checkbox inputs have to be evaaluated</span>
+                <span class="c1"># when the okay-Button has been pressed</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
+                    <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">userInput</span>
 
-        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
-                <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">userInput</span>
-            <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-            <span class="n">inputArgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>                
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    
+                <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
+                    <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">userInput</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">CollectUserOptionsInput</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">CollectUserOptionsInput</span><span class="p">()</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOkay] Options for Input&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOkay] Options for Output&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputArgs</span> <span class="o">=</span> <span class="n">inputArgs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputArgs</span> <span class="o">=</span> <span class="n">outputArgs</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">onRun</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
 

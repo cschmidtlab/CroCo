@@ -40,13 +40,14 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
     
         print('Reading Percolator-file: ' + p_file)
     
-        # only called if inter_file is not None
-    
-        percolated = pd.read_csv(hf.FSCompatiblePath(p_file),
-                                 delimiter='\t',
-                                 usecols=range(5),
-                                 index_col=False, # avoid taking the first col as index
-                                 engine='python')
+        try:
+            percolated = pd.read_csv(hf.FSCompatiblePath(p_file),
+                                     delimiter='\t',
+                                     usecols=range(5),
+                                     index_col=False, # avoid taking the first col as index
+                                     engine='python')
+        except FileNotFoundError:
+            raise Exception("Could not find the percolated file %s. Please move it into the same directory as the percolator files!" % p_file)
     
         percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
     
@@ -60,8 +61,8 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
                                       usecols=range(10),
                                       engine='python',
                                       index_col=False)
-        except:
-            raise FileNotFoundError(unperc_file)
+        except FileNotFoundError:
+            raise Exception("Could not find the unpercolated file %s. Please move it into the same directory as the percolator files!" % unperc_file)
     
         # Merge with left join (only keys that are in tje percolated DF will be re-
         # tained)
@@ -77,8 +78,8 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
             kojak = pd.read_csv(hf.FSCompatiblePath(kojak_file),
                                 skiprows = 1, # skip the Kojak version
                                 delimiter='\t')
-        except:
-            raise FileNotFoundError("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
+        except FileNotFoundError:
+            raise Exception("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
     
         kojak.rename(columns={'Scan Number': 'scannr'}, inplace=True)
     

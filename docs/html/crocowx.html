@@ -67,6 +67,18 @@ structure see availReads.</p>
 <dd><p><em>list of str</em> – defines the column headers required for xtable output</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.inputOptionsToUserInput">
+<code class="descname">inputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.inputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.outputOptionsToUserInput">
+<code class="descname">outputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.outputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="croco_wx.CroCoMainFrame.Info">
 <code class="descname">Info</code><span class="sig-paren">(</span><em>message</em>, <em>caption='CroCo'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.Info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.Info" title="Permalink to this definition">¶</a></dt>
@@ -181,12 +193,6 @@ structure see availReads.</p>
 
 </dd></dl>
 
-<dl class="attribute">
-<dt id="croco_wx.CroCoMainFrame.inputArgs">
-<code class="descname">inputArgs</code><em class="property"> = None</em><a class="headerlink" href="#croco_wx.CroCoMainFrame.inputArgs" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>list</em> – arguments to pass at input function call</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="croco_wx.CroCoMainFrame.makeMenuBar">
 <code class="descname">makeMenuBar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.makeMenuBar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.makeMenuBar" title="Permalink to this definition">¶</a></dt>
@@ -255,12 +261,6 @@ conversion by calling the actual conversion script</p>
 <code class="descname">onStart</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onStart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onStart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Show dialog if additional user input is required.
 Otherwise start the conversion</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="croco_wx.CroCoMainFrame.outputArgs">
-<code class="descname">outputArgs</code><em class="property"> = None</em><a class="headerlink" href="#croco_wx.CroCoMainFrame.outputArgs" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>list</em> – arguments to pass at output function call</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -338,18 +338,6 @@ be called</p>
 <code class="descname">updateOptions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.updateOptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.updateOptions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collect the variables that determine the layout of the options window and
 compute the window layout</p>
-<dl class="attribute">
-<dt id="croco_wx.CroCoOptionsFrame.inputOptionsToUserInput">
-<code class="descname">inputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.inputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="croco_wx.CroCoOptionsFrame.outputOptionsToUserInput">
-<code class="descname">outputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.outputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="croco_wx.CroCoOptionsFrame.textCtrls">
 <code class="descname">textCtrls</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.textCtrls" title="Permalink to this definition">¶</a></dt>

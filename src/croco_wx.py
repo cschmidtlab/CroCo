@@ -92,8 +92,8 @@ class CroCoMainFrame(wx.Frame):
                                                              'Please provide an SSF file as returned by StavroX')]],
                            'Xi': [croco.Xi.Read, []],
                            'Xi+XiFDR': [croco.XiSearchFDR.Read,[('Xi search file',
-                                                                   'file',
-                                                                   'Please provide Xi output file')]],
+                                                                 'file',
+                                                                 'Please provide Xi output file')]],
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 
@@ -107,8 +107,8 @@ class CroCoMainFrame(wx.Frame):
                                                             'No special format is required as only the filename is used'),
                                                            ('Offset',
                                                             'input',
-                                                            'Difference between the index in the PDB file and the xTable ' +\
-                                                            '(e.g. 1 for 12 in the xTable and 13 in the PDB)'),
+                                                            'Difference between the index in the PDB file and the xTable. ' +\
+                                                            'Is either a single integer or a list of protein:offset assignments.'),
                                                            ('Chains',
                                                             'input',
                                                             'Map chains to protein names (e.g. Protein1:AB, Protein2:C). '+\

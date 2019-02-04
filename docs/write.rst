@@ -19,6 +19,9 @@ xTable
 xWalk
 -----
 
+The xWalk (http://xwalk.org) command line tool can be utilised to compare experimental cross-links with an available three-dimensional model (e.g. a crystal structure).
+CroCo can generate a list of cross-linked atoms with the corresponding indices as required for xWalk.
+To use xWalk in your analysis, select "xWalk" as output format in CroCo and provide the following information:
 
 -  **Write to**: Directory in which to save xWalk file
 -  OptionsWindow:
@@ -29,6 +32,12 @@ xWalk
    -  Chains: comma separated list of protein:chain allocations, e.g. ProteinA:AB, ProteinB:C
    -  PDB Atom code (Text): A PDB atom code (e.g. CB) that should be used for distance calculation
 
+The generated file (FILENAME_xWalk.tsv) is then used as input for xWalk as follows (the complete documentation of xWalk parameters can be found by calling ´´java Xwalk --help´´)
+
+.. highlight:: cmd
+   java -Xmx1024m Xwalk -infile 2w84.pdb -pymol -out 2w84.pml -dist FILENAME_xWalk.tsv -max 34 -bb -homo
+
+   
 .. automodule:: croco.xWalk
    :members:
 

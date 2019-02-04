@@ -55,7 +55,7 @@
 <span class="sd">    for xTable and return the xTable.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        kojak_file (str): path or paths to Kojak results file(s)</span>
+<span class="sd">        kojak_files (list): path or paths to Kojak results file(s)</span>
 <span class="sd">        rawfile (str): name of the corresponding rawfile</span>
 <span class="sd">        decoy_string (optional): string used in kojak to label decoys</span>
 <span class="sd">        col_order (list) – List of xTable column titles that are used to sort and compress the resulting datatable</span>
@@ -74,11 +74,11 @@
     <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">kojak_files</span><span class="p">:</span>
 
 
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading Kojak-file: &#39;</span> <span class="o">+</span> <span class="n">kojak_file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading Kojak-file: &#39;</span> <span class="o">+</span> <span class="n">file</span><span class="p">)</span>
 
         <span class="c1"># only called if kojak_file is not None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">kojak_file</span><span class="p">),</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">file</span><span class="p">),</span>
                                  <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="c1"># skip the Kojak version</span>
                                  <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
