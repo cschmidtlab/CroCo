@@ -81,8 +81,9 @@ def assign_ID_and_type(xtable):
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable.loc[xtable['prot2'].notnull(), 'type'] = 'inter'
     xtable.loc[xtable['prot2'].isnull() & xtable['xlink2'].notnull(), 'type'] = 'loop'
-    # TODO: Kojak does not generate monolinked peptides but peptides modified
+    # Kojak does not generate monolinked peptides but peptides modified
     # with the hydrolysed xlinker mass
+    xtable.loc[xtable['xlink1'].isnull() & xtable['xlink2'].isnull(), 'type'] = 'linear or mono'
 
     # Reassign the type for inter xlink to inter/intra/homomultimeric
     isInterLink = xtable['type'] == 'inter'

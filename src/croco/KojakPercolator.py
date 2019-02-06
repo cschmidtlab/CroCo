@@ -100,7 +100,7 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     xtable = kj.extract_peptide(xtable)
 
     # transform unset xlinks to np.nan
-    xtable[['xlink1', 'xlink2']] = xtable[['xlink1', 'xlink2']].replace('-1', np.nan)
+    xtable[['xlink1', 'xlink2']] = xtable[['xlink1', 'xlink2']].replace(-1, np.nan)
 
     # extract protein name and relative cross-link position from the Protein #
     # entries

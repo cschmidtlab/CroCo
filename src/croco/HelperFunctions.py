@@ -90,7 +90,7 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
 
     if type in ['mono', 'loop']:
         return '-'.join([str(prot1), str(xpos1)])
-    else:
+    elif type in ['inter', 'intra', 'homomultimeric']:
         xpos1 = int(xpos1)
         xpos2 = int(xpos2)
         if xpos1 > xpos2:
@@ -100,6 +100,8 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
             return '-'.join([prot_list[0], str(xpos1), prot_list[1], str(xpos2)])
         else:
             return '-'.join([str(prot2), str(xpos2), str(prot1), str(xpos1)])
+    else:
+        return np.nan
 
 def toList(strorList):
     """

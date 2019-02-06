@@ -34,7 +34,7 @@ def Read(xQuest_files, col_order=None, compact=False):
         """
         Extract rawfile name, precursor charge and scan no from xQuest spectrum
         string
-    
+
         Args:
             spec_string: xQuest spectrum string
         Returns:
@@ -49,13 +49,13 @@ def Read(xQuest_files, col_order=None, compact=False):
             return match.groups()
         else:
             return np.nan
-    
+
     def process_xQuest_Id(Id_string):
         """
         Extract peptide sequence of the alpha (longer) and the beta (shorter)
         peptide as well as the relative positions of the cross-links within
         these sequences from an xQuest Id-string
-        
+
         Args:
             ID_string (str): an xQuest Id-String
         Returns:
@@ -69,22 +69,22 @@ def Read(xQuest_files, col_order=None, compact=False):
             match = Id_pattern.match(Id_string)
             # pepseq1, pepseq2, xlink1, xlink2
             pepseq1, pepseq2, xlink1, xlink2 = match.groups()
-    
+
             return pepseq1, pepseq2, int(xlink1), int(xlink2)
         else:
             return np.nan
-    
+
     def categorizexQuestType(XQType):
         """
         Extract protein name and absolute cross-link position from
         xQuest type string (xlink, loop, mono)
-        
+
         Args:
             XQType (str): xquest type string
         Returns:
             str or np.nan: type of cross-link (inter, loop, mono)
         """
-    
+
         if XQType == 'xlink':
             return 'inter'
         elif XQType in ['loop', 'looplink']:
