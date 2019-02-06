@@ -13,6 +13,10 @@ import os, sys
 
 import wx
 import wx.adv
+
+# replacement for DirDialog to allow multiple input dirs
+import wx.lib.agw.multidirdialog as MDD
+
 import pandas as pd
 
 import croco
@@ -371,16 +375,19 @@ class CroCoMainFrame(wx.Frame):
         """
         Open a dir dialaog and set the paths
         """
-        dlg = wx.DirDialog(self,
-                           message="Choose one or multiple directories for Input:",
-                           defaultPath=self.currentPath,
-                           style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        # In standard wx there is no dialog to select multiple dirs at once
+        # The MDD MultiDirDialog is a bit outdated but with a few path corrections
+        # should allow the user to select multiple dirs on windows
+        dlg = MDD.MultiDirDialog(self,
+                                 title="Choose one or multiple directories for Input:",
+                                 defaultPath=self.currentPath,
+                                 agwStyle=MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
             # self.theInput is always a list of paths
-            self.theInput = [dlg.GetPath()]
-            self.currentPath = dlg.GetPath()
-            print('[onInputDir] Loaded {}'.format(self.currentPath))
+            self.theInput = [croco.HelperFunctions.clearMDD(x) for x in dlg.GetPaths()]
+            self.currentPath = os.path.dirname(self.theInput[0])
+            print('[onInputDir] Loaded {}'.format(', '.join(self.theInput)))
 
         dlg.Destroy()
 

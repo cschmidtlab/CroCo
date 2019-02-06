@@ -6,6 +6,21 @@ HelperFunctions: Function that are used in multiple modules of CroCo
 import pandas as pd
 import numpy as np
 import os
+import re
+
+def clearMDD(path):
+    pattern = re.compile(r'.*(\w:)')
+    
+    parts = path.split(os.path.sep)
+    try:
+        drive = pattern.match(parts[0]).group(1)
+        parts[0] = drive
+        if os.path.isdir(os.path.sep.join(parts)):
+            return os.path.sep.join(parts)
+        else:
+            raise Exception ['[ClearMDD] Generated path not found on your system']
+    except:
+        raise Exception('[ClearMDD] Error during path generation')
 
 def FSCompatiblePath(raw_path, encoding=None):
     """
