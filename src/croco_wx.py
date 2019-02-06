@@ -90,7 +90,9 @@ class CroCoMainFrame(wx.Frame):
                            'Kojak': [croco.Kojak.Read, [('Kojak rawfile',
                                                          'input',
                                                          'Please provide the name of the rawfile for the data')]],
-                           'Kojak+Percolator': [croco.KojakPercolator.Read, []],
+                           'Kojak+Percolator': [croco.KojakPercolator.Read, [('Kojak rawfile',
+                                                                              'input',
+                                                                              'Please provide the name of the rawfile for the data')]],
                            'StavroX': [croco.StavroX.Read, [('SSF file',
                                                              'file',
                                                              'Please provide an SSF file as returned by StavroX')]],
@@ -516,26 +518,26 @@ class CroCoMainFrame(wx.Frame):
         # Displays a busy cursor during the run of the programme
         self.wait = wx.BusyCursor()
 
-        def runCroCo(f):
+        def runCroCo(listOfFilepaths):
             """
             Function to wrap up the CroCo call to simplify maintenance.
 
             Relies on many variables in self
 
             Args:
-                f (list): list of filepaths to call CroCo on
+                listOfFilepaths (list): list of filepaths to call CroCo on
             Returns:
                 outpath (str): path where the files are written
             """
             try:
-                if len(self.inputOptionsToUserInput) > 0 :
-                    if self.multipleSettingsCheck.GetValue() is False:
+                if len(self.inputOptionsToUserInput) > 0 : # do we need to ask for multiple options?
+                    if self.multipleSettingsCheck.GetValue() is False: # are the options all the same?
 
                         # init a list of xtables because every single call to
                         # croco with a different set of options will
                         # generate another table
                         allData = list()
-                        for file in f:
+                        for file in listOfFilepaths:
                             fname = os.path.basename(file)
                             print(fname)
                             # Collect the input options for this file by concatenating
@@ -544,20 +546,20 @@ class CroCoMainFrame(wx.Frame):
                             for option in self.availReads[self.theReadFormat][1]:
                                 label = fname + ' - ' + option[0]
                                 args.append(self.inputOptionsToUserInput[label])
-                            print('[onRun] Found input args for file {}: "{}"'.format(fname, args))
-                            s = self.availReads[self.theReadFormat][0](f, *args, col_order=self.col_order)
+                            print('[onRun] Found input args for file {}: "{}"'.format(fname, ', '.join(args)))
+                            s = self.availReads[self.theReadFormat][0](file, *args, col_order=self.col_order)
                             allData.append(s)
 
-                        xtable = pd.concat(allData)
+                        xtable = pd.concat(allData, sort=False)
 
                     else:
                         args = list(self.inputOptionsToUserInput.values())
-                        print('[onRun] Found input args for file {}: "{}"'.format(f, args))
-                        xtable = self.availReads[self.theReadFormat][0](f, *args, col_order=self.col_order)
+                        print('[onRun] Found input args for file {}: "{}"'.format(listOfFilepaths, ', '.join(args)))
+                        xtable = self.availReads[self.theReadFormat][0](listOfFilepaths, *args, col_order=self.col_order)
                 else:
                     print('[onRun] No extra input arguments required.')
-                    xtable = self.availReads[self.theReadFormat][0](f, col_order=self.col_order)
-                print('[onRun] Table(s) successfully read: {}'.format(', '.join(f)))
+                    xtable = self.availReads[self.theReadFormat][0](listOfFilepaths, col_order=self.col_order)
+                print('[onRun] Table(s) successfully read: {}'.format(', '.join(listOfFilepaths)))
             except Exception as e:
                 self.Warning('Error while reading Input-file: ' + str(e))
 
@@ -570,16 +572,16 @@ class CroCoMainFrame(wx.Frame):
 
             # if no user-defined output dir use current
             if self.theOutput == '':
-                self.theOutput = os.path.dirname(f)
+                self.theOutput = os.path.dirname(listOfFilepaths[0])
 
             # set filename for output file
-            fileString = '_'.join([os.path.splitext(os.path.basename(x))[0] for x in f])
+            fileString = '_'.join([os.path.splitext(os.path.basename(x))[0] for x in listOfFilepaths])
             fileString = croco.HelperFunctions.alphanum_string(fileString)
-            fname = fileString + '_' + self.theReadFormat +\
+            outName = fileString + '_' + self.theReadFormat +\
                     '_to_' + self.theWriteFormat
 
             # generate output path w/o extension
-            outpath = os.path.join(self.theOutput, fname)
+            outpath = os.path.join(self.theOutput, outName)
 
             try:
                 print('[onRun] Writing table in {} format to {}'.format(self.theWriteFormat, outpath))
@@ -592,7 +594,7 @@ class CroCoMainFrame(wx.Frame):
                     self.availWrites[self.theWriteFormat][0](xtable, outpath)
                 print('[onRun] Table successfully written!')
             except Exception as e:
-                self.Warning('[onRun] Conversion of {} was '.format(f) +
+                self.Warning('[onRun] Conversion of {} was '.format(listOfFilepaths) +
                                    'not successfull:{}'.format(str(e)))
 
             return outpath

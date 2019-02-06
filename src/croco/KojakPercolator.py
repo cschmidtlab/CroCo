@@ -14,7 +14,7 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', rawfile=None, compact=False, col_order=None):
+def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string='REVERSE', compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 
@@ -87,7 +87,7 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
         
         allData.append(s)
 
-    xtable = pd.concat(allData)
+    xtable = pd.concat(allData, sort=False)
 
     # split ambiguous concatenated protein names
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])
@@ -140,7 +140,6 @@ def Read(perc_files, percolator_string='.validated', decoy_string='REVERSE', raw
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
     
-
     return xtable
 
 if __name__ == '__main__':
