@@ -436,7 +436,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.6.1')
+        aboutInfo.SetVersion('0.6.2')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -592,14 +592,13 @@ class CroCoMainFrame(wx.Frame):
                         args = list()
                         for option in self.availWrites[self.theWriteFormat][1]:
                             label = halfLabel + option[0]
-                            print(label)
                             args.append(self.outputOptionsToUserInput[label])
-                        print('[crocoWrite] Found output args for file {}: "{}"'.format(basename, ', '.join(args)))
+                        print('[crocoWrite] Found output args for file {}: "{}"'.format(basename, ', '.join([str(x) for x in args])))
                         self.availWrites[self.theWriteFormat][0](xtable, outpath, *args)
 
                     else:
                         args = list(self.outputOptionsToUserInput.values())
-                        print('[crocoWrite] Found input args for file {}: "{}"'.format(basename, ', '.join(args)))
+                        print('[crocoWrite] Found input args for file {}: "{}"'.format(basename, ', '.join([str(x) for x in args])))
                         xtable = self.availWrites[self.theWriteFormat][0](xtable, outpath, *args)                
 
                 else:
