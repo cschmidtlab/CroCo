@@ -97,9 +97,12 @@ class CroCoMainFrame(wx.Frame):
                                                              'file',
                                                              'Please provide an SSF file as returned by StavroX')]],
                            'Xi': [croco.Xi.Read, []],
-                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('Xi search file',
+                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('xiFDR Links PSM file',
                                                                  'file',
-                                                                 'Please provide Xi output file')]],
+                                                                 'Please provide file with xiFDR filtered crosslinks'),
+                                                                ('xiFDR Links Linear PSM file',
+                                                                 'file',
+                                                                 'Please provide file with xiFDR filtered linear peptides')]],
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 
@@ -223,7 +226,7 @@ class CroCoMainFrame(wx.Frame):
         self.compactTableCheck.Bind(wx.EVT_HELP,
                                lambda evt: self.Info('Only add minimal columns to xTable', caption='Help'))
         self.mergeTableCheck.Bind(wx.EVT_HELP,
-                               lambda evt: self.Info('Merge the data from multiple input files into one. Does not work for pLink or xi+xiFDR.', caption='Help'))
+                               lambda evt: self.Info('Merge the data from multiple input files into one. Does not work for xi+xiFDR.', caption='Help'))
         self.sameSettingsCheck.Bind(wx.EVT_HELP,
                                lambda evt: self.Info('Use the same settings for all processed files.', caption='Help'))
 

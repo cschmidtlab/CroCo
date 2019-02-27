@@ -58,21 +58,40 @@ def Read(xQuest_files, col_order=None, compact=False):
 
         Args:
             ID_string (str): an xQuest Id-String
+            type (str): the xlink type from xQuest (monolink, inrtalink, xlink)
         Returns:
             str or np.nan: pepseq1
             str or np.nan: pepseq2
             int or np.nan: xlink1
             int or np.nan: xlink2
         """
-        Id_pattern = re.compile('(\w+)-(\w+)-a(\d+)-b(\d+)')
-        if Id_pattern.match(Id_string):
-            match = Id_pattern.match(Id_string)
+        xlink_pattern = re.compile('^(\w+)-(\w+)-a(\d+)-b(\d+)')
+        intralink_pattern = re.compile('^(\w+)-\D{1}(\d+)-\D{1}(\d+)')
+        monolink_pattern = re.compile('^(\w+)-\D{1}(\d+)-\d+')
+
+        if xlink_pattern.match(Id_string):
+            match = xlink_pattern.match(Id_string)
             # pepseq1, pepseq2, xlink1, xlink2
             pepseq1, pepseq2, xlink1, xlink2 = match.groups()
 
+#                return pepseq1, pepseq2, xlink1, xlink2
             return pepseq1, pepseq2, int(xlink1), int(xlink2)
+        elif intralink_pattern.match(Id_string):
+            match = intralink_pattern.match(Id_string)
+            # pepseq1, pepseq2, xlink1, xlink2
+            pepseq, xlink1, xlink2 = match.groups()
+
+#                return pepseq, pepseq, xlink1, xlink2
+            return pepseq, pepseq, int(xlink1), int(xlink2)
+        elif monolink_pattern.match(Id_string):
+            match = monolink_pattern.match(Id_string)
+            # pepseq1, pepseq2, xlink1, xlink2
+            pepseq, xlink = match.groups()
+            
+#                return pepseq, np.nan, xlink, np.nan
+            return pepseq, np.nan, int(xlink), np.nan
         else:
-            return np.nan
+            return np.nan, np.nan, np.nan, np.nan
 
     def categorizexQuestType(XQType):
         """
@@ -129,17 +148,21 @@ def Read(xQuest_files, col_order=None, compact=False):
                       columns=rename_dict,
                       inplace=True)
     except Exception as e:
-        raise Exception('Error during xQuest header renaming: %s' % e)
+        raise Exception('[xQuest Read] Error during xQuest header renaming: %s' % e)
 
     # Extract rawfile, scanno and precursor charge from the mgf header string
     # used as Spectrum by xQuest
     xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
         zip(*xtable['Spectrum'].apply(process_xQuest_spectrum))
 
+    print('[xQuest Read] Processed Spectrum entry')
+
     # Extract peptide sequences and relative cross-link positions form the
     # xQuest ID-string
     xtable['pepseq1'], xtable['pepseq2'], xtable['xlink1'], xtable['xlink2'] =\
         zip(*xtable['Id'].apply(process_xQuest_Id))
+
+    print('[xQuest Read] Processed xQuest ID' )
 
     # Modifications are not defined in xQuest
     xtable['mod1'], xtable['mod2'] = "", ""
@@ -149,21 +172,29 @@ def Read(xQuest_files, col_order=None, compact=False):
     xtable['pos1'] = xtable['xpos1'] - xtable['xlink1'] + 1
     xtable['pos2'] = xtable['xpos2'] - xtable['xlink2'] + 1
 
+    print('[xQuest Read] Calculated positions')
+
     # Assign mono
     xtable['type'] = np.vectorize(categorizexQuestType)(xtable['Type'])
 
-    # Reassign the type for inter xlink to inter/intra/homomultimeric
-    xtable.loc[xtable['type'] == 'inter', 'type'] =\
-        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                 xtable[xtable['type'] == 'inter']['pos1'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                 xtable[xtable['type'] == 'inter']['prot2'],
-                                                 xtable[xtable['type'] == 'inter']['pos2'],
+    if len(xtable[xtable['type'] == 'inter']) > 0:
+        # Reassign the type for inter xlink to inter/intra/homomultimeric
+        xtable.loc[xtable['type'] == 'inter', 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
+                                                     xtable[xtable['type'] == 'inter']['pos1'],
+                                                     xtable[xtable['type'] == 'inter']['pepseq1'],
+                                                     xtable[xtable['type'] == 'inter']['prot2'],
+                                                     xtable[xtable['type'] == 'inter']['pos2'],
                                                  xtable[xtable['type'] == 'inter']['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
+    else:
+        print('[xQuest Read] skipped inter peptide categorization')
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
         np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+
+    print('[xQuest Read] Generated ID')
 
     # xQuest does not incorporate decoy entries in the results table
     # but protein names can contain identifiers as reverse or decoy
@@ -175,7 +206,7 @@ def Read(xQuest_files, col_order=None, compact=False):
     # to avoid confusion with missing valued like np.nan, they are set to
     # UNKNOWN
     for header in ['xtype', 'modmass1', 'modpos1', 'modmass2', 'modpos2']:
-        xtable[header] = 'UNKNOWN'
+        xtable[header] = np.nan
 
     # reassign dtypes for every element in the df
     # errors ignore leaves the dtype as object for every

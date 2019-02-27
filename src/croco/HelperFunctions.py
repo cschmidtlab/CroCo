@@ -89,6 +89,7 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
     """
 
     if type in ['mono', 'loop']:
+        xpos1 = int(xpos1)
         return '-'.join([str(prot1), str(xpos1)])
     elif type in ['inter', 'intra', 'homomultimeric']:
         xpos1 = int(xpos1)
