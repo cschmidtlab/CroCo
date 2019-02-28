@@ -201,11 +201,12 @@ def Read(xQuest_files, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID)(xtable['type'],
-                                              xtable['prot1'],
-                                              xtable['xpos1'],
-                                              xtable['prot2'],
-                                              xtable['xpos2']),
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
                  index=xtable.index).replace('nan', np.nan)
 
     print('[xQuest Read] Generated ID')

@@ -138,13 +138,13 @@ def Read(plinkdirs, col_order=None, compact=False):
         pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
         try:
             match = pattern.match(seq_string)
-            # pepseq1, xpos1, pepseq2, xpos2, xtype
-            return match.groups()
+            pepseq1, xpos1, pepseq2, xpos2, xtype = match.groups()
+            return str(pepseq1), int(xpos1), str(pepseq2), int(xpos2), xtype
     
         except Exception as e:
             print(e)
             return np.nan
-    
+
     def process_plink_spectrum(spec_string):
         """
         Extract rawfile name, precursor charge and scan no from pLink spectrum
@@ -156,11 +156,13 @@ def Read(plinkdirs, col_order=None, compact=False):
         Returns:
             list or np.nan: [rawfile, scanno, prec_ch]
         """
-        pextract_pattern = re.compile('(.+)\.(\d+)\.\d+\.(\d+)\.dta')
+        # the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2
+        # in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1
+        pextract_pattern = re.compile('(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
         if pextract_pattern.match(spec_string):
             match = pextract_pattern.match(spec_string)
-            # rawfile, scanno, prec_ch
-            return match.groups()
+            rawfile, scanno, prec_ch = match.groups()
+            return str(rawfile), int(scanno), int(prec_ch)
         else:
             return np.nan
     
@@ -178,7 +180,8 @@ def Read(plinkdirs, col_order=None, compact=False):
         """
         pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
         match = pattern.match(prot_string)
-        return match.groups()
+        prot1, xpos1, prot2, xpos2 = match.groups()
+        return str(prot1), int(xpos1), str(prot2), int(xpos2)
 
 
     ### Collect data, convert to pandas format and merge
@@ -190,6 +193,14 @@ def Read(plinkdirs, col_order=None, compact=False):
         plinkdirs = [plinkdirs]
     
     allData = list()
+
+    plink_dtypes = {'Spectrum': str,
+                    'Sequence': str,
+                    'Proteins': str,
+                    'type': str,
+                    'Score': float,
+                    'Order': int,
+                    'Order2': int}
 
     for file in plinkdirs:
 
@@ -230,27 +241,31 @@ def Read(plinkdirs, col_order=None, compact=False):
 
         allData.append(s)
 
-    xtable = pd.concat(allData)
+    xtable = pd.concat(allData).astype(dtype=plink_dtypes)
     ### Convert data inside pandas df
 
     # rawfile, scanno, prec_ch
-    xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Spectrum'].apply(process_plink_spectrum))
+    xtable[['rawfile', 'scanno', 'prec_ch']] =\
+        pd.DataFrame(xtable['Spectrum'].apply(process_plink_spectrum).tolist(), index=xtable.index)
 
     # Directly assign the re group matches into new columns
-    xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
-    xtable['xlink2'], xtable['xtype'] =\
-        zip(*xtable['Sequence'].apply(process_plink_sequence))
+    xtable[['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype']] =\
+        pd.DataFrame(xtable['Sequence'].apply(process_plink_sequence).tolist(), index=xtable.index)
 
-    xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*xtable['Proteins'].apply(process_plink_proteins))
+    xtable[['prot1', 'xpos1', 'prot2', 'xpos2']] =\
+            pd.DataFrame(xtable['Proteins'].apply(process_plink_proteins).tolist(), index=xtable.index)
 
-    xtable['type'] = xtable['type']
     xtable['score'] = xtable['Score']
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -261,25 +276,25 @@ def Read(plinkdirs, col_order=None, compact=False):
                      xtable['xlink2'].astype(int, errors='ignore') + 1
 
     # add a lobel referring to the ordering in the pLink results table
-    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(x), axis=1)
+    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(str(x)), axis=1)
 
-    # Reassign the type for inter xlink to inter/intra/homomultimeric
-    xtable.loc[xtable['type'] == 'inter', 'type'] =\
-        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                 xtable[xtable['type'] == 'inter']['pos1'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                 xtable[xtable['type'] == 'inter']['prot2'],
-                                                 xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
+    if len(xtable[xtable['type'] == 'inter']) > 0:
+        # Reassign the type for inter xlink to inter/intra/homomultimeric
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
+    else:
+        print('[xQuest Read] skipped inter peptide categorization')
 
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
     xtable['decoy'] = False
-
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     # generate the mod_dict linking pLink modification names to masses
     
@@ -380,11 +395,6 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink1'
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-    
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
@@ -403,4 +413,4 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
         
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink1\SV_BS3_pLink1\sample1', col_order=col_order)
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\pLink1_results\2.report\sample1', col_order=col_order)

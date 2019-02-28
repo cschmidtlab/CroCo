@@ -34,7 +34,14 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
         perc_files = [perc_files]
     
     allData = list()
-    
+
+    kojak_dtypes = {'Scan Number': pd.Int64Dtype(),
+                    'Charge': pd.Int64Dtype(),
+                    'Link #1': pd.Int64Dtype(),
+                    'Link #2': pd.Int64Dtype(),
+                    'Score': float
+                    }
+
     for p_file in perc_files:
         ### Collect data and convert to pandas format
     
@@ -77,6 +84,8 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
         try:
             kojak = pd.read_csv(hf.FSCompatiblePath(kojak_file),
                                 skiprows = 1, # skip the Kojak version
+                                dtype=kojak_dtypes,
+                                na_values='-',
                                 delimiter='\t')
         except FileNotFoundError:
             raise Exception("Could not find the kojak_file %s. Please move it into the same directory as the percolator files!" % kojak_file)
@@ -92,8 +101,13 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     # split ambiguous concatenated protein names
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])
 
-    xtable[['scanno', 'prec_ch', 'xlink1', 'xlink2', 'score']] =\
-        xtable[['scannr', 'Charge', 'Link #1', 'Link #2', 'Score']].astype(int)
+    ### Process the data to comply to xTable format
+    xtable = xtable.rename(columns={'Scan Number': 'scanno',
+                                    'Charge': 'prec_ch',
+                                    'Link #1': 'xlink1',
+                                    'Link #2': 'xlink2',
+                                    'Score': 'score'
+                                    })
 
     # Extract peptide sequence, modification mass and position from the
     # Peptide #1 and Peptide #2 entries
@@ -133,18 +147,11 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
 
     xtable['search_engine'] = 'Kojak and Percolator'
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
     xtable = hf.applyColOrder(xtable, col_order, compact)
     
     return xtable
 
 if __name__ == '__main__':
-    import os
-
     # defines the column headers required for xtable output
     col_order = [ 'rawfile', 'scanno', 'prec_ch',
                   'pepseq1', 'xlink1',
@@ -154,10 +161,6 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    os.chdir(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Kojak')
-    perc_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Kojak\20180518_JB_jb05a_l50.perc.loop.validated.txt'
+    perc_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.intra.validated.txt'
 
-    perc = Read(perc_file)
-
-#    perc.to_excel('test.xls',
-#                  index=False)
+    xtable = Read(perc_file)

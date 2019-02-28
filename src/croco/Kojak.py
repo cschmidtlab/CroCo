@@ -8,8 +8,6 @@ search engine.
 import numpy as np
 import pandas as pd
 
-import os
-
 if __name__ == '__main__':
     import HelperFunctions as hf
     import KojakFunctions as kj
@@ -39,6 +37,13 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     allData = list()
 
+    kojak_dtypes = {'Scan Number': pd.Int64Dtype(),
+                    'Charge': pd.Int64Dtype(),
+                    'Link #1': pd.Int64Dtype(),
+                    'Link #2': pd.Int64Dtype(),
+                    'Score': float
+                    }
+
     for file in kojak_files:
 
 
@@ -47,8 +52,10 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
         # only called if kojak_file is not None
         try:
             s = pd.read_csv(hf.FSCompatiblePath(file),
-                                 skiprows = 1, # skip the Kojak version
-                                 delimiter='\t')
+                            skiprows = 1, # skip the Kojak version
+                            dtype=kojak_dtypes,
+                            na_values = '-',
+                            delimiter='\t')
             allData.append(s)
         except Exception as e:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
@@ -57,7 +64,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     # remove lines containing non-identified PSMs (marked with '-' in both
     # Link columns
-    xtable = xtable[(xtable['Link #1'] != '-') & (xtable['Link #2'] != '-')]
+    xtable.dropna(axis=0, how='any', subset=['Link #1', 'Link #2'], inplace=True)
 
     # dropping lines causes fragmented index --> regenate the index
     xtable.reset_index(drop=True, inplace=True)
@@ -66,8 +73,13 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
     # match an experimental spectrum
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])
 
-    xtable[['scanno', 'prec_ch', 'xlink1', 'xlink2', 'score']] =\
-        xtable[['Scan Number', 'Charge', 'Link #1', 'Link #2', 'Score']].astype(int)
+    ### Process the data to comply to xTable format
+    xtable = xtable.rename(columns={'Scan Number': 'scanno',
+                                    'Charge': 'prec_ch',
+                                    'Link #1': 'xlink1',
+                                    'Link #2': 'xlink2',
+                                    'Score': 'score'
+                                    })
 
     # Extract peptide sequence, modification mass and position from the
     # Peptide #1 and Peptide #2 entries
@@ -107,18 +119,13 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     xtable['search_engine'] = 'Kojak'
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
     return xtable
 
 if __name__ == '__main__':
-    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\kojak\20180518_JB_jb05a_l50.kojak.txt'
+    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.kojak.txt'
 
     col_order = ['rawfile', 'scanno', 'prec_ch',
                  'pepseq1', 'xlink1',

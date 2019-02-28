@@ -316,6 +316,18 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     allData = list()
 
+    stavrox_dtypes = {'Scan number': 'int64',
+                      'Charge': 'int16',
+                      'Protein 1 From': str,
+                      'Protein 2 From': str,
+                      'Protein 1': str,
+                      'Protein 2': str,
+                      'Peptide 1': str,
+                      'Peptide 2': str,
+                      'best linkage position peptide 1': str,
+                      'best linkage position peptide 2': str,
+                      'Score': float}
+
     for file in stavrox_files:
 
         print('Reading StavroX-file: {}'.format(file))
@@ -344,10 +356,11 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
             # Reassign the column headers to avoid duplicate From and To fields
             s = pd.read_csv(hf.FSCompatiblePath(file),
-                               delimiter=';',
-                               header=0,
-                               index_col = False,
-                               names = headers)
+                            delimiter=';',
+                            header=0,
+                            index_col = False,
+                            dtype=stavrox_dtypes,
+                            names = headers)
 
             allData.append(s)
         except:
@@ -365,7 +378,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     # calculate the type of line (i.e. mono, loop, intra or inter)
     xtable['type'] = np.vectorize(type_from_proteins)(xtable['Protein 1'], xtable['Protein 2'])
-    
+
     print('[StavroX Read] inferred type')
 
     # Set pos1 to 1 if Nterminal cross-link
@@ -380,7 +393,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     print('[StavroX Read] Reformatted pepseqs')
 
-    # Stavrox does not write down aw file names
+    # Stavrox does not write down any file names
     xtable['rawfile'] = 'UNKNOWN'
 
     # remove for example preceding > in UniProt headers
@@ -412,20 +425,25 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     print('[StavroX Read] parsed SSF')
 
     # Extract the modification mass and position from the peptide string
-    xtable['mod1'], xtable['modpos1'], xtable['modmass1'],\
-    xtable['mod2'], xtable['modpos2'], xtable['modmass2'] =\
-        zip(*xtable[['Peptide 1', 'Peptide 2']].apply(\
+    xtable[['mod1', 'modpos1', 'modmass1', 'mod2', 'modpos2', 'modmass2']] =\
+        pd.DataFrame(xtable[['Peptide 1', 'Peptide 2']].apply(\
             lambda row: mods_from_peptides(row['Peptide 1'],
                                            row['Peptide 2'],
                                            mod2name,
                                            mod2mass),
-           axis=1))
+                    axis=1).tolist(), index=xtable.index)
 
     print('[StavroX Read] Extracted modifications')
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     print('[StavroX Read] Generated ID')
 
@@ -434,17 +452,17 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for inter xlink to inter/intra/homomultimeric
-        xtable.loc[xtable['type'] == 'inter', 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                     xtable[xtable['type'] == 'inter']['pos1'],
-                                                     xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                     xtable[xtable['type'] == 'inter']['prot2'],
-                                                     xtable[xtable['type'] == 'inter']['pos2'],
-                                                     xtable[xtable['type'] == 'inter']['pepseq1'])
-
-        print('[StavroX Read] categorized inter peptides')
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
     else:
-        print('[StavroX Read] skipped inter peptide categorization')
+        print('[xQuest Read] skipped inter peptide categorization')
 
     # StavroX already filters decoys
     xtable['decoy'] = False
@@ -472,12 +490,7 @@ if __name__ == '__main__':
                   'ID',
                   'pos1', 'pos2', 'decoy']
 
-    os.chdir(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX')
-    stavrox_files = [r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l50.csv',
-                     r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l100.csv']
+    stavrox_files = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\StavroX\stavrox.csv'
 
-    ssf_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\properties.ssf'
-    stvrx = Read(stavrox_files, ssf_file, col_order=col_order, compact=False)
-
-    stvrx.to_excel('test.xls',
-                   index=False)
+    ssf_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\StavroX\StavroxSettings.ssf'
+    xtable = Read(stavrox_files, ssf_file, col_order=col_order, compact=False)

@@ -201,6 +201,9 @@ def split_concatenated_lists(dataframe, where, delimiter=';'):
                 
         # iterate over all rows in the input df
         for idx, row in dataframe.iterrows():
+            # skip rows containing NaN
+            if isNaN(row[w]):
+                continue
             # if the delimiter is found at the specified column
             if delimiter in row[w]:
                 # strip the delimiter from the end of the entry

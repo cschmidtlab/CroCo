@@ -10,10 +10,8 @@ import pandas as pd
 
 if __name__ == '__main__' or __name__ == 'KojakFunctions':
     import HelperFunctions as hf
-    import KojakFunctions as kj
 else:
     from . import HelperFunctions as hf
-    from . import KojakFunctions as kj
 
 def extract_peptide(xtable):
     """
@@ -25,11 +23,19 @@ def extract_peptide(xtable):
     Returns:
         pandas.DataFrame: xTable with modmass, modpos, pepseq and mod
     """
-    xtable['modmass1'], xtable['modpos1'], xtable['pepseq1'] =\
-        [pd.Series(x) for x in zip(*xtable['Peptide #1'].apply(kj.process_kojak_peptide))]
+    pep1notNull = xtable['Peptide #1'].notnull()
+    pep2notNull = xtable['Peptide #2'].notnull()
+    
+    # the index corresponds to the index of the slice of the dataframe
+    # as original row numbers are retained during conversion, values can directly
+    # be inserted at the right row
+    xtable[['modmass1', 'modpos1', 'pepseq1']] =\
+        pd.DataFrame(xtable.loc[pep1notNull, 'Peptide #1'].apply(process_kojak_peptide).tolist(),
+                     index=xtable.loc[pep1notNull, 'Peptide #1'].index)
 
-    xtable['modmass2'], xtable['modpos2'], xtable['pepseq2'] =\
-           [pd.Series(x) for x in zip(*xtable['Peptide #2'].apply(kj.process_kojak_peptide))]
+    xtable[['modmass2', 'modpos2', 'pepseq2']] =\
+        pd.DataFrame(xtable.loc[pep2notNull, 'Peptide #2'].apply(process_kojak_peptide).tolist(),
+                     index=xtable.loc[pep2notNull, 'Peptide #2'].index)
 
     # use the modification masses as labels
     xtable['mod1'] = xtable['modmass1'].apply(lambda x: x if hf.isNaN(x) else [str(y) for y in x])
@@ -48,7 +54,7 @@ def extract_protein(xtable):
         pandas.DataFrame: xTable with prot and xpos
     """
     xtable['prot1'], xtable['xpos1'] =\
-           [pd.Series(x) for x in zip(*xtable['Protein #1'].apply(kj.process_kojak_protein))]
+           [pd.Series(x) for x in zip(*xtable['Protein #1'].apply(process_kojak_protein))]
 
     # calculate xpos2 as if both peptides are identical
     # if the peptides are not, xpos2 is replaces below
@@ -57,13 +63,11 @@ def extract_protein(xtable):
 
     # prot2 and xpos2 for inter and intra cross-links are derived from Protein #2
     # select the lines that have a Protein #2 entry
-    hasSecProtein = xtable['Protein #2'] != '-'
+    hasSecProtein = xtable['Protein #2'].notnull()
     if sum(hasSecProtein) > 0:
-        prot2, xpos2 =\
-            [pd.Series(x) for x in zip(*xtable.loc[hasSecProtein, 'Protein #2'].apply(kj.process_kojak_protein))]
-        xtable.loc[hasSecProtein, 'prot2'] = prot2
-        xtable.loc[hasSecProtein, 'xpos2'] = xpos2
-
+        xtable.loc[hasSecProtein, ['prot2', 'xpos2']] =\
+            pd.DataFrame(xtable.loc[hasSecProtein, 'Protein #2'].apply(process_kojak_protein).tolist(),
+                         index=xtable.loc[hasSecProtein, 'Protein #2'].index)
     return xtable
 
 def assign_ID_and_type(xtable):
@@ -102,11 +106,13 @@ def assign_ID_and_type(xtable):
     type_identified = xtable['type'].notna()
     # generate an ID for every crosslink position within the protein(s)
     xtable.loc[type_identified, 'ID'] =\
-        np.vectorize(hf.generateID)(xtable.loc[type_identified, 'type'],
-                                    xtable.loc[type_identified, 'prot1'],
-                                    xtable.loc[type_identified, 'xpos1'],
-                                    xtable.loc[type_identified, 'prot2'],
-                                    xtable.loc[type_identified, 'xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     return xtable
 

@@ -38,17 +38,17 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
         """
         Take a list of modifications with their positions and return those modpositions
         that match a given modification name for the monolinker
-        
+
         Args:
             mod (str): a ;-separated list of modification names
             modpos (str): a also ;-separated list of the corresponding positions
-        
+
         Returns:
             position (int or np.nan)
         """
         if hf.isNaN(mod):
             return np.nan
-        
+
         mods = mod.split(';')
         modposns = modpos.split(';')
 
@@ -67,7 +67,25 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
 
     print('[xiFDR Read] Reading xi-file: {}'.format(xi_file))
 
-    xiraw = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',')
+    xi_dtypes = {'Scan': pd.Int64Dtype(),
+                 'PrecoursorCharge': pd.Int64Dtype(),
+                 'BasePeptide1': str,
+                 'ProteinLink1': pd.Int16Dtype(),
+                 'BasePeptide2': str,
+                 'ProteinLink2': pd.Int16Dtype(),
+                 'Protein1': str,
+                 'Protein2': str,
+                 'Start1': pd.Int32Dtype(),
+                 'Start2': pd.Int32Dtype(),
+                 'Link1': pd.Int16Dtype(),
+                 'Link2': pd.Int16Dtype(),
+                 'match score': float
+                 }
+
+    try:
+        xiraw = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',', dtype=xi_dtypes)
+    except:
+        raise Exception('[xTable Read] Failed opening file: {}'.format(xi_file))
 
     # list to collect the tables from the FDR processed files
     allFDR = list()
@@ -76,48 +94,48 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
     if xifdr_linksPSM_file != None:
         if not 'Links_PSM_xiFDR' in xifdr_linksPSM_file:
             raise Exception('[xiFDR Read] The string "Links_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
-    
+
         print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linksPSM_file))
-    
+
         try:
             linkXiFDR = pd.read_csv(hf.FSCompatiblePath(xifdr_linksPSM_file), delimiter=',')
-    
+
             linkXiFDR.rename(columns={'run': 'Run',
-                                  'scan': 'Scan',
-                                  'Protein1': 'Protein1_FDR',
-                                  'Protein2': 'Protein2_FDR'}, inplace=True)
+                                      'scan': 'Scan',
+                                      'Protein1': 'Protein1_FDR',
+                                      'Protein2': 'Protein2_FDR'}, inplace=True)
         except Exception as e:
             raise Exception('[xiFDR Read] Error while reading the xiFDR file: {}'.format(e))
-        
-        # Merge with left join (only keys that are in tje percolated DF will be re-
+
+        # Merge with left join (only keys that are in the percolated DF will be re-
         # tained)
         s = pd.merge(linkXiFDR, xiraw, on=['Run', 'Scan'], how='left')
-        
+
         allFDR.append(s)
 
     ### get the xiFDR file containing the monlinks ###
 
     if xifdr_linearPSM_file != None:
-    
+
         if not 'Links_Linear_PSM_xiFDR' in xifdr_linearPSM_file:
             raise Exception('[xiFDR Read] The string "Links_Linear_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
-    
+
         print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linearPSM_file))
-    
+
         try:
             linaerXiFDR = pd.read_csv(hf.FSCompatiblePath(xifdr_linearPSM_file), delimiter=',')
-    
+
             linaerXiFDR.rename(columns={'run': 'Run',
-                                  'scan': 'Scan',
-                                  'Protein1': 'Protein1_FDR',
-                                  'Protein2': 'Protein2_FDR'}, inplace=True)
+                                        'scan': 'Scan',
+                                        'Protein1': 'Protein1_FDR',
+                                        'Protein2': 'Protein2_FDR'}, inplace=True)
         except Exception as e:
             raise Exception('[xiFDR Read] Error while reading the xiFDR file: {}'.format(e))
 
-        # Merge with left join (only keys that are in tje percolated DF will be re-
+        # Merge with left join (only keys that are in the percolated DF will be re-
         # tained)
         s = pd.merge(linaerXiFDR, xiraw, on=['Run', 'Scan'], how='left')
-        
+
         allFDR.append(s)
 
     # only continue if at least one of the FDR-processed files has been provided
@@ -171,31 +189,33 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     print('[xiFDR Read] generated ID')
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for inter xlink to inter/intra/homomultimeric
-        xtable.loc[xtable['type'] == 'inter', 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                     xtable[xtable['type'] == 'inter']['pos1'],
-                                                     xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                     xtable[xtable['type'] == 'inter']['prot2'],
-                                                     xtable[xtable['type'] == 'inter']['pos2'],
-                                                     xtable[xtable['type'] == 'inter']['pepseq2'])
-        print('[xiFDR Read] categorized inter peptides')
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
     else:
-        print('[xiFDR Read] skipped inter peptide categorization')
+        print('[xQuest Read] skipped inter peptide categorization')
 
     xtable['xtype'] = np.nan
 
     xtable['search_engine'] = 'XiSearch and XiFDR'
-
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
@@ -215,8 +235,4 @@ if __name__ == '__main__':
     xi_file = r'XI_results_XiVersion1.6.739.csv'
     xifdr_linksPSM_file = r'XiFDR_5_FDR_Links_PSM_xiFDR1.0.22.csv'
     xifdr_linearPSM_file = r'XiFDR_5_FDR_Links_Linear_PSM_xiFDR1.0.22.csv'
-    xi_df = Read(xi_file, xifdr_linearPSM_file=xifdr_linearPSM_file, xifdr_linksPSM_file=xifdr_linksPSM_file, modstring='bs3', compact=True)
-
-    xi_df.to_excel('test.xls',
-                   index=False)
-
+    xtable = Read(xi_file, xifdr_linearPSM_file=xifdr_linearPSM_file, xifdr_linksPSM_file=xifdr_linksPSM_file, modstring='bs3', compact=True)

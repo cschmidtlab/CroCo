@@ -112,8 +112,8 @@ def Read(plinkdirs, col_order=None, compact=False):
         pextract_pattern = re.compile('(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
         if pextract_pattern.match(spec_string):
             match = pextract_pattern.match(spec_string)
-            # rawfile, scanno, prec_ch
-            return match.groups()
+            rawfile, scanno, prec_ch = match.groups()
+            return str(rawfile), int(scanno), int(prec_ch)
         else:
             return np.nan
     
@@ -138,23 +138,22 @@ def Read(plinkdirs, col_order=None, compact=False):
             pattern = re.compile(r'(\w+)\((\d+)\)-(\w*)\((\d*)\)')
             match = pattern.match(row['Peptide'])
             pepseq1, xlink1, pepseq2, xlink2 = match.groups()
+            return str(pepseq1), int(xlink1), str(pepseq2), int(xlink2), xtype
     
         elif row['type'] == 'loop':
             pattern = re.compile(r'(\w+)\((\d+)\)\((\d*)\)')
             match = pattern.match(row['Peptide'])
             pepseq1, xlink1, xlink2 = match.groups()
-            pepseq2 = np.nan
+            return str(pepseq1), int(xlink1), np.nan, int(xlink2), xtype
     
         elif row['type'] == 'mono':
             pattern = re.compile(r'(\w+)\((\d*)\)')
             match = pattern.match(row['Peptide'])
             pepseq1, xlink1 = match.groups()
-            xlink2, pepseq2 = [np.nan] * 2
+            return str(pepseq1), int(xlink1), np.nan, np.nan, xtype
     
         else:
-            pepseq1, xlink1, pepseq2, xlink2 = [np.nan] * 4
-    
-        return pepseq1, xlink1, pepseq2, xlink2, xtype
+            return np.nan, np.nan, np.nan, np.nan, xtype
     
     def process_plink2_proteins(row):
         """
@@ -272,6 +271,15 @@ def Read(plinkdirs, col_order=None, compact=False):
     
     allData = list()
 
+    plink_dtypes = {'Title': str,
+                    'Peptide_Type': str,
+                    'Peptide': str,
+                    'Proteins': str,
+                    'Score': float,
+                    'Linker': str,
+                    'Peptide_Order': int,
+                    'Spectrum_Order': int}
+
     for file in plinkdirs:
 
         ### Collect data, convert to pandas format and merge
@@ -290,6 +298,7 @@ def Read(plinkdirs, col_order=None, compact=False):
                     
                     print('Reading pLink peptide file: ' + peptidesFile)
                     peptide_df = plink2peptide2pandas(hf.FSCompatiblePath(os.path.join(file, peptidesFile)))
+                    
                 if '_spectra.csv' in f:
                     spectraFile = f
                     foundSpectraFile = True               
@@ -315,25 +324,25 @@ def Read(plinkdirs, col_order=None, compact=False):
     
         allData.append(s)
 
-    xtable = pd.concat(allData)
+    # establish a read-csv like behaviour of dtype argument for astype
+    # astype does not accept if there are more columns supplied than found in
+    # the data
+    xtable = pd.concat(allData).astype(dtype=plink_dtypes)
     ### Convert data inside pandas df
 
     # split title column into three
-    xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Title'].apply(process_plink2_title))
+    xtable[['rawfile', 'scanno', 'prec_ch']] =\
+        pd.DataFrame(xtable['Title'].apply(process_plink2_title).tolist(), index=xtable.index)
 
     # assign the type
     xtable['type'] = xtable['Peptide_Type'].apply(assignType)
 
     # Directly assign the re group matches into new columns
-    xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
-    xtable['xlink2'], xtable['xtype'] =\
-        zip(*xtable.apply(process_plink2_sequence,
-                          axis=1))
+    xtable[['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype']] =\
+        pd.DataFrame(xtable.apply(process_plink2_sequence, axis=1).tolist(), index=xtable.index)
 
-    xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*xtable.apply(process_plink2_proteins,
-                              axis=1))
+    xtable[['prot1', 'xpos1', 'prot2', 'xpos2']] =\
+        pd.DataFrame(xtable.apply(process_plink2_proteins, axis=1).tolist(), index=xtable.index)
 
     xtable['score'] = xtable['Score']
     
@@ -341,13 +350,20 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     # calculate absolute position of first AA of peptide
-    xtable['pos1'], xtable['pos2'] = zip(*xtable.apply(calculate_abs_pos,
-                                                       axis=1))
+    xtable[['pos1', 'pos2']] =\
+        pd.DataFrame(xtable.apply(calculate_abs_pos, axis=1).tolist(), index=xtable.index)
+
     # add a label referring to the ordering in the pLink results table
-    xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].apply(lambda x: ','.join(x), axis=1)
+    xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].apply(lambda x: ','.join(str(x)), axis=1)
 
     # set the sequence of loop links to be the same as the corresponding pepseq1
     xtable.loc[xtable['type'] == 'loop', 'pepseq2'] = xtable[xtable['type'] == 'loop']['pepseq1']
@@ -356,19 +372,19 @@ def Read(plinkdirs, col_order=None, compact=False):
     # algorithm
     xtable['decoy'] = False
 
-    # Reassign the type for inter xlink to inter/intra/homomultimeric
-    xtable.loc[xtable['type'] == 'inter', 'type'] =\
-        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                 xtable[xtable['type'] == 'inter']['pos1'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                 xtable[xtable['type'] == 'inter']['prot2'],
-                                                 xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq2'])
-
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+    if len(xtable[xtable['type'] == 'inter']) > 0:
+        # Reassign the type for inter xlink to inter/intra/homomultimeric
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
+    else:
+        print('[xQuest Read] skipped inter peptide categorization')
 
     ## generate the mod_dict linking pLink modification names to masses
     # in case of calling croco from the source folder structure...
@@ -487,11 +503,6 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink2'
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
@@ -510,6 +521,4 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    init(col_order)
-
-    xtable = Read(r'H:\pLink_task_2018.08.13.16.45.46\reports', col_order=col_order)
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\pLink2_results\reports', col_order=col_order)
