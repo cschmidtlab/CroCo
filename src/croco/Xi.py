@@ -42,7 +42,7 @@ def assign_type(row):
     elif prot1 != 'nan' and prot2 == 'nan' and xlink1 != 'nan':
         t = 'mono'
     else:
-        t = None
+        t = np.nan
     return t
 
 def rawfile_from_source(source_str):

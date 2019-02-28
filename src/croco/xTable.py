@@ -29,7 +29,9 @@ def Write(xtable, outpath, col_order=None, compact=False):
         else:
             return entry
 
-    xtable = xtable.applymap(convert_list)
+    # select only object dtypes as lists will anyways be found only in those
+    # and applymap struggles with nullable int64 dtype
+    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(convert_list)
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
 

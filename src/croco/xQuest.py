@@ -45,8 +45,8 @@ def Read(xQuest_files, col_order=None, compact=False):
         spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
         if spectrum_pattern.match(spec_string):
             match = spectrum_pattern.match(spec_string)
-            # rawfile, scanno, prec_ch
-            return match.groups()
+            rawfile, scanno, prec_ch = match.groups()
+            return str(rawfile), int(scanno), int(prec_ch)
         else:
             return np.nan
 
@@ -120,18 +120,26 @@ def Read(xQuest_files, col_order=None, compact=False):
 
     allData = list()
 
+    xQuest_dtypes = {'z': pd.Int64Dtype(),
+                     'Protein1': str,
+                     'Protein2': str,
+                     'AbsPos1': pd.Int64Dtype(),
+                     'AbsPos2': pd.Int64Dtype(),
+                     'ld-Score': float}
+
     for file in xQuest_files:
 
         ### Collect data and convert to pandas format
         print('Reading xQuest-file: ' + file)
 
         # only called if inter_file is not None
-        try:
-            s = pd.read_csv(hf.FSCompatiblePath(file),
-                            delimiter='\t')
-            allData.append(s)
-        except:
-            raise Exception('[xQuest Read] Failed opening file: {}'.format(file))
+#        try:
+        s = pd.read_csv(hf.FSCompatiblePath(file),
+                        delimiter='\t',
+                        dtype=xQuest_dtypes)
+        allData.append(s)
+#        except:
+#            raise Exception('[xQuest Read] Failed opening file: {}'.format(file))
 
     xtable = pd.concat(allData)
 
@@ -152,15 +160,15 @@ def Read(xQuest_files, col_order=None, compact=False):
 
     # Extract rawfile, scanno and precursor charge from the mgf header string
     # used as Spectrum by xQuest
-    xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Spectrum'].apply(process_xQuest_spectrum))
+    xtable[['rawfile', 'scanno', 'prec_ch']] =\
+        pd.DataFrame(xtable['Spectrum'].apply(process_xQuest_spectrum).tolist(), index=xtable.index)
 
     print('[xQuest Read] Processed Spectrum entry')
 
     # Extract peptide sequences and relative cross-link positions form the
     # xQuest ID-string
-    xtable['pepseq1'], xtable['pepseq2'], xtable['xlink1'], xtable['xlink2'] =\
-        zip(*xtable['Id'].apply(process_xQuest_Id))
+    xtable[['pepseq1', 'pepseq2', 'xlink1', 'xlink2']] =\
+        pd.DataFrame(xtable['Id'].apply(process_xQuest_Id).tolist(), index=xtable.index)
 
     print('[xQuest Read] Processed xQuest ID' )
 
@@ -175,24 +183,30 @@ def Read(xQuest_files, col_order=None, compact=False):
     print('[xQuest Read] Calculated positions')
 
     # Assign mono
-    xtable['type'] = np.vectorize(categorizexQuestType)(xtable['Type'])
+    xtable['type'] = xtable['Type'].apply(categorizexQuestType)
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for inter xlink to inter/intra/homomultimeric
-        xtable.loc[xtable['type'] == 'inter', 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                     xtable[xtable['type'] == 'inter']['pos1'],
-                                                     xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                     xtable[xtable['type'] == 'inter']['prot2'],
-                                                     xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
         print('[xQuest Read] categorized inter peptides')
     else:
         print('[xQuest Read] skipped inter peptide categorization')
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID)(xtable['type'],
+                                              xtable['prot1'],
+                                              xtable['xpos1'],
+                                              xtable['prot2'],
+                                              xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     print('[xQuest Read] Generated ID')
 
@@ -208,12 +222,22 @@ def Read(xQuest_files, col_order=None, compact=False):
     for header in ['xtype', 'modmass1', 'modpos1', 'modmass2', 'modpos2']:
         xtable[header] = np.nan
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### Return df
     return xtable
+
+if __name__ == '__main__':
+    """
+    For testing purposes only
+    """
+
+    col_order = [ 'rawfile', 'scanno', 'prec_ch',
+                  'pepseq1', 'xlink1',
+                  'pepseq2', 'xlink2', 'xtype',
+                  'modmass1', 'modpos1', 'mod1',
+                  'modmass2', 'modpos2', 'mod2',
+                  'prot1', 'xpos1', 'prot2',
+                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
+
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\xQuest\20190227_croco_PK_xquest_results_targetdecoy.xls', col_order=col_order)
