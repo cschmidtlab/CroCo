@@ -14,13 +14,14 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string='REVERSE', compact=False, col_order=None):
+def Read(perc_files, rawfile=None, validated_string='.validated', percolator_string='.perc', decoy_string='REVERSE', compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 
     Args:
         perc_file (str): path or list of paths to percolated Kojak file(s)
-        percolator_string (str): user-defined string appended to the percolated filenames
+        validated_string (str): user-defined string appended to the percolated filenames
+        percolator_string (str): user-defined string appended to the file prepared for percolating
         decoy_string (optional): string used in kojak to label decoys
         rawfile (str): name of the corresponding rawfile
         col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
@@ -58,7 +59,7 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     
         percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
     
-        unperc_file = p_file.replace(percolator_string, '')
+        unperc_file = p_file.replace(validated_string, '')
     
         print('Reading Percolator input: ' + unperc_file)
     
@@ -77,7 +78,7 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     
         # Reading the Kojak-file is required to get additional information on the
         # matches such as the corresponding protein names
-        kojak_file = unperc_file[0:unperc_file.find('.perc')] + '.kojak.txt'
+        kojak_file = unperc_file[0:unperc_file.find(percolator_string)] + '.kojak.txt'
     
         print('Reading Kojak-file: ' + kojak_file)
     
@@ -101,17 +102,23 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     # split ambiguous concatenated protein names
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])
 
+    print('[Kojak Perc Read] Splitted concatenated lists')
+
     ### Process the data to comply to xTable format
-    xtable = xtable.rename(columns={'Scan Number': 'scanno',
+    xtable = xtable.rename(columns={'scannr': 'scanno',
                                     'Charge': 'prec_ch',
                                     'Link #1': 'xlink1',
                                     'Link #2': 'xlink2',
                                     'Score': 'score'
                                     })
 
+    print('[Kojak Perc Read] Renamed columns')
+    
     # Extract peptide sequence, modification mass and position from the
     # Peptide #1 and Peptide #2 entries
     xtable = kj.extract_peptide(xtable)
+
+    print('[Kojak Perc Read] Extracted peptides')
 
     # transform unset xlinks to np.nan
     xtable[['xlink1', 'xlink2']] = xtable[['xlink1', 'xlink2']].replace(-1, np.nan)
@@ -119,6 +126,8 @@ def Read(perc_files, rawfile=None, percolator_string='.validated', decoy_string=
     # extract protein name and relative cross-link position from the Protein #
     # entries
     xtable = kj.extract_protein(xtable)
+
+    print('[Kojak Perc Read] Extracted Proteins')
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -161,6 +170,8 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    perc_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.intra.validated.txt'
+    perc_file = [r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.intra.validated.txt',
+                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.loop.validated.txt',
+                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.single.validated.txt']
 
     xtable = Read(perc_file)
