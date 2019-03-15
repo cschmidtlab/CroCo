@@ -279,15 +279,15 @@ def Read(plinkdirs, col_order=None, compact=False):
     xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(str(x)), axis=1)
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
-        # Reassign the type for inter xlink to inter/intra/homomultimeric
-        onlyInter = xtable['type'] == 'inter'
-        xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
-                                                     xtable[onlyInter]['pos1'],
-                                                     xtable[onlyInter]['pepseq1'],
-                                                     xtable[onlyInter]['prot2'],
-                                                     xtable[onlyInter]['pos2'],
-                                                     xtable[onlyInter]['pepseq1'])
+        # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
+        intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
+        xtable.loc[intraAndInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[intraAndInter]['prot1'],
+                                                     xtable[intraAndInter]['pos1'],
+                                                     xtable[intraAndInter]['pepseq1'],
+                                                     xtable[intraAndInter]['prot2'],
+                                                     xtable[intraAndInter]['pos2'],
+                                                     xtable[intraAndInter]['pepseq1'])
         print('[xQuest Read] categorized inter peptides')
     else:
         print('[xQuest Read] skipped inter peptide categorization')

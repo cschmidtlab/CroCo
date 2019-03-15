@@ -8,6 +8,12 @@ import numpy as np
 import os
 import re
 
+### variables of repeated use that are centrally stored
+
+regexDict = {'mgfTITLE': r'(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*'}
+
+### Functions that are repeatedly used
+
 def clearMDD(path):
     pattern = re.compile(r'.*(\w:)')
     
@@ -94,7 +100,7 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
     elif type in ['inter', 'intra', 'homomultimeric']:
         xpos1 = int(xpos1)
         xpos2 = int(xpos2)
-        if xpos1 > xpos2:
+        if xpos1 < xpos2:
             return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
         elif xpos1 == xpos2:
             prot_list = sorted([str(prot1), str(prot2)])

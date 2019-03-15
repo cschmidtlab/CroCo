@@ -92,8 +92,8 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
 
     ### get the xiFDR file containing the cross-links ###
     if xifdr_linksPSM_file != None:
-        if not 'Links_PSM_xiFDR' in xifdr_linksPSM_file:
-            raise Exception('[xiFDR Read] The string "Links_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
+        if not 'PSM_xiFDR' in xifdr_linksPSM_file:
+            raise Exception('[xiFDR Read] The string "PSM_xiFDR" is missing in your input file. Did you choose the right file?')
 
         print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linksPSM_file))
 
@@ -117,8 +117,8 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
 
     if xifdr_linearPSM_file != None:
 
-        if not 'Links_Linear_PSM_xiFDR' in xifdr_linearPSM_file:
-            raise Exception('[xiFDR Read] The string "Links_Linear_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
+        if not 'Linear_PSM_xiFDR' in xifdr_linearPSM_file:
+            raise Exception('[xiFDR Read] The string "Linear_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
 
         print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linearPSM_file))
 

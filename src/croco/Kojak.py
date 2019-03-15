@@ -64,7 +64,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     # remove lines containing non-identified PSMs (marked with '-' in both
     # Link columns
-    xtable.dropna(axis=0, how='any', subset=['Link #1', 'Link #2'], inplace=True)
+    xtable.dropna(axis=0, how='all', subset=['Link #1', 'Link #2'], inplace=True)
 
     # dropping lines causes fragmented index --> regenate the index
     xtable.reset_index(drop=True, inplace=True)
@@ -90,7 +90,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     # extract protein name and relative cross-link position from the Protein #
     # entries
-    xtable = kj.extract_protein(xtable)
+    xtable = kj.extract_protein(xtable)  
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -125,7 +125,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
     return xtable
 
 if __name__ == '__main__':
-    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.kojak.txt'
+    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak\20180615_KS_CL_9_msconvert.kojak.txt'
 
     col_order = ['rawfile', 'scanno', 'prec_ch',
                  'pepseq1', 'xlink1',

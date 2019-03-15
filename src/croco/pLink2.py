@@ -109,9 +109,9 @@ def Read(plinkdirs, col_order=None, compact=False):
         """
         # the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2
         # in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1
-        pextract_pattern = re.compile('(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
-        if pextract_pattern.match(spec_string):
-            match = pextract_pattern.match(spec_string)
+        mgfTITLE_pattern = re.compile(hf.regexDict['mgfTITLE'])
+        if mgfTITLE_pattern.match(spec_string):
+            match = mgfTITLE_pattern.match(spec_string)
             rawfile, scanno, prec_ch = match.groups()
             return str(rawfile), int(scanno), int(prec_ch)
         else:
@@ -373,15 +373,15 @@ def Read(plinkdirs, col_order=None, compact=False):
     xtable['decoy'] = False
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
-        # Reassign the type for inter xlink to inter/intra/homomultimeric
-        onlyInter = xtable['type'] == 'inter'
-        xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
-                                                     xtable[onlyInter]['pos1'],
-                                                     xtable[onlyInter]['pepseq1'],
-                                                     xtable[onlyInter]['prot2'],
-                                                     xtable[onlyInter]['pos2'],
-                                                     xtable[onlyInter]['pepseq1'])
+        # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
+        intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
+        xtable.loc[intraAndInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[intraAndInter]['prot1'],
+                                                     xtable[intraAndInter]['pos1'],
+                                                     xtable[intraAndInter]['pepseq1'],
+                                                     xtable[intraAndInter]['prot2'],
+                                                     xtable[intraAndInter]['pos2'],
+                                                     xtable[intraAndInter]['pepseq2'])
         print('[xQuest Read] categorized inter peptides')
     else:
         print('[xQuest Read] skipped inter peptide categorization')

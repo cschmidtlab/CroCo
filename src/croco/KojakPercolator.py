@@ -55,10 +55,12 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
                                      index_col=False, # avoid taking the first col as index
                                      engine='python')
         except FileNotFoundError:
-            raise Exception("Could not find the percolated file %s. Please move it into the same directory as the percolator files!" % p_file)
+            raise Exception("Could not find the percolated file %s." % p_file)
     
         percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
-    
+        
+        print(validated_string)
+        
         unperc_file = p_file.replace(validated_string, '')
     
         print('Reading Percolator input: ' + unperc_file)
@@ -170,8 +172,8 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    perc_file = [r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.intra.validated.txt',
-                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.loop.validated.txt',
-                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\20190226_croco_testfiles_kojak\20180615_KS_CL_9_msconvert.perc.single.validated.txt']
+    perc_file = [r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.intra.validated.txt',
+                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.loop.validated.txt',
+                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.single.validated.txt']
 
     xtable = Read(perc_file)

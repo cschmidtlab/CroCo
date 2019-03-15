@@ -101,10 +101,10 @@ class CroCoMainFrame(wx.Frame):
                                                              'file',
                                                              'Please provide an SSF file as returned by StavroX')]],
                            'Xi': [croco.Xi.Read, []],
-                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('xiFDR Links PSM file',
+                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('xiFDR crosslink PSM file',
                                                                  'file',
                                                                  'Please provide file with xiFDR filtered crosslinks'),
-                                                                ('xiFDR Links Linear PSM file',
+                                                                ('xiFDR Linear PSM file',
                                                                  'file',
                                                                  'Please provide file with xiFDR filtered linear peptides')]],
                            'xQuest': [croco.xQuest.Read, []],
@@ -443,7 +443,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.6.2')
+        aboutInfo.SetVersion('0.6.3')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")

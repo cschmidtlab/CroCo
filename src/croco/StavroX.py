@@ -99,13 +99,13 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
         try:
             if t == 'mono':
-                return 0
+                return np.nan
             elif t == 'loop':
-                return int(pos1) + int(xlink2)
+                return int(pos1) + int(xlink2) - 1
             else:
-                return int(pos2) + int(xlink2)
+                return int(pos2) + int(xlink2) - 1
         except:
-            return 0
+            return np.nan
 
     def pepseqs_from_peptides(peptide1, peptide2):
         """
@@ -316,10 +316,10 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     allData = list()
 
-    stavrox_dtypes = {'Scan number': 'int64',
+    stavrox_dtypes = {'Scan number': str,
                       'Charge': 'int16',
-                      'Protein 1 From': str,
-                      'Protein 2 From': str,
+                      'Protein 1 From': pd.Int64Dtype(),
+                      'Protein 2 From': pd.Int64Dtype(),
                       'Protein 1': str,
                       'Protein 2': str,
                       'Peptide 1': str,
@@ -349,8 +349,8 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
                         last_saved = element
                 else:
                     headers.append(last_saved + ' ' + element)
-            # there is a last column without header
-            headers.append('Unknown')
+            # the spectrum UUID column contains a semicolon delimiter! This messes up the whole csv reading
+            headers.insert(-1, 'Spectrum UUID2')
 
             print(headers)
 
@@ -369,12 +369,16 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     xtable = pd.concat(allData)
 
     ### Process the data to comply to xTable format
-    xtable = xtable.rename(columns={'Scan number': 'scanno',
-                                    'Charge': 'prec_ch',
-                                    'Protein 1 From': 'pos1',
+    xtable = xtable.rename(columns={'Protein 1 From': 'pos1',
                                     'Protein 2 From': 'pos2',
                                     'Score': 'score'
                                     })
+
+    # the field Scan number contains the mgf file header. Use Regex to extract 
+    # scan no
+    xtable[['rawfile', 'scanno', 'prec_ch']] = xtable['Scan number'].str.extract(hf.regexDict['mgfTITLE'])
+
+    print('[StavroX Read] Parsed MGF title')
 
     # calculate the type of line (i.e. mono, loop, intra or inter)
     xtable['type'] = np.vectorize(type_from_proteins)(xtable['Protein 1'], xtable['Protein 2'])
@@ -382,7 +386,8 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     print('[StavroX Read] inferred type')
 
     # Set pos1 to 1 if Nterminal cross-link
-    xtable.loc[(xtable['type'] != 'mono') & (xtable['pos1'] == 0), ['pos1', 'pos2']] = 1
+    xtable['pos1'] = xtable['pos1'].replace(0, 1)
+    xtable['pos2'] = xtable['pos2'].replace(0, 1)
 
     print('[StavroX Read] changed xlink positions')
 
@@ -393,9 +398,6 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     print('[StavroX Read] Reformatted pepseqs')
 
-    # Stavrox does not write down any file names
-    xtable['rawfile'] = 'UNKNOWN'
-
     # remove for example preceding > in UniProt headers
     xtable['prot1'] = xtable['Protein 1'].apply(clear_protname)
     xtable['prot2'] = xtable['Protein 2'].apply(clear_protname)
@@ -405,14 +407,15 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     # Best linkage position also contains the linked AA (that is already given
     # by sequence and link position)
     # --> xtract only the numerical part
-    xtable['xlink1'] = xtable['best linkage position peptide 1'].apply(clear_xlink)
-    xtable['xlink2'] = xtable['best linkage position peptide 2'].apply(clear_xlink)
+    # StavroX treats the N-terminus as 0th position --> replace by 1
+    xtable['xlink1'] = xtable['best linkage position peptide 1'].apply(clear_xlink).replace(0, 1)
+    xtable['xlink2'] = xtable['best linkage position peptide 2'].apply(clear_xlink).replace(0, 1)
 
     print('[StavroX Read] Found xlink position')
 
     # calculate absolute position of xlink as sum of start of peptide
     # and relative position of the xlink
-    xtable['xpos1'] = xtable['xlink1'].astype(int) + xtable['pos1'].astype(int)
+    xtable['xpos1'] = xtable['xlink1'].astype(int) + xtable['pos1'].astype(int) - 1
 
     # xpos2 has to be calculated separately for inter/intra, loop and mono-peptides
     xtable['xpos2'] =\
@@ -490,7 +493,7 @@ if __name__ == '__main__':
                   'ID',
                   'pos1', 'pos2', 'decoy']
 
-    stavrox_files = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\StavroX\stavrox.csv'
+    stavrox_files = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\stavrox\20180615_KS_CL_9_pXtract.csv'
 
-    ssf_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\StavroX\StavroxSettings.ssf'
+    ssf_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\stavrox\StavroxSettings.ssf'
     xtable = Read(stavrox_files, ssf_file, col_order=col_order, compact=False)
