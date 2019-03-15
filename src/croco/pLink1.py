@@ -17,156 +17,6 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def plinkprotein2pandas(filepath):
-    """
-    Read a pLink protein results file and return a pandas dictionary.
-
-    Args:
-        filepath (str): Path to a pLink results file e.g. _inter_combine.protein.xls
-
-    Returns:
-        pandas.DataFrame
-    """
-    with open(filepath, 'r') as fh:
-
-        data = {} # init of data dict for pandas
-
-        # initialise the protein_header line
-        header1 = ''
-        # initialise the peptide header-line
-        header2 = ''
-
-        # protein level header starts with Order tag
-        header1_exp = re.compile(r'^Order\s.*')
-        # protein level entry starts with the order entry
-        entry1_exp = re.compile(r'^\d+\s.*')
-        # peptide level header starts with tab
-        header2_exp = re.compile(r'^\s+Order.*')
-        # peptide entry starts with whitespace foloowed by order entry
-        entry2_exp = re.compile(r'^\s+\d+.*')
-
-        for line in fh.readlines():
-
-            # beginning of a protein-block
-            if header1_exp.match(line):
-                # only read the header-line on its first occurence
-                if header1 == '':
-                    # Get header names
-                    header1 = line.strip().split('\t')
-                    # set the column names for the dict
-                    for h in header1:
-                        data[h] = []
-
-            # body of a protein-block
-            elif entry1_exp.match(line):
-                # Read and store header1 data to write with every case of header2
-                entry1_data = line.strip().split('\t')
-
-            # beginning of a peptide block
-            elif header2_exp.match(line):
-                if header2 == '':
-                    header2 = line.strip().split('\t')
-                    header2 = [x if x != 'Order' else 'Order2' for x in header2 ]
-                    for h in header2:
-                        data[h] = []
-
-            # beginning of a peptide entry
-            elif entry2_exp.match(line):
-                entry2_data = line.strip().split('\t')
-                # add the corresponding level1 entries
-                for idx, d in enumerate(entry1_data):
-                    data[header1[idx]].append(d)
-                for idx, d in enumerate(entry2_data):
-                    data[header2[idx]].append(d)
-                    
-        try:
-            data = pd.DataFrame.from_dict(data)
-            if len(data) > 0:
-                return data
-            else:
-                raise Exception('Generated xtable had a length of 0!')
-        except:
-            raise Exception('Could not generat xtable. Please check file at: {}'.format(filepath))
-
-def read_plink_modifications(filepath):
-    """
-    Open a pLink modification.ini file and extract all modifications with
-    their names as dict.
-    
-    Args:
-        filepath (str): Path to modifications.ini
-    
-    Returns
-        dict: mod_dict mapping pLink modification names to masses
-    """
-    
-    pattern = re.compile(r'^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+')
-    mod_dict = {}
-    
-    with open(filepath, 'r') as f:
-        for line in f:
-            if pattern.match(line):
-                match = pattern.match(line)
-                name, mass = match.groups()
-                mod_dict[name] = mass
-
-    return mod_dict
-
-def process_plink_sequence(seq_string):
-    """
-    Extract peptide sequences and cross-link positions from
-    pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
-
-    Args:
-        seq_string (str): pLink sequence string
-    Returns:
-        list or np.nan: [pepseq1, pepseq2, xpos1, xpos2, xtype]
-    """
-    pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
-    try:
-        match = pattern.match(seq_string)
-        # pepseq1, xpos1, pepseq2, xpos2, xtype
-        return match.groups()
-
-    except Exception as e:
-        print(e)
-        return np.nan
-
-def process_plink_spectrum(spec_string):
-    """
-    Extract rawfile name, precursor charge and scan no from pLink spectrum
-    string such as 2017_08_04_SVs_BS3_16.17079.17079.4.dta
-
-    Args:
-        spec_string: pLink spectrum string
-
-    Returns:
-        list or np.nan: [rawfile, scanno, prec_ch]
-    """
-    pextract_pattern = re.compile('(.+)\.(\d+)\.\d+\.(\d+)\.dta')
-    if pextract_pattern.match(spec_string):
-        match = pextract_pattern.match(spec_string)
-        # rawfile, scanno, prec_ch
-        return match.groups()
-    else:
-        return np.nan
-
-def process_plink_proteins(prot_string):
-    """
-    Extract protein name and absolute cross-link position from
-    pLink protein string e.g.
-    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)
-    
-    Args:
-        prot_string: pLink protein string
-    
-    Returns:
-        list or np.nan: [prot1, xpos1, prot2, xpos2]
-    """
-    pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
-    match = pattern.match(prot_string)
-    return match.groups()
-
 def Read(plinkdirs, col_order=None, compact=False):
     """
     Read pLink report dir and return an xtabel data array.
@@ -180,6 +30,160 @@ def Read(plinkdirs, col_order=None, compact=False):
         pandas.DataFrame: xTable data table
     """
 
+    def plinkprotein2pandas(filepath):
+        """
+        Read a pLink protein results file and return a pandas dictionary.
+    
+        Args:
+            filepath (str): Path to a pLink results file e.g. _inter_combine.protein.xls
+    
+        Returns:
+            pandas.DataFrame
+        """
+        with open(filepath, 'r') as fh:
+    
+            data = {} # init of data dict for pandas
+    
+            # initialise the protein_header line
+            header1 = ''
+            # initialise the peptide header-line
+            header2 = ''
+    
+            # protein level header starts with Order tag
+            header1_exp = re.compile(r'^Order\s.*')
+            # protein level entry starts with the order entry
+            entry1_exp = re.compile(r'^\d+\s.*')
+            # peptide level header starts with tab
+            header2_exp = re.compile(r'^\s+Order.*')
+            # peptide entry starts with whitespace foloowed by order entry
+            entry2_exp = re.compile(r'^\s+\d+.*')
+    
+            for line in fh.readlines():
+    
+                # beginning of a protein-block
+                if header1_exp.match(line):
+                    # only read the header-line on its first occurence
+                    if header1 == '':
+                        # Get header names
+                        header1 = line.strip().split('\t')
+                        # set the column names for the dict
+                        for h in header1:
+                            data[h] = []
+    
+                # body of a protein-block
+                elif entry1_exp.match(line):
+                    # Read and store header1 data to write with every case of header2
+                    entry1_data = line.strip().split('\t')
+    
+                # beginning of a peptide block
+                elif header2_exp.match(line):
+                    if header2 == '':
+                        header2 = line.strip().split('\t')
+                        header2 = [x if x != 'Order' else 'Order2' for x in header2 ]
+                        for h in header2:
+                            data[h] = []
+    
+                # beginning of a peptide entry
+                elif entry2_exp.match(line):
+                    entry2_data = line.strip().split('\t')
+                    # add the corresponding level1 entries
+                    for idx, d in enumerate(entry1_data):
+                        data[header1[idx]].append(d)
+                    for idx, d in enumerate(entry2_data):
+                        data[header2[idx]].append(d)
+                        
+            try:
+                data = pd.DataFrame.from_dict(data)
+                if len(data) > 0:
+                    return data
+                else:
+                    raise Exception('Generated xtable had a length of 0!')
+            except:
+                raise Exception('Could not generat xtable. Please check file at: {}'.format(filepath))
+    
+    def read_plink_modifications(filepath):
+        """
+        Open a pLink modification.ini file and extract all modifications with
+        their names as dict.
+        
+        Args:
+            filepath (str): Path to modifications.ini
+        
+        Returns
+            dict: mod_dict mapping pLink modification names to masses
+        """
+        
+        pattern = re.compile(r'^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+')
+        mod_dict = {}
+        
+        with open(filepath, 'r') as f:
+            for line in f:
+                if pattern.match(line):
+                    match = pattern.match(line)
+                    name, mass = match.groups()
+                    mod_dict[name] = mass
+    
+        return mod_dict
+    
+    def process_plink_sequence(seq_string):
+        """
+        Extract peptide sequences and cross-link positions from
+        pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
+    
+        Args:
+            seq_string (str): pLink sequence string
+        Returns:
+            list or np.nan: [pepseq1, pepseq2, xpos1, xpos2, xtype]
+        """
+        pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
+        try:
+            match = pattern.match(seq_string)
+            pepseq1, xpos1, pepseq2, xpos2, xtype = match.groups()
+            return str(pepseq1), int(xpos1), str(pepseq2), int(xpos2), xtype
+    
+        except Exception as e:
+            print(e)
+            return np.nan
+
+    def process_plink_spectrum(spec_string):
+        """
+        Extract rawfile name, precursor charge and scan no from pLink spectrum
+        string such as 2017_08_04_SVs_BS3_16.17079.17079.4.dta
+    
+        Args:
+            spec_string: pLink spectrum string
+    
+        Returns:
+            list or np.nan: [rawfile, scanno, prec_ch]
+        """
+        # the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2
+        # in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1
+        pextract_pattern = re.compile('(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
+        if pextract_pattern.match(spec_string):
+            match = pextract_pattern.match(spec_string)
+            rawfile, scanno, prec_ch = match.groups()
+            return str(rawfile), int(scanno), int(prec_ch)
+        else:
+            return np.nan
+    
+    def process_plink_proteins(prot_string):
+        """
+        Extract protein name and absolute cross-link position from
+        pLink protein string e.g.
+        sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)
+        
+        Args:
+            prot_string: pLink protein string
+        
+        Returns:
+            list or np.nan: [prot1, xpos1, prot2, xpos2]
+        """
+        pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
+        match = pattern.match(prot_string)
+        prot1, xpos1, prot2, xpos2 = match.groups()
+        return str(prot1), int(xpos1), str(prot2), int(xpos2)
+
+
     ### Collect data, convert to pandas format and merge
 
     print('[pLink1 Read] This is pLink1 Reader')
@@ -189,6 +193,14 @@ def Read(plinkdirs, col_order=None, compact=False):
         plinkdirs = [plinkdirs]
     
     allData = list()
+
+    plink_dtypes = {'Spectrum': str,
+                    'Sequence': str,
+                    'Proteins': str,
+                    'type': str,
+                    'Score': float,
+                    'Order': int,
+                    'Order2': int}
 
     for file in plinkdirs:
 
@@ -229,27 +241,31 @@ def Read(plinkdirs, col_order=None, compact=False):
 
         allData.append(s)
 
-    xtable = pd.concat(allData)
+    xtable = pd.concat(allData).astype(dtype=plink_dtypes)
     ### Convert data inside pandas df
 
     # rawfile, scanno, prec_ch
-    xtable['rawfile'], xtable['scanno'], xtable['prec_ch'] =\
-        zip(*xtable['Spectrum'].apply(process_plink_spectrum))
+    xtable[['rawfile', 'scanno', 'prec_ch']] =\
+        pd.DataFrame(xtable['Spectrum'].apply(process_plink_spectrum).tolist(), index=xtable.index)
 
     # Directly assign the re group matches into new columns
-    xtable['pepseq1'], xtable['xlink1'], xtable['pepseq2'],\
-    xtable['xlink2'], xtable['xtype'] =\
-        zip(*xtable['Sequence'].apply(process_plink_sequence))
+    xtable[['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype']] =\
+        pd.DataFrame(xtable['Sequence'].apply(process_plink_sequence).tolist(), index=xtable.index)
 
-    xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'] =\
-            zip(*xtable['Proteins'].apply(process_plink_proteins))
+    xtable[['prot1', 'xpos1', 'prot2', 'xpos2']] =\
+            pd.DataFrame(xtable['Proteins'].apply(process_plink_proteins).tolist(), index=xtable.index)
 
-    xtable['type'] = xtable['type']
     xtable['score'] = xtable['Score']
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
     # calculate absolute position of first AA of peptide
     # ignoring errors avoids raising error in case on NaN -> returns NaN
@@ -260,25 +276,25 @@ def Read(plinkdirs, col_order=None, compact=False):
                      xtable['xlink2'].astype(int, errors='ignore') + 1
 
     # add a lobel referring to the ordering in the pLink results table
-    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(x), axis=1)
+    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(str(x)), axis=1)
 
-    # Reassign the type for inter xlink to inter/intra/homomultimeric
-    xtable.loc[xtable['type'] == 'inter', 'type'] =\
-        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                 xtable[xtable['type'] == 'inter']['pos1'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                 xtable[xtable['type'] == 'inter']['prot2'],
-                                                 xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
+    if len(xtable[xtable['type'] == 'inter']) > 0:
+        # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
+        intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
+        xtable.loc[intraAndInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[intraAndInter]['prot1'],
+                                                     xtable[intraAndInter]['pos1'],
+                                                     xtable[intraAndInter]['pepseq1'],
+                                                     xtable[intraAndInter]['prot2'],
+                                                     xtable[intraAndInter]['pos2'],
+                                                     xtable[intraAndInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
+    else:
+        print('[xQuest Read] skipped inter peptide categorization')
 
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
     xtable['decoy'] = False
-
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     # generate the mod_dict linking pLink modification names to masses
     
@@ -379,11 +395,6 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink1'
 
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
-    
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
     ### return xtable df
@@ -402,4 +413,4 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']    
         
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLink1\SV_BS3_pLink1\sample1', col_order=col_order)
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\pLink1_results\2.report\sample1', col_order=col_order)

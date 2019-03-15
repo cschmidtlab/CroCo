@@ -8,18 +8,17 @@ Functions to read Xi processed crosslink data.
 import numpy as np
 import pandas as pd
 
-import os
-
-if __name__ == '__main__':
+if __name__ in ['__main__', 'Xi']:
     import HelperFunctions as hf
 else:
     from . import HelperFunctions as hf
+
 
 def assign_type(row):
     """
     Assign mono, loop, inter and intra link
     based on prot1, prot2, xlink1 and xlink2 entries
-    
+
     Args:
         row (Series): a series or list containing prot1, prot2, xlink1, xlink2
     Returns:
@@ -38,17 +37,17 @@ def assign_type(row):
         t = 'inter'
     elif prot2 == 'nan' and xlink2 != 'nan':
         t = 'loop'
-    elif prot1 != 'nan' and prot2 == 'nan':
+    elif prot1 != 'nan' and prot2 == 'nan' and xlink1 != 'nan':
         t = 'mono'
     else:
-        t = None
+        t = np.nan
     return t
 
 def rawfile_from_source(source_str):
     """
     Exctracts filename from string like
     E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
-    
+
     Args:
         source_str (str): Path to a rawfile
     Returns:
@@ -77,20 +76,35 @@ def Read(xi_files, col_order=None, compact=False):
     # convert to list if the input is only a single path
     if not isinstance(xi_files, list):
         xi_files = [xi_files]
-    
+
     allData = list()
-    
+
+    xi_dtypes = {'Scan': pd.Int64Dtype(),
+                 'PrecoursorCharge': pd.Int64Dtype(),
+                 'BasePeptide1': str,
+                 'ProteinLink1': pd.Int16Dtype(),
+                 'BasePeptide2': str,
+                 'ProteinLink2': pd.Int16Dtype(),
+                 'Protein1': str,
+                 'Protein2': str,
+                 'Start1': pd.Int32Dtype(),
+                 'Start2': pd.Int32Dtype(),
+                 'Link1': pd.Int16Dtype(),
+                 'Link2': pd.Int16Dtype(),
+                 'match score': float
+                 }
+
     for file in xi_files:
 
         print('Reading xi-file: {}'.format(file))
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',')
+            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',', dtype=xi_dtypes)
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
 
     xtable = pd.concat(allData)
-    
+
     ### Process the data to comply to xTable format
     xtable = xtable.rename(columns={'Scan': 'scanno',
                                    'PrecoursorCharge': 'prec_ch',
@@ -121,25 +135,31 @@ def Read(xi_files, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        np.vectorize(hf.generateID)(xtable['type'], xtable['prot1'], xtable['xpos1'], xtable['prot2'], xtable['xpos2'])
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                 index=xtable.index).replace('nan', np.nan)
 
-    # Reassign the type for inter xlink to inter/intra/homomultimeric
-    xtable.loc[xtable['type'] == 'inter', 'type'] =\
-        np.vectorize(hf.categorizeInterPeptides)(xtable[xtable['type'] == 'inter']['prot1'],
-                                                 xtable[xtable['type'] == 'inter']['pos1'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'],
-                                                 xtable[xtable['type'] == 'inter']['prot2'],
-                                                 xtable[xtable['type'] == 'inter']['pos2'],
-                                                 xtable[xtable['type'] == 'inter']['pepseq1'])
+    if len(xtable[xtable['type'] == 'inter']) > 0:
+        # Reassign the type for inter xlink to inter/intra/homomultimeric
+        onlyInter = xtable['type'] == 'inter'
+        xtable.loc[onlyInter, 'type'] =\
+            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+                                                     xtable[onlyInter]['pos1'],
+                                                     xtable[onlyInter]['pepseq1'],
+                                                     xtable[onlyInter]['prot2'],
+                                                     xtable[onlyInter]['pos2'],
+                                                     xtable[onlyInter]['pepseq1'])
+        print('[xQuest Read] categorized inter peptides')
+    else:
+        print('[xQuest Read] skipped inter peptide categorization')
 
     xtable['xtype'] = np.nan
 
     xtable['search_engine'] = 'XiSearch'
-
-    # reassign dtypes for every element in the df
-    # errors ignore leaves the dtype as object for every
-    # non-numeric element
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
 
@@ -156,11 +176,6 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    os.chdir(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi')
-    xi_file = r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_XiVersion1.6.739.csv'
+    xi_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\Xi\XI_results_XiVersion1.6.739.csv'
 
-    xi = Read(xi_file)
-
-    xi.to_excel('test.xls',
-                 index=False)
-
+    xtable = Read(xi_file)

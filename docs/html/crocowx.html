@@ -1,0 +1,425 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The CroCoWX Class &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="The graphical User-Interface" href="GUI_intro.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-crocowx-class">
+<span id="crocoxw"></span><h1>The CroCoWX Class<a class="headerlink" href="#the-crocowx-class" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="croco_wx.CroCoMainFrame">
+<em class="property">class </em><code class="descclassname">croco_wx.</code><code class="descname">CroCoMainFrame</code><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">wx._core.Frame</span></code></p>
+<p>The wx window class for the croco cross-link converter GUI</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.availReads">
+<code class="descname">availReads</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.availReads" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – Dictionary with writing operation to list: [function to call (func), options for displaying a related widget (list)].
+Structure of options list:
+(Label for the widget (str)),
+type of the widget (can be ‘file’/’dir’/’input’/’check’),
+Help text (str),
+Optional multi-purpose field: e.g. default value for input fields)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.availWrites">
+<code class="descname">availWrites</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.availWrites" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – Dictionary with writing operation to list. For
+structure see availReads.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.currentPath">
+<code class="descname">currentPath</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.currentPath" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – set starting path for folder selection GUI</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.col_order">
+<code class="descname">col_order</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.col_order" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list of str</em> – defines the column headers required for xtable output</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.inputOptionsToUserInput">
+<code class="descname">inputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.inputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.outputOptionsToUserInput">
+<code class="descname">outputOptionsToUserInput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.outputOptionsToUserInput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – mapping the label names to the user-provided input</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.Info">
+<code class="descname">Info</code><span class="sig-paren">(</span><em>message</em>, <em>caption='CroCo'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.Info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.Info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a message dialog</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>message</strong> (<em>str</em>) – Message to send</li>
+<li><strong>caption</strong> (<em>str</em>) – Title for the wx-window</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.OnOpenSwitch">
+<code class="descname">OnOpenSwitch</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.OnOpenSwitch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.OnOpenSwitch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a dir-opening dialog if pLink was selected, else file-opening</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>wx.Event</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.OnReadFormat">
+<code class="descname">OnReadFormat</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.OnReadFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.OnReadFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p>function to enable the file input button only after an input format was chosen</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>wx.Event</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.OnWriteFormat">
+<code class="descname">OnWriteFormat</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.OnWriteFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.OnWriteFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p>function to enable the file output button only after an input format was chosen</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>wx.Event</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.Warning">
+<code class="descname">Warning</code><span class="sig-paren">(</span><em>message</em>, <em>caption='Warning!'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.Warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.Warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Issue a warning on the console and as a wx window</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>message</strong> (<em>str</em>) – Message to send</li>
+<li><strong>caption</strong> (<em>str</em>) – Title for the wx-window</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.createWidgets">
+<code class="descname">createWidgets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.createWidgets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.createWidgets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the widgets for the croco MainFrame</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.compactTableCheck">
+<code class="descname">compactTableCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.compactTableCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>wx.CheckBox</em> – whether to compact the table before passing to output function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.mergeTableCheck">
+<code class="descname">mergeTableCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.mergeTableCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>wx.CheckBox</em> – Whether to merge multiple files (pass paths in loop)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.multipleSettingsCheck">
+<code class="descname">multipleSettingsCheck</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.multipleSettingsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>wx.CheckBox</em> – whether to apply the same settings to all files or call separately</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.writeFormat">
+<code class="descname">writeFormat</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.writeFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – the format to write data to (from availWrites)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.readFormat">
+<code class="descname">readFormat</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.readFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – the format to read data from (from availReads)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.makeMenuBar">
+<code class="descname">makeMenuBar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.makeMenuBar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.makeMenuBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the top menu for the CroCo MainFrame</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onAbout">
+<code class="descname">onAbout</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onAbout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onAbout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show the about dialog</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onExit">
+<code class="descname">onExit</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onExit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onExit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the frame, terminating the application.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onInputDir">
+<code class="descname">onInputDir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onInputDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onInputDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a dir dialaog and set the paths</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onInputFile">
+<code class="descname">onInputFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onInputFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onInputFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a file dialaog and set the paths</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.theInput">
+<code class="descname">theInput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.theInput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list of str</em> – selected input paths</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onOutputDir">
+<code class="descname">onOutputDir</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onOutputDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onOutputDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a dialog to select an output dir</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.theOutput">
+<code class="descname">theOutput</code><a class="headerlink" href="#croco_wx.CroCoMainFrame.theOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Path to write output</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onRun">
+<code class="descname">onRun</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect all necessary information from self and start the
+conversion by calling the actual conversion script</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>wx.Event</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoMainFrame.onStart">
+<code class="descname">onStart</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoMainFrame.onStart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoMainFrame.onStart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show dialog if additional user input is required.
+Otherwise start the conversion</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.readSet">
+<code class="descname">readSet</code><em class="property"> = None</em><a class="headerlink" href="#croco_wx.CroCoMainFrame.readSet" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>bool</em> – True if the read format is set</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoMainFrame.writeSet">
+<code class="descname">writeSet</code><em class="property"> = None</em><a class="headerlink" href="#croco_wx.CroCoMainFrame.writeSet" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>bool</em> – True if the write format is set</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="croco_wx.CroCoOptionsFrame">
+<em class="property">class </em><code class="descclassname">croco_wx.</code><code class="descname">CroCoOptionsFrame</code><span class="sig-paren">(</span><em>parent</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">wx._core.Frame</span></code></p>
+<p>Child Frame to CroCoMainWindow asking the user for input
+regarding the possible options of a submodule</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoOptionsFrame.parent">
+<code class="descname">parent</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.parent" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>wx.Frame</em> – parent frame</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoOptionsFrame.currentPath">
+<code class="descname">currentPath</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.currentPath" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – current working directory</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="croco_wx.CroCoOptionsFrame.InputOptionsToAsk">
+<code class="descname">InputOptionsToAsk</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.InputOptionsToAsk" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list</em> – Input options from CroCoMainWindow</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">InputOptionsToAsk</code></dt>
+<dd><p><em>list</em> – Output options from CroCoMainWindow</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoOptionsFrame.Info">
+<code class="descname">Info</code><span class="sig-paren">(</span><em>message</em>, <em>caption='CroCo'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.Info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.Info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Info dialog method of CroCoOptionsWindow</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoOptionsFrame.onOkay">
+<code class="descname">onOkay</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.onOkay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.onOkay" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the user clicks okay, all inputs will be evaluated, returned to
+the parent classe and the onRun method of the parent class will
+be called</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoOptionsFrame.onOpenDir">
+<code class="descname">onOpenDir</code><span class="sig-paren">(</span><em>event</em>, <em>dictToAppend</em>, <em>label</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.onOpenDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.onOpenDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dir opening method of CroCoOptionsWindow</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoOptionsFrame.onOpenFile">
+<code class="descname">onOpenFile</code><span class="sig-paren">(</span><em>event</em>, <em>dictToAppend</em>, <em>label</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.onOpenFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.onOpenFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>File opening method of CroCoOptionsWindow</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="croco_wx.CroCoOptionsFrame.updateOptions">
+<code class="descname">updateOptions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco_wx.html#CroCoOptionsFrame.updateOptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.updateOptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect the variables that determine the layout of the options window and
+compute the window layout</p>
+<dl class="attribute">
+<dt id="croco_wx.CroCoOptionsFrame.textCtrls">
+<code class="descname">textCtrls</code><a class="headerlink" href="#croco_wx.CroCoOptionsFrame.textCtrls" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – mapping text labels to input text fields.
+all inputs done by extra dialog widgets (file and paths) are
+stored upon closing the dialogs. Text and checkbox inputs have to be evaaluated
+when the okay-Button has been pressed</p>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="GUI_intro.html" title="previous chapter">The graphical User-Interface</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+      |
+      <a href="_sources/crocowx.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

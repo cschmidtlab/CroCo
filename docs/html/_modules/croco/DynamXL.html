@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.DynamXL &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco.DynamXL</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts xTable data into cross-link information</span>
+<span class="sd">    file for the dynamXL analysis software:</span>
+
+<span class="sd">    K189 NZ K192 NZ 18</span>
+<span class="sd">    K189 NZ K196 NZ 5</span>
+<span class="sd">    K200 NZ K192 NZ 1</span>
+<span class="sd">    K236 NZ K189 NZ 3</span>
+
+<span class="sd">    dynamxl.chem.ox.ac.uk</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+<div class="viewcode-block" id="Write"><a class="viewcode-back" href="../../write.html#croco.DynamXL.Write">[docs]</a><span class="k">def</span> <span class="nf">Write</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert xTable to DynamXL input file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        xtable: data table structure</span>
+<span class="sd">        outpath: path to write file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">aa_and_pos</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate tne amino acid and the absolute position</span>
+<span class="sd">        of a crosslink based on the sequence of an xl-peptide,</span>
+<span class="sd">        the relative and the absolute position of the cross-link</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            row (object): xTable row containing pepseq, xlin, and xpos</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: id1</span>
+<span class="sd">            str: id2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">aa1</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">id1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">])</span>
+
+        <span class="n">aa2</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">id2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span>
+
+    <span class="k">def</span> <span class="nf">xlink_atom_from_AA</span><span class="p">(</span><span class="n">AA</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the typical cross-linked atom in PDB code</span>
+<span class="sd">        for a specific amino-acid</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            AA(str): Amino acid in 1-letter code</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            PDB code of cross-linked atom</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">AA</span> <span class="o">==</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;NZ&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;CA&#39;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Converting to dynamXL input file format&#39;</span><span class="p">)</span>
+
+    <span class="c1"># init xtable with column containing lists of rawfile, scanno, prec_ch</span>
+    <span class="n">dynamxl</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">])</span>
+
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">],</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">aa_and_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">xlink_atom_from_AA</span><span class="p">)</span>
+
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">xlink_atom_from_AA</span><span class="p">)</span>
+
+    <span class="c1"># reorder df</span>
+    <span class="n">dynamxl</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[[</span><span class="s1">&#39;ID1&#39;</span><span class="p">,</span> <span class="s1">&#39;atom1&#39;</span><span class="p">,</span> <span class="s1">&#39;ID2&#39;</span><span class="p">,</span> <span class="s1">&#39;atom2&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">]]</span>
+
+    <span class="n">dynamxl</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">),</span>
+                   <span class="n">sep</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
+                   <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.3f</span><span class="s1">&#39;</span><span class="p">,</span>
+                   <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

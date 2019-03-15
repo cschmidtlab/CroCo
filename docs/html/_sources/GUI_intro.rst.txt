@@ -1,80 +1,44 @@
 .. _introGUI:
 
-The CroCo graphical User-Interface
+The graphical User-Interface
 ==================================
 
-Input formats
-~~~~~~~~~~~~~
+A portable GUI to easily transfer cross-link data files and help users focusing on experimental work is the main idea behind CroCo.
+However, usage of the modules inside Python-scripts is possible (and documented at :ref:`crocoread` and :ref:`crocowrite`).
 
-Kojak
-^^^^^
+General usage
+=============
 
--  **Load file(s)**: e.g. \ ``FILENAME.kojak.txt``
--  Provide: Rawfile title (e.g. ``FILENAME.raw``)
+ - Download the compiled GUI from https://github.com/cschmidtlab/CroCo/releases/latest
+    - If your OS is not supported you can still try `Starting the CroCo GUI from Python`_.
+ - Start the programme
+    - If Windows complains about the non-verified origin of the programme, acknowledge and continue
+ - You should see something like the following
 
-Kojak & Percolator
-^^^^^^^^^^^^^^^^^^
+ .. figure:: _static/img/crocoGUI.png
+    :align: center
+    :alt: The CroCO GUI
+	
+    The CroCo GUI
 
-For this script to work, the unpercolated Kojak file
-(e.g. ``FILENAME.kojak.txt``) has to be in the same directory as the
-percolated file.
+ - In the ``Input`` and ``Output`` dropdown menus, choose a format and select a directory or one or multiple files.
+    - the Start button will only be available once both formats are set and files are selected
+ - If you selected multiple files for input you can use the ``Merge files`` and ``Same settings for all files`` checkboxes
+    - ``Same settings for all files`` lets you chose only one set of options (e.g. necessary additional files) that will be used for all files. If the box is unchecked, you will get a separate prompt for each file selected.
+    - ``Merge files`` concatenates the tables for all selected files and generates the output from the concatenated table
+ - CroCo transfers all information found in the input files into the generated xTable files. If you want to restrict the xTable headers to the minimum columns necessary, you can choose ``Compact xTable``
+ - Click on ``Start``
+ - Depending on your choice of input and output formats, CroCo may require additional information. Therefore a second window may pop up.
+    - Detailed information on how to enter format-specific information can be found at :ref:`crocoread` and :ref:`crocowrite`.
 
--  **Load file(s)**: e.g. \ ``FILENAME.validated.txt``
--  Provide: Rawfile title (e.g. ``FILENAME.raw``)
-
-StavroX
-^^^^^^^
-
--  **Load file(s)**: StavroX results file (e.g. FILENAME.csv)
--  Provide: Path to SSF-file
-
-Xi
-^^
-
--  **Load file(s)**: Path to Xi results file
-   (e.g. ``FILENAME_XiVersion1.6.739.csv``)
-
-Xi & XiFDR
-^^^^^^^^^^
-
--  **Load file(s)**: Path to xiFDR file
-   (e.g. ``FILENAME_5_FDR_PSM_xiFDR1.0.22.csv``)
--  Provide: Path to corresponding Xi results file
-   (e.g. ``FILENAME_XiVersion1.6.739.csv``)
-
-pLink1
-^^^^^^
-
--  **Load file(s)** (folder): sample folder within the pLink results dir
-   (e.g. ``2.report\sample1``)
-
-pLink2
-^^^^^^
-
--  **Load file(s)** (folder): reports folder within the pLink results
-   (e.g. ``pLink_task_2018.06.12.09.33.10\reports``)
-
-xQuest
-^^^^^^
-
--  **Load file(s)**: xQuest results file exported as csv
-   (e.g. ``FILENAME_xquest.csv``)
-
-Output formats
-~~~~~~~~~~~~~~
-
-DynamXL
-^^^^^^^
-
--  **Write to**: Directory in which to save the DynamXL file
-
-customTable
-^^^^^^^^^^^
-
--  **Write to**: Directory in which to save the customTable csv file
--  Provide: customTable template file
-
-customTable Format
-''''''''''''''''''
-
-\``\` [header] Protein 1, Protein 2 [data] [prot1], [pr
+Starting the CroCo GUI from Python
+==================================
+ - Clone the CroCo repository from https://github.com/cschmidtlab/CroCo.git
+    - If you're not familiar with github, download and extract the latest version of the CroCo source code from https://github.com/cschmidtlab/CroCo/archive/master.zip
+ - Install Python 3+
+    - The easiest way is usually to use anaconda Python (https://www.anaconda.com/distribution/)
+    - Install the required python packages for CroCo (see requirements.txt in the CroCo root directory) either via ``pip install PACKAGE`` or via ``conda install PACKAGE``
+ - Open a Python-aware command-line
+    - On Windows, use Anaconda Prompt or cmd.exe if you exported Python to your OS PATH-Variable
+ - Navigate to ``CroCo/src``
+ - Start the GUI by typing ``python croco_wx.py``

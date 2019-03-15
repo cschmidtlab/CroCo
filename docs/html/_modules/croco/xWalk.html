@@ -1,0 +1,293 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.xWalk &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco.xWalk</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to write data as input for xWalk.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+<div class="viewcode-block" id="Write"><a class="viewcode-back" href="../../write.html#croco.xWalk.Write">[docs]</a><span class="k">def</span> <span class="nf">Write</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">pdb</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">chains</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert xTable into a list format that can be used as</span>
+<span class="sd">    input for the xWalk standalone programme.</span>
+
+<span class="sd">    Format is:</span>
+
+<span class="sd">    index \t pdb-file \t RESIDUE-NO--ATOM \t RESIDUE-NO--ATOM</span>
+
+<span class="sd">    As xWalk can only validate one protein at a time, the function</span>
+<span class="sd">    generates several oouput files for all intra-protein cross-links</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        xtable (pandas.DataFrame): data table structure</span>
+<span class="sd">        pdb (str): PDB-file name</span>
+<span class="sd">        offset (int): shift between PDB AA indices and the xTable</span>
+<span class="sd">        chains: (str) comma separated list protein:chain allocations</span>
+<span class="sd">        atom (str): Atom identifier (e.g. CB)</span>
+<span class="sd">        outpath (str): path to write file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    
+    <span class="k">def</span> <span class="nf">AA_from_sequence</span><span class="p">(</span><span class="n">pepseq</span><span class="p">,</span> <span class="n">xlink</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the 3-character amino acid label of the cross-linked AA</span>
+<span class="sd">        from a peptide sequence</span>
+<span class="sd">        and the relative position of the cross-linker in the sequence</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            pepseq (str): peptide sequence</span>
+<span class="sd">            xlink (int): position of the cross-link within the sequence</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: 3-letter amino acid code for the cross-linked amino acid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">aa_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;R&#39;</span><span class="p">:</span> <span class="s1">&#39;ARG&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;HIS&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="s1">&#39;LYS&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="s1">&#39;ASP&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="s1">&#39;GLU&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="s1">&#39;SER&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="s1">&#39;THR&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="s1">&#39;ASN&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="s1">&#39;GLN&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="s1">&#39;CYS&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;SEC&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="s1">&#39;GLY&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="s1">&#39;PRO&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;ALA&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="s1">&#39;VAL&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="s1">&#39;ILE&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;L&#39;</span><span class="p">:</span> <span class="s1">&#39;LEU&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;MET&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="s1">&#39;PHE&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="s1">&#39;TYR&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;W&#39;</span><span class="p">:</span> <span class="s1">&#39;TRP&#39;</span>
+               <span class="p">}</span>
+    
+        <span class="n">AA</span> <span class="o">=</span> <span class="n">aa_dict</span><span class="p">[</span><span class="n">pepseq</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">xlink</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
+    
+        <span class="k">return</span> <span class="n">AA</span>
+
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">outpath</span><span class="p">,</span> <span class="n">pdb</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">chains</span><span class="p">,</span> <span class="n">atom</span><span class="p">)</span>
+
+    <span class="n">pdbBase</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">pdb</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pdbBase</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdb&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Please provide a valid PDB file&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;File name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pdbBase</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xWalk Write] Please provide PDB atom code with at most 4 characters&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;atom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+    <span class="n">chainDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">chains</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+            <span class="n">protein</span><span class="p">,</span> <span class="n">chain</span> <span class="o">=</span> <span class="n">annotation</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+            <span class="c1"># by generating a list of the string, all characters will be represented</span>
+            <span class="c1"># as single chain identifiers</span>
+            <span class="n">chainDict</span><span class="p">[</span><span class="n">protein</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xWalk Write] Please specify protein:chain in an comma-separated list&#39;</span><span class="p">)</span>
+
+    <span class="c1"># drop duplicates on the cross-link position as only the absolute position</span>
+    <span class="c1"># is relevant to xWalk</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">],</span> <span class="n">keep</span><span class="o">=</span><span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># remove rows that contain NaN in prot1 or prot2 i.e. monolinks</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># set the 3-character code for the cross-linked amino acids</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;linked_aa1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">AA_from_sequence</span><span class="p">)</span>\
+        <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+         <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;linked_aa2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">AA_from_sequence</span><span class="p">)</span>\
+        <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">],</span>
+         <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span>
+
+    <span class="n">allChainTables</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">proteinA</span> <span class="ow">in</span> <span class="n">chainDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">chainA</span> <span class="ow">in</span> <span class="n">chainDict</span><span class="p">[</span><span class="n">proteinA</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">proteinB</span> <span class="ow">in</span> <span class="n">chainDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">chainB</span> <span class="ow">in</span> <span class="n">chainDict</span><span class="p">[</span><span class="n">proteinB</span><span class="p">]:</span>
+                    <span class="n">thisXTable</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">proteinA</span><span class="p">)</span> <span class="o">&amp;</span>\
+                                        <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">proteinB</span><span class="p">)][[</span><span class="s1">&#39;File name&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;atom&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;prot1&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;linked_aa1&#39;</span><span class="p">,</span>
+                                                                        <span class="s1">&#39;linked_aa2&#39;</span><span class="p">]]</span>
+                    <span class="n">thisXTable</span><span class="p">[</span><span class="s1">&#39;chain1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chainA</span>
+                    <span class="n">thisXTable</span><span class="p">[</span><span class="s1">&#39;chain2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chainB</span>
+
+                    <span class="n">allChainTables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thisXTable</span><span class="p">)</span>
+
+    <span class="n">xWalkTable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allChainTables</span><span class="p">)</span>
+
+    <span class="c1"># convert the offset user-input into an integer as requried for pandas below</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xWalk Write] Please provide an integer offset!&#39;</span><span class="p">)</span>
+
+    <span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">offset</span>
+    <span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">offset</span>
+
+    <span class="n">atomInfo1</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">atomInfo2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">xWalkTable</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">atomInfo1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;linked_aa1&#39;</span><span class="p">]),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">])),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;chain1&#39;</span><span class="p">]),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;atom&#39;</span><span class="p">])]))</span>
+
+        <span class="n">atomInfo2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;linked_aa2&#39;</span><span class="p">]),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;chain2&#39;</span><span class="p">]),</span>
+                                   <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;atom&#39;</span><span class="p">])]))</span>
+
+    <span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;Atom Info 1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">atomInfo1</span>
+    <span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;Atom Info 2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">atomInfo2</span>
+
+    <span class="c1"># Remove those amino acids interacting with itself (distance = 0)</span>
+    <span class="n">xWalkTable</span> <span class="o">=</span> <span class="n">xWalkTable</span><span class="p">[</span><span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;Atom Info 1&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">xWalkTable</span><span class="p">[</span><span class="s1">&#39;Atom Info 2&#39;</span><span class="p">]]</span>
+
+    <span class="n">xWalkTable</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">xWalkTable</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="s1">&#39;File name&#39;</span><span class="p">,</span> <span class="s1">&#39;Atom Info 1&#39;</span><span class="p">,</span> <span class="s1">&#39;Atom Info 2&#39;</span><span class="p">]]</span>\
+        <span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">.tsv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outpath</span><span class="p">),</span> <span class="s1">&#39;xWalk&#39;</span><span class="p">),</span>
+                                   <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                                   <span class="n">index_label</span> <span class="o">=</span> <span class="s1">&#39;Index&#39;</span><span class="p">,</span>
+                                   <span class="n">header</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                                   <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">xTable</span> <span class="k">import</span> <span class="n">Read</span>
+
+    <span class="n">pdb</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\1aqf.pdb&#39;</span>
+    <span class="n">atom</span> <span class="o">=</span> <span class="s1">&#39;CB&#39;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Downloads\test&#39;</span>
+    <span class="n">chains</span> <span class="o">=</span> <span class="s1">&#39;SPA_STAAU:AD, IgG4_heavy:BC&#39;</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\pLink2_reports_xtable.xlsx&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">Write</span><span class="p">(</span><span class="n">xtable</span><span class="o">=</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="n">chains</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="n">atom</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

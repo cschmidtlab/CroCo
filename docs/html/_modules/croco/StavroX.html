@@ -1,0 +1,591 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.StavroX &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco.StavroX</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to read StavroX processed crosslink data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">re</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+
+<div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.StavroX.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">stavrox_files</span><span class="p">,</span> <span class="n">ssf_file</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collect data from StavroX spectrum search and return an xtable data array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        stavrox_files: path to StavroX output file</span>
+<span class="sd">        ssf_file: properties.ssf to load modification IDs and masses</span>
+<span class="sd">        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable</span>
+<span class="sd">        compact (bool): Whether to compact the xTable to only those columns listed in col_order</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame: xtable data table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">rawfile_and_scanno_from_Scan</span><span class="p">(</span><span class="n">scan_number_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract rawfile name and scan number from a string like</span>
+<span class="sd">        20180518_JB_jb05a_l50.10069.10069.5.dta</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            scan_number_string (str): A spectrum ID string from StavroX</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str or np.nan: rawfile</span>
+<span class="sd">            int or np.nan: scan number</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^([^\.]+)\.(\d+)\.\d+\.\d+\.\w+$&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">scan_number_string</span><span class="p">):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">scan_number_string</span><span class="p">)</span>
+            <span class="n">rawfile</span><span class="p">,</span> <span class="n">scanno</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">scanno</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">scanno</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rawfile</span><span class="p">,</span> <span class="n">scanno</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    
+    <span class="k">def</span> <span class="nf">type_from_proteins</span><span class="p">(</span><span class="n">protein1_string</span><span class="p">,</span> <span class="n">protein2_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decide whether its a mono, loop, intra or inter-protein link</span>
+<span class="sd">        based on the fields Protein 1 and Protein 2 of a StavroX results</span>
+<span class="sd">        table</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            protein1_string (str): A Protein1 string from StavroX</span>
+<span class="sd">            protein2_string (str): A Protein2 string from StavroX</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: type of cross-link (mono, loop, intra, inter)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">if</span> <span class="n">protein2_string</span> <span class="o">==</span> <span class="s1">&#39;H2O&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;mono&#39;</span>
+        <span class="k">elif</span> <span class="n">protein2_string</span> <span class="o">==</span> <span class="s1">&#39;intrapeptidal&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;loop&#39;</span>
+        <span class="k">elif</span> <span class="n">protein1_string</span> <span class="o">==</span> <span class="n">protein2_string</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;intra&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;inter&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">clear_protname</span><span class="p">(</span><span class="n">protname_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear fasta-header and return the cleaned string. Also remove StavroX </span>
+<span class="sd">        specific protein2-terms like H20 and intrapeptidal</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            protname_string (str): A StavroX-Protein string</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: cleaned protein string (my be empty string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">protname_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">):</span>
+            <span class="n">protname_string</span> <span class="o">=</span> <span class="n">protname_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">protname_string</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">elif</span> <span class="n">protname_string</span> <span class="o">==</span> <span class="s1">&#39;H2O&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">elif</span> <span class="n">protname_string</span> <span class="o">==</span> <span class="s1">&#39;intrapeptidal&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">protname_string</span>
+    
+    <span class="k">def</span> <span class="nf">clear_xlink</span><span class="p">(</span><span class="n">xlink_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes all non-numerical characters from a string.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            xlink_string (str): Contains the xlink position with the linked AA</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int: the xlink position without the amino acid label</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">xlink_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;\D+&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xlink_string</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink_string</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">calc_xpos2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">pos1</span><span class="p">,</span> <span class="n">pos2</span><span class="p">,</span> <span class="n">xlink2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the absolute position of a beta-peptide cross-link</span>
+<span class="sd">        based on what type the xlink is</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            t(str): type of the crosslink (mono, loop, inter/intra/homomultimeric)</span>
+<span class="sd">            pos1(int): absolute position of the first AA of the alpha-peptide</span>
+<span class="sd">            pos2(int): absolute position of the first AA of the beta-peptide</span>
+<span class="sd">            xlink2(int): relative position of the cross-link in the beta-peptide</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int: absolute position of the cross-link in the beta-peptide</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">pos1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">pos2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink2</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+    
+    <span class="k">def</span> <span class="nf">pepseqs_from_peptides</span><span class="p">(</span><span class="n">peptide1</span><span class="p">,</span> <span class="n">peptide2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the peptide sequences for peptide 1 and peptide 2 from the</span>
+<span class="sd">        StavroX Peptide entry.</span>
+<span class="sd">        Set peptide2 to np.nan for monolinks and to peptide1 for loop-links</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            peptide1 (str): Stavrox peptide string for peptide 1</span>
+<span class="sd">            peptide2 (str): Stavrox peptide string for peptide 2</span>
+<span class="sd">    </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            pepseq1 (str): corrected sequence for peptide1</span>
+<span class="sd">            pepseq2 (str): corrected sequence for peptide2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">def</span> <span class="nf">clear_pepname</span><span class="p">(</span><span class="n">peptide_string</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Remove the preceding and trailing identifiers for free N- and C-termini</span>
+<span class="sd">            []{} denote N- and C-termini in StavroX</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+    
+            <span class="k">if</span> <span class="n">peptide_string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="n">peptide_string</span> <span class="o">=</span> <span class="n">peptide_string</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">peptide_string</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="n">peptide_string</span> <span class="o">=</span> <span class="n">peptide_string</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># make all upper case to allow parsing in later programmes</span>
+            <span class="k">return</span> <span class="n">peptide_string</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="c1"># mono-link</span>
+            <span class="n">peptide2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">return</span> <span class="n">clear_pepname</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="c1"># loop-link</span>
+            <span class="n">peptide2</span> <span class="o">=</span> <span class="n">peptide1</span>
+            <span class="k">return</span> <span class="n">clear_pepname</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="n">clear_pepname</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># regular inter-peptide link</span>
+            <span class="k">return</span> <span class="n">clear_pepname</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="n">clear_pepname</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">mods_from_peptides</span><span class="p">(</span><span class="n">peptide1</span><span class="p">,</span> <span class="n">peptide2</span><span class="p">,</span> <span class="n">mod2name</span><span class="p">,</span> <span class="n">mod2mass</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract modification position and name from two StavroX peptide strings.</span>
+<span class="sd">        Set peptide2 to np.nan for monolinks and to peptide1 for loop-links</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            peptide1 (str): Entry of the StavroX Peptide 1 column</span>
+<span class="sd">            peptide2 (str): Entry of the StavroX Peptide 2 column</span>
+<span class="sd">            mod2name (dict): dict mapping modification abbreviations to names</span>
+<span class="sd">            mod2mass (dict): dict mapping modification abbreviations to masses</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            list: name of the modification(s) of peptide1</span>
+<span class="sd">            list: position of the modification(s) of peptide1</span>
+<span class="sd">            list: mass(es) of the modification(s) of peptide1</span>
+<span class="sd">            list: name of the modification(s) of peptide2</span>
+<span class="sd">            list: position of the modification(s) of peptide2</span>
+<span class="sd">            list: mass(es) of the modification(s) of peptide2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">def</span> <span class="nf">calculate</span><span class="p">(</span><span class="n">peptide_string</span><span class="p">,</span> <span class="n">mod2name</span><span class="o">=</span><span class="n">mod2name</span><span class="p">,</span> <span class="n">mod2mass</span><span class="o">=</span><span class="n">mod2mass</span><span class="p">):</span>
+            <span class="c1"># if there is no peptide, there are no modifications</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">a_float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">peptide_string</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a_float</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unusual peptide string recognised: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a_float</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># clean up peptide string</span>
+                <span class="k">if</span> <span class="n">peptide_string</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">:</span>
+                    <span class="n">peptide_string</span> <span class="o">=</span> <span class="n">peptide_string</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="n">peptide_string</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">:</span>
+                    <span class="n">peptide_string</span> <span class="o">=</span> <span class="n">peptide_string</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+                <span class="n">modpos</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">modmass</span><span class="o">=</span> <span class="p">[]</span>
+                <span class="n">mod</span> <span class="o">=</span> <span class="p">[]</span>
+    
+                <span class="n">position</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">peptide_string</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">mod2name</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="c1"># avoid setting N- and C-terminal ends as modification</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;[]</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">:</span>
+                            <span class="n">position</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">mod</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mod2name</span><span class="p">[</span><span class="n">char</span><span class="p">])</span>
+                            <span class="n">modmass</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mod2mass</span><span class="p">[</span><span class="n">char</span><span class="p">])</span>
+                            <span class="n">modpos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    
+                <span class="k">return</span> <span class="n">mod</span><span class="p">,</span> <span class="n">modpos</span><span class="p">,</span> <span class="n">modmass</span>
+    
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="c1"># mono-link</span>
+            <span class="n">peptide2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="p">(</span><span class="n">mod1</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modmass1</span><span class="p">),</span> <span class="p">(</span><span class="n">mod2</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">modmass2</span><span class="p">)</span> <span class="o">=</span>\
+                <span class="n">calculate</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="p">([],</span> <span class="p">[],</span> <span class="p">[])</span>
+        <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="c1"># loop-link</span>
+            <span class="n">peptide2</span> <span class="o">=</span> <span class="n">peptide1</span>
+            <span class="p">(</span><span class="n">mod1</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modmass1</span><span class="p">),</span> <span class="p">(</span><span class="n">mod2</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">modmass2</span><span class="p">)</span> <span class="o">=</span>\
+                <span class="n">calculate</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="n">calculate</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># regular inter-peptide link</span>
+            <span class="p">(</span><span class="n">mod1</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modmass1</span><span class="p">),</span> <span class="p">(</span><span class="n">mod2</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">modmass2</span><span class="p">)</span> <span class="o">=</span>\
+                <span class="n">calculate</span><span class="p">(</span><span class="n">peptide1</span><span class="p">),</span> <span class="n">calculate</span><span class="p">(</span><span class="n">peptide2</span><span class="p">)</span>
+    
+    
+        <span class="k">return</span> <span class="n">mod1</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modmass1</span><span class="p">,</span> <span class="n">mod2</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">modmass2</span>
+    
+    <span class="k">def</span> <span class="nf">ParseSSF</span><span class="p">(</span><span class="n">ssf_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parses a StavroX properties.ssf file to extract modification identifiers</span>
+<span class="sd">        and masses</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            ssf_file (str): path to the properties.ssf file from StavroX</span>
+<span class="sd">    </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dict mapping modification identifiers to their mass</span>
+<span class="sd">            dict: Dict mapping modification identifiers to their name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">def</span> <span class="nf">ElementalComposition</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">elements2mass</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Compute two lists with elements and amount of atoms from</span>
+<span class="sd">            a chemical cormula</span>
+<span class="sd">    </span>
+<span class="sd">            Args:</span>
+<span class="sd">                formula (string): a chemical formula like C6H12N2O</span>
+<span class="sd">                elements2mass (dict): a dict mapping elements to mass</span>
+<span class="sd">    </span>
+<span class="sd">            Returns:</span>
+<span class="sd">                elements: a list of the elements in the formula</span>
+<span class="sd">                stoichiometries: a list of the amounts of these elements</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+    
+            <span class="n">elements</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">this_stoichiometrie</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">stoichiometries</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">collected_stoichiometry</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># set initial to true to avoid</span>
+            <span class="c1"># setting element 1 to 1</span>
+    
+            <span class="c1"># formula is e.g. C6H12N2O</span>
+            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">formula</span><span class="p">:</span>
+                <span class="c1"># check if character is an element</span>
+                <span class="k">if</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">elements2mass</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+                    <span class="c1"># only enter if this_stoichiometrie has been filled</span>
+                    <span class="k">if</span> <span class="n">this_stoichiometrie</span><span class="p">:</span>
+                        <span class="c1"># if stoichiometrie is not given as 1</span>
+                        <span class="n">stoichiometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_stoichiometrie</span><span class="p">)</span>
+                        <span class="n">this_stoichiometrie</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">this_stoichiometrie</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                        <span class="k">if</span> <span class="n">collected_stoichiometry</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                            <span class="n">stoichiometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">collected_stoichiometry</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">this_stoichiometrie</span> <span class="o">+=</span> <span class="n">char</span>
+                    <span class="n">collected_stoichiometry</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">collected_stoichiometry</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">stoichiometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stoichiometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_stoichiometrie</span><span class="p">)</span>
+    
+            <span class="k">return</span> <span class="n">elements</span><span class="p">,</span> <span class="n">stoichiometries</span>
+    
+        <span class="n">ssf_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">current_list</span> <span class="o">=</span> <span class="kc">None</span>
+    
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ssf_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;ELEMENTS&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">current_list</span> <span class="o">=</span> <span class="s1">&#39;elements&#39;</span>
+                    <span class="n">ssf_dict</span><span class="p">[</span><span class="n">current_list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">elif</span> <span class="s1">&#39;AMINOACIDS&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">current_list</span> <span class="o">=</span> <span class="s1">&#39;AAs&#39;</span>
+                    <span class="n">ssf_dict</span><span class="p">[</span><span class="n">current_list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">elif</span> <span class="s1">&#39;END&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">current_list</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">elif</span> <span class="n">current_list</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">ssf_dict</span><span class="p">[</span><span class="n">current_list</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">))</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+    
+        <span class="n">elements2mass</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ssf_dict</span><span class="p">[</span><span class="s1">&#39;elements&#39;</span><span class="p">])</span>
+    
+        <span class="n">AA2formula</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span> <span class="ow">in</span> <span class="n">ssf_dict</span><span class="p">[</span><span class="s1">&#39;AAs&#39;</span><span class="p">])</span>
+        <span class="n">AA2name</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span> <span class="ow">in</span> <span class="n">ssf_dict</span><span class="p">[</span><span class="s1">&#39;AAs&#39;</span><span class="p">])</span>
+    
+        <span class="n">mod2mass</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">mod2name</span> <span class="o">=</span> <span class="p">{}</span>
+    
+        <span class="k">for</span> <span class="n">AA</span> <span class="ow">in</span> <span class="n">AA2formula</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">AA</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;RHKDESTNQCUGPAVILMFYW&#39;</span><span class="p">:</span>
+                <span class="n">formula</span> <span class="o">=</span> <span class="n">AA2formula</span><span class="p">[</span><span class="n">AA</span><span class="p">]</span>
+                <span class="n">elements</span><span class="p">,</span> <span class="n">stoichiometries</span> <span class="o">=</span> <span class="n">ElementalComposition</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">elements2mass</span><span class="p">)</span>
+                <span class="n">mass</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">element</span><span class="p">,</span> <span class="n">amount</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">elements</span><span class="p">,</span> <span class="n">stoichiometries</span><span class="p">):</span>
+                    <span class="n">mass</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">amount</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements2mass</span><span class="p">[</span><span class="n">element</span><span class="p">])</span>
+    
+                <span class="n">mod2mass</span><span class="p">[</span><span class="n">AA</span><span class="p">]</span> <span class="o">=</span> <span class="n">mass</span>
+                <span class="n">mod2name</span><span class="p">[</span><span class="n">AA</span><span class="p">]</span> <span class="o">=</span> <span class="n">AA2name</span><span class="p">[</span><span class="n">AA</span><span class="p">]</span>
+    
+        <span class="k">return</span> <span class="n">mod2mass</span><span class="p">,</span> <span class="n">mod2name</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read continues HERE</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># convert to list if the input is only a single path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stavrox_files</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">stavrox_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">stavrox_files</span><span class="p">]</span>
+    
+    <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">stavrox_files</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading StavroX-file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stavrox_files</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Reassign the column headers to avoid duplicate From and To fields</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">file</span><span class="p">),</span>
+                               <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span>
+                               <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                               <span class="n">index_col</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                               <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Score&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;m/z&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Charge&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;M+H+&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Calculated MassDeviation in ppm&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Deviation in ppm&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Peptide 1&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 1&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 1 From&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 1 To&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Peptide 2&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 2&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 2 From&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Protein 2 To&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Scan number&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;is Selected in Table&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Candidate identifier&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Folder Number&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Retention time in sec&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;miscellaneous&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;best linkage position peptide 1&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;best linkage position peptide 2&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;All linkage positions&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Spectrum UUID&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;local False discovery rate&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;Unknown&#39;</span><span class="p">])</span>
+    
+            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[StavroX Read] Failed opening file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+    
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+    
+    <span class="c1">### Process the data to comply to xTable format</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Scan&#39;</span><span class="p">:</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Charge&#39;</span><span class="p">:</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Protein 1 From&#39;</span><span class="p">:</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Protein 2 From&#39;</span><span class="p">:</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Score&#39;</span><span class="p">:</span> <span class="s1">&#39;score&#39;</span>
+                                    <span class="p">})</span>
+
+    <span class="c1"># calculate the type of line (i.e. mono, loop, intra or inter)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">type_from_proteins</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein 1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein 2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Set pos1 to 1 if Nterminal cross-link</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mono&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+
+
+    <span class="c1"># Extract the Peptide sequence e.g. from [KPDT]AGT]</span>
+    <span class="c1">#xtable[[&#39;pepseq1&#39;, &#39;pepseq2&#39;]] = data[[&#39;Peptide 1&#39;, &#39;Peptide 2&#39;]].apply(pepseqs_from_peptides, axis=1)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">pepseqs_from_peptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide 1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide 2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># extract rawfile name and scan no from the Scan header e.g.</span>
+    <span class="c1"># 20180518_JB_jb05a_m100.10636.10636.2.dta</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;scanno&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Scan number&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">rawfile_and_scanno_from_Scan</span><span class="p">))</span>
+
+    <span class="c1"># remove for example preceding &gt; in UniProt headers</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein 1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">clear_protname</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein 2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">clear_protname</span><span class="p">)</span>
+
+    <span class="c1"># Best linkage position also contains the linked AA (that is already given</span>
+    <span class="c1"># by sequence and link position)</span>
+    <span class="c1"># --&gt; xtract only the numerical part</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;best linkage position peptide 1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">clear_xlink</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;best linkage position peptide 2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">clear_xlink</span><span class="p">)</span>
+
+    <span class="c1"># calculate absolute position of xlink as sum of start of peptide</span>
+    <span class="c1"># and relative position of the xlink</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">+</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="c1"># xpos2 has to be calculated separately for inter/intra, loop and mono-peptides</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">calc_xpos2</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span>
+
+    <span class="n">mod2mass</span><span class="p">,</span> <span class="n">mod2name</span> <span class="o">=</span> <span class="n">ParseSSF</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">ssf_file</span><span class="p">))</span>
+
+    <span class="c1"># Extract the modification mass and position from the peptide string</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass1&#39;</span><span class="p">],</span>\
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modpos2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;Peptide 1&#39;</span><span class="p">,</span> <span class="s1">&#39;Peptide 2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>\
+            <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">mods_from_peptides</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide 1&#39;</span><span class="p">],</span>
+                                           <span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide 2&#39;</span><span class="p">],</span>
+                                           <span class="n">mod2name</span><span class="p">,</span>
+                                           <span class="n">mod2mass</span><span class="p">),</span>
+           <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+
+    <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Stavrox does not run on isotope-labeled xlinkers</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+
+    <span class="c1"># StavroX already filters decoys</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;decoy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># reassign dtypes for every element in the df</span>
+    <span class="c1"># errors ignore leaves the dtype as object for every</span>
+    <span class="c1"># non-numeric element</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xtable</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="c1"># defines the column headers required for xtable output</span>
+    <span class="n">col_order</span> <span class="o">=</span> <span class="p">[</span> <span class="s1">&#39;rawfile&#39;</span><span class="p">,</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span> <span class="s1">&#39;xtype&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;ID&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span> <span class="s1">&#39;decoy&#39;</span><span class="p">]</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX&#39;</span><span class="p">)</span>
+    <span class="n">stavrox_files</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l50.csv&#39;</span><span class="p">,</span>
+                     <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\l100.csv&#39;</span><span class="p">]</span>
+
+    <span class="n">ssf_file</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\StavroX\properties.ssf&#39;</span>
+    <span class="n">stvrx</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="n">stavrox_files</span><span class="p">,</span> <span class="n">ssf_file</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">stvrx</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;test.xls&#39;</span><span class="p">,</span>
+                   <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

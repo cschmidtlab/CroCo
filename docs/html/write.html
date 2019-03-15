@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Modules to generate files from xTables &#8212; CroCo  documentation</title>
+    <title>Functions documentation for write functions &#8212; CroCo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -15,7 +15,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Modules to Read cross-link datafiles" href="read.html" />
+    <link rel="next" title="The graphical User-Interface" href="GUI_intro.html" />
+    <link rel="prev" title="Functions documentation for read functions" href="read.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -30,26 +31,36 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="modules-to-generate-files-from-xtables">
-<h1>Modules to generate files from xTables<a class="headerlink" href="#modules-to-generate-files-from-xtables" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="functions-documentation-for-write-functions">
+<span id="crocowrite"></span><h1>Functions documentation for write functions<a class="headerlink" href="#functions-documentation-for-write-functions" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="module-croco.xTable">
-<span id="xtable"></span><h2>xTable<a class="headerlink" href="#module-croco.xTable" title="Permalink to this headline">¶</a></h2>
-<p>Functions to read and write xTable data.</p>
+<div class="section" id="xtable">
+<h2>xTable<a class="headerlink" href="#xtable" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xTable file</li>
+</ul>
+<span class="target" id="module-croco.xTable"></span><p>Functions to read and write xTable data.</p>
 <dl class="function">
 <dt id="croco.xTable.Read">
-<code class="descclassname">croco.xTable.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xTable_files</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xTable.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xTable_files</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/xTable.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.xTable.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read an xTable data structure from file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xTable_files</strong> – path to the xtable file(s)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xTable_files</strong> – path to the xtable file(s)</li>
+<li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
+<li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">xTable dataframe object</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">xTable dataframe object</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">xtable</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xtable</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -57,7 +68,7 @@
 
 <dl class="function">
 <dt id="croco.xTable.Write">
-<code class="descclassname">croco.xTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>keep=True</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/xTable.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.xTable.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>writes an xtable data structure to file (in xlsx format)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -66,53 +77,33 @@
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>xtable</strong> – data table structure</li>
 <li><strong>to write file</strong> (<em>outpath</em>) – </li>
-<li><strong>keep</strong> (<em>optional</em>) – whether to restrict columns to the defined xTable cols</li>
+<li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
+<li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.xTable.init">
-<code class="descclassname">croco.xTable.</code><code class="descname">init</code><span class="sig-paren">(</span><em>this_order</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xTable.init" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set required variables for conversion</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.xWalk">
-<span id="xwalk"></span><h2>xWalk<a class="headerlink" href="#module-croco.xWalk" title="Permalink to this headline">¶</a></h2>
-<p>Functions to write data as input for xWalk.</p>
-<dl class="function">
-<dt id="croco.xWalk.AA_from_sequence">
-<code class="descclassname">croco.xWalk.</code><code class="descname">AA_from_sequence</code><span class="sig-paren">(</span><em>pepseq</em>, <em>xlink</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xWalk.AA_from_sequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the 3-character amino acid label of the cross-linked AA
-from a peptide sequence
-and the relative position of the cross-linker in the sequence</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pepseq</strong> (<em>str</em>) – peptide sequence</li>
-<li><strong>xlink</strong> (<em>int</em>) – position of the cross-link within the sequence</li>
+<div class="section" id="xwalk">
+<h2>xWalk<a class="headerlink" href="#xwalk" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xWalk file</li>
+<li>OptionsWindow:<ul>
+<li>PDB to map xlinks: Name of a PDB file that should be analysed by
+xWalk</li>
+<li>Offset: shift between PDB AA indices and the xTable</li>
+<li>Chains: comma separated list of protein:chain allocations, e.g. ProteinA:AB, ProteinB:C</li>
+<li>PDB Atom code (Text): A PDB atom code (e.g. CB) that should be used for distance calculation</li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3-letter amino acid code for the cross-linked amino acid</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+</li>
+</ul>
+<span class="target" id="module-croco.xWalk"></span><p>Functions to write data as input for xWalk.</p>
 <dl class="function">
 <dt id="croco.xWalk.Write">
-<code class="descclassname">croco.xWalk.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>pdb</em>, <em>offset</em>, <em>chains</em>, <em>atom</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xWalk.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xWalk.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>pdb</em>, <em>offset</em>, <em>chains</em>, <em>atom</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/xWalk.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.xWalk.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert xTable into a list format that can be used as
 input for the xWalk standalone programme.</p>
 <p>Format is:</p>
@@ -138,12 +129,15 @@ generates several oouput files for all intra-protein cross-links</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.xVis">
-<span id="xvis"></span><h2>xVis<a class="headerlink" href="#module-croco.xVis" title="Permalink to this headline">¶</a></h2>
-<p>Functions to write data structures as input for the xVis webserver (<a class="reference external" href="https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php">https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php</a>).</p>
+<div class="section" id="xvis">
+<h2>xVis<a class="headerlink" href="#xvis" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xVis file</li>
+</ul>
+<span class="target" id="module-croco.xVis"></span><p>Functions to write data structures as input for the xVis webserver (<a class="reference external" href="https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php">https://xvis.genzentrum.lmu.de/CrossVisNoLogin.php</a>).</p>
 <dl class="function">
 <dt id="croco.xVis.Write">
-<code class="descclassname">croco.xVis.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xVis.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xVis.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/xVis.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.xVis.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert xtable data structure to cross-link
 data file for xVis data visualisation tool</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -161,12 +155,40 @@ data file for xVis data visualisation tool</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.customTable">
-<span id="customtable"></span><h2>customTable<a class="headerlink" href="#module-croco.customTable" title="Permalink to this headline">¶</a></h2>
-<p>Functions to write crosslink data as defined by a user-provided template.</p>
+<div class="section" id="customtable">
+<h2>customTable<a class="headerlink" href="#customtable" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save the customTable csv file</li>
+<li>OptionsWindow: customTable template file</li>
+</ul>
+<div class="section" id="customtable-format">
+<h3>customTable Format<a class="headerlink" href="#customtable-format" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">header</span><span class="p">]</span>
+<span class="n">Protein</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Protein</span> <span class="mi">2</span>
+<span class="p">[</span><span class="n">data</span><span class="p">]</span>
+<span class="p">[</span><span class="n">prot1</span><span class="p">],</span> <span class="p">[</span><span class="n">prot2</span><span class="p">]</span>
+<span class="p">[</span><span class="n">footer</span><span class="p">]</span>
+<span class="n">This</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">footer</span> <span class="n">of</span> <span class="n">the</span> <span class="n">file</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Everything between [header] and [data] is considered the header and
+is printed once on top of the output file</li>
+<li>In the [data] block columns identified by their xTable header are
+written in substitution of the header name.<ul>
+<li>E.g. instead of <code class="docutils literal notranslate"><span class="pre">[prot1],</span> <span class="pre">[prot2]</span></code> a line like
+<code class="docutils literal notranslate"><span class="pre">SPA_STAAU,</span>&#160; <span class="pre">IgG4_heavy</span></code> is written for every line in the xTable
+file</li>
+<li>Everything <strong>not</strong> enclosed in brackets will be written as is</li>
+<li>If an invalid header name is given in brackets, the program will
+stop</li>
+</ul>
+</li>
+</ul>
+<span class="target" id="module-croco.customTable"></span><p>Functions to write crosslink data as defined by a user-provided template.</p>
 <dl class="function">
 <dt id="croco.customTable.Write">
-<code class="descclassname">croco.customTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>customTemplatePath</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.customTable.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.customTable.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>customTemplatePath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/customTable.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.customTable.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>writes an xtable data structure to file (in xtable format) based on a
 user-provided template file</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -185,9 +207,13 @@ user-provided template file</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.DynamXL">
-<span id="dynamxl"></span><h2>DynamXL<a class="headerlink" href="#module-croco.DynamXL" title="Permalink to this headline">¶</a></h2>
-<p>Converts xTable data into cross-link information
+</div>
+<div class="section" id="dynamxl">
+<h2>DynamXL<a class="headerlink" href="#dynamxl" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save the DynamXL file</li>
+</ul>
+<span class="target" id="module-croco.DynamXL"></span><p>Converts xTable data into cross-link information
 file for the dynamXL analysis software:</p>
 <p>K189 NZ K192 NZ 18
 K189 NZ K196 NZ 5
@@ -196,7 +222,7 @@ K236 NZ K189 NZ 3</p>
 <p>dynamxl.chem.ox.ac.uk</p>
 <dl class="function">
 <dt id="croco.DynamXL.Write">
-<code class="descclassname">croco.DynamXL.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.DynamXL.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.DynamXL.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/DynamXL.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.DynamXL.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert xTable to DynamXL input file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -213,15 +239,18 @@ K236 NZ K189 NZ 3</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.xiNET">
-<span id="xinet"></span><h2>xiNET<a class="headerlink" href="#module-croco.xiNET" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
+<div class="section" id="xinet">
+<h2>xiNET<a class="headerlink" href="#xinet" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save xiNet file</li>
+</ul>
+<span class="target" id="module-croco.xiNET"></span><dl class="docutils">
 <dt>Functions to write data for the xiNET data</dt>
 <dd>visualisation tool (<a class="reference external" href="http://crosslinkviewer.org">http://crosslinkviewer.org</a>)</dd>
 </dl>
 <dl class="function">
 <dt id="croco.xiNET.Write">
-<code class="descclassname">croco.xiNET.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.xiNET.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.xiNET.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/xiNET.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.xiNET.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert xtable data structure to xiNET
 data file</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -239,12 +268,18 @@ data file</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-croco.pLabel">
-<span id="plabel"></span><h2>pLabel<a class="headerlink" href="#module-croco.pLabel" title="Permalink to this headline">¶</a></h2>
-<p>Functions to write pLabel data.</p>
+<div class="section" id="plabel">
+<h2>pLabel<a class="headerlink" href="#plabel" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Write to</strong>: Directory in which to save the pLabel file</li>
+<li>OptionsWindow: Directory containing the corresponding mgf-files
+- The mgf filenames <strong>must</strong> match the rawfile names given in the xTable</li>
+<li>OptionsWindow: <code class="docutils literal notranslate"><span class="pre">Merge</span> <span class="pre">mgf</span> <span class="pre">files</span></code> will generate a new mgf-files containing only those spectra that were references in the xTable. It will adopt all paths in the pLabel files to match the location of the merged mgf-file.</li>
+</ul>
+<span class="target" id="module-croco.pLabel"></span><p>Functions to write pLabel data.</p>
 <dl class="function">
 <dt id="croco.pLabel.Write">
-<code class="descclassname">croco.pLabel.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>mgfDir</em>, <em>xlinker</em>, <em>mergepLabel=False</em><span class="sig-paren">)</span><a class="headerlink" href="#croco.pLabel.Write" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.pLabel.</code><code class="descname">Write</code><span class="sig-paren">(</span><em>xtable</em>, <em>outpath</em>, <em>mgfDir</em>, <em>xlinker</em>, <em>mergepLabel=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/pLabel.html#Write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.pLabel.Write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts xtable data structure to (multiple) input file(s)
 for the pLabel cross-link annotation tool</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -272,16 +307,43 @@ for the pLabel cross-link annotation tool</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Modules to generate files from xTables</a><ul>
-<li><a class="reference internal" href="#module-croco.xTable">xTable</a></li>
-<li><a class="reference internal" href="#module-croco.xWalk">xWalk</a></li>
-<li><a class="reference internal" href="#module-croco.xVis">xVis</a></li>
-<li><a class="reference internal" href="#module-croco.customTable">customTable</a></li>
-<li><a class="reference internal" href="#module-croco.DynamXL">DynamXL</a></li>
-<li><a class="reference internal" href="#module-croco.xiNET">xiNET</a></li>
-<li><a class="reference internal" href="#module-croco.pLabel">pLabel</a></li>
+<li><a class="reference internal" href="#">Functions documentation for write functions</a><ul>
+<li><a class="reference internal" href="#xtable">xTable</a></li>
+<li><a class="reference internal" href="#xwalk">xWalk</a></li>
+<li><a class="reference internal" href="#xvis">xVis</a></li>
+<li><a class="reference internal" href="#customtable">customTable</a><ul>
+<li><a class="reference internal" href="#customtable-format">customTable Format</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dynamxl">DynamXL</a></li>
+<li><a class="reference internal" href="#xinet">xiNET</a></li>
+<li><a class="reference internal" href="#plabel">pLabel</a></li>
 </ul>
 </li>
 </ul>
@@ -289,17 +351,11 @@ for the pLabel cross-link annotation tool</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="read.html" title="previous chapter">Modules to Read cross-link datafiles</a></li>
+      <li>Previous: <a href="read.html" title="previous chapter">Functions documentation for read functions</a></li>
+      <li>Next: <a href="GUI_intro.html" title="next chapter">The graphical User-Interface</a></li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/write.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -320,14 +376,14 @@ for the pLabel cross-link annotation tool</p>
       &copy;2019, Julian Bender.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
       <a href="_sources/write.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
     
 
     

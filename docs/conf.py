@@ -43,6 +43,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
+	'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,8 +85,22 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {    'logo': 'img/croco_logo.png',
+						  'github_user': 'cschmidtlab',
+						  'github_repo': 'CroCo',
+						  'github_banner': 'true',
+						  'description': 'The CroCo cross-link data converter',
+						  'show_powered_by': False,}
 
+html_sidebars = {
+    '**': [
+        'about.html',
+        'localtoc.html',
+        'relations.html',
+        'searchbox.html',
+    ]
+}
+						  
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

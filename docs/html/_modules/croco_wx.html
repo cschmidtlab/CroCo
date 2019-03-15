@@ -1,0 +1,1026 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco_wx &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco_wx</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The CroCo Cross-Link Converter GUI</span>
+
+<span class="sd">Graphical interface to convert results from data analysis of chemical cross-linking /</span>
+<span class="sd">mass-spectrometry experiments.</span>
+
+<span class="sd">This script creates the GUI in wxPython (https://wxpython.org/pages/overview/)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">wx.adv</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">croco</span>
+<span class="c1">#from pandas import read_csv</span>
+
+
+
+<div class="viewcode-block" id="CroCoMainFrame"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame">[docs]</a><span class="k">class</span> <span class="nc">CroCoMainFrame</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; The wx window class for the croco cross-link converter GUI</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        availReads (dict): Dictionary with writing operation to list: [function to call (func), options for displaying a related widget (list)].</span>
+<span class="sd">                           Structure of options list:</span>
+<span class="sd">                           (Label for the widget (str)),</span>
+<span class="sd">                           type of the widget (can be &#39;file&#39;/&#39;dir&#39;/&#39;input&#39;/&#39;check&#39;),</span>
+<span class="sd">                           Help text (str),</span>
+<span class="sd">                           Optional multi-purpose field: e.g. default value for input fields)</span>
+<span class="sd">        availWrites (dict):  Dictionary with writing operation to list. For</span>
+<span class="sd">                             structure see availReads.</span>
+<span class="sd">        currentPath (str): set starting path for folder selection GUI</span>
+<span class="sd">        col_order (list of str): defines the column headers required for xtable output</span>
+<span class="sd">        inputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
+<span class="sd">        outputOptionsToUserInput (dict): mapping the label names to the user-provided input</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialises parameters for the MainFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># ensure the parent&#39;s __init__ is called</span>
+        <span class="n">wx</span><span class="o">.</span><span class="n">Frame</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                          <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span>
+                          <span class="n">style</span><span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">SYSTEM_MENU</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">CAPTION</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">CLOSE_BOX</span><span class="p">,</span>
+                          <span class="n">title</span><span class="o">=</span><span class="s1">&#39;The CroCo cross-link converter&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1">## setting the icon for the frame</span>
+        <span class="c1"># in case of calling croco from the source folder structure...</span>
+        <span class="n">file_dir</span><span class="p">,</span> <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span>
+                                       <span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">)):</span>
+            <span class="n">iconFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span>
+                                                      <span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">))</span>
+        <span class="c1"># ... or calling from a exe-file in a folder-setup with the data folder at top-level</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">):</span>
+            <span class="n">iconFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">)</span>
+        <span class="c1"># ... or calling from within a single bundled exe-file</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># PyInstaller creates a temp folder and stores its path in _MEIPASS</span>
+                <span class="n">base_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_MEIPASS</span>
+                <span class="n">iconFile</span> <span class="o">=</span>  <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>\
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;./data/croco_logo.ico&#39;</span><span class="p">))</span>
+            <span class="c1"># ... or something went wrong</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;croco_logo.ico not found&#39;</span><span class="p">)</span>
+        <span class="c1">## end setting the icon</span>
+
+        <span class="n">icon</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">iconFile</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_ICO</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetIcon</span><span class="p">(</span><span class="n">icon</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+
+        <span class="c1"># define the croco read and write options and link to the modules</span>
+        <span class="c1"># each value of a dict is a list of [ functionToCall, options]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;pLink1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">pLink1</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]],</span>
+                           <span class="s1">&#39;pLink2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">pLink2</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]],</span>
+                           <span class="s1">&#39;Kojak&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">Kojak</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Kojak rawfile&#39;</span><span class="p">,</span>
+                                                         <span class="s1">&#39;input&#39;</span><span class="p">,</span>
+                                                         <span class="s1">&#39;Please provide the name of the rawfile for the data&#39;</span><span class="p">)]],</span>
+                           <span class="s1">&#39;Kojak+Percolator&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">KojakPercolator</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]],</span>
+                           <span class="s1">&#39;StavroX&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">StavroX</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;SSF file&#39;</span><span class="p">,</span>
+                                                             <span class="s1">&#39;file&#39;</span><span class="p">,</span>
+                                                             <span class="s1">&#39;Please provide an SSF file as returned by StavroX&#39;</span><span class="p">)]],</span>
+                           <span class="s1">&#39;Xi&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">Xi</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]],</span>
+                           <span class="s1">&#39;Xi+XiFDR&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">XiSearchFDR</span><span class="o">.</span><span class="n">Read</span><span class="p">,[(</span><span class="s1">&#39;Xi search file&#39;</span><span class="p">,</span>
+                                                                   <span class="s1">&#39;file&#39;</span><span class="p">,</span>
+                                                                   <span class="s1">&#39;Please provide Xi output file&#39;</span><span class="p">)]],</span>
+                           <span class="s1">&#39;xQuest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xQuest</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]],</span>
+                           <span class="s1">&#39;xTable&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xTable</span><span class="o">.</span><span class="n">Read</span><span class="p">,</span> <span class="p">[]]}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span> <span class="o">=</span>  <span class="p">{</span><span class="s1">&#39;xTable&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xTable</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[]],</span>
+                             <span class="s1">&#39;xVis&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xVis</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[]],</span>
+                             <span class="s1">&#39;xiNet&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xiNET</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[]],</span>
+                             <span class="s1">&#39;DynamXL&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">DynamXL</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[]],</span>
+                             <span class="s1">&#39;xWalk&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">xWalk</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;PDB to map xlinks to&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;file&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;Please provide a PDB file you want to map the xlinks to.</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">+</span>\
+                                                            <span class="s1">&#39;No special format is required as only the filename is used&#39;</span><span class="p">),</span>
+                                                           <span class="p">(</span><span class="s1">&#39;Offset&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;input&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;Difference between the index in the PDB file and the xTable &#39;</span> <span class="o">+</span>\
+                                                            <span class="s1">&#39;(e.g. 1 for 12 in the xTable and 13 in the PDB)&#39;</span><span class="p">),</span>
+                                                           <span class="p">(</span><span class="s1">&#39;Chains&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;input&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;Map chains to protein names (e.g. Protein1:AB, Protein2:C). &#39;</span><span class="o">+</span>\
+                                                            <span class="s1">&#39;Use exactly the same naming scheme as the xTable file&#39;</span><span class="p">),</span>
+                                                           <span class="p">(</span><span class="s1">&#39;PDB Atom code&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;input&#39;</span><span class="p">,</span>
+                                                            <span class="s1">&#39;Provide an PDB atom code (e.g. CB) for distance calculation&#39;</span><span class="p">)]],</span>
+                             <span class="s1">&#39;pLabel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">pLabel</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Dir containing mgf files&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;dir&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;Provide path to a folder containing mgf-files corresponding to the&#39;</span><span class="o">+</span>\
+                                                              <span class="s1">&#39;rawfile names in the input file&#39;</span><span class="p">),</span>
+                                                             <span class="p">(</span><span class="s1">&#39;Xlinker as referenced by pLabel&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;input&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;Provide a cross-linker name (e.g. BS3) that is used by pLabel&#39;</span><span class="o">+</span>\
+                                                              <span class="s1">&#39;to calculate the potentially linked amino acids&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;BS3&#39;</span><span class="p">),</span>
+                                                             <span class="p">(</span><span class="s1">&#39;Merge mgf files&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;check&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;Tick to merge mgf files into one file containign&#39;</span> <span class="o">+</span>
+                                                              <span class="s1">&#39;only the spectra  mentioned in the (merged) pLabel&#39;</span><span class="p">)]],</span>
+                              <span class="s1">&#39;customTable&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">croco</span><span class="o">.</span><span class="n">customTable</span><span class="o">.</span><span class="n">Write</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Custom Template&#39;</span><span class="p">,</span>
+                                                                         <span class="s1">&#39;file&#39;</span><span class="p">,</span>
+                                                                         <span class="s1">&#39;Provide tample file for parsing&#39;</span><span class="p">)]]}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">col_order</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">,</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span> <span class="s1">&#39;xtype&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span> <span class="s1">&#39;decoy&#39;</span><span class="p">]</span>
+
+        <span class="c1">#: bool: True if the read format is set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readSet</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1">#: bool: True if the write format is set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeSet</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># create a menu bar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeMenuBar</span><span class="p">()</span>
+
+        <span class="c1"># load widgets</span>
+        <span class="c1"># ALWAYS AFTER LOADING MENU AND STATUS BAR!!!!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">createWidgets</span><span class="p">()</span>
+
+        <span class="c1"># Dicts mapping the label names to the user-provided input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="CroCoMainFrame.createWidgets"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.createWidgets">[docs]</a>    <span class="k">def</span> <span class="nf">createWidgets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the widgets for the croco MainFrame</span>
+
+<span class="sd">        Attributes:</span>
+
+<span class="sd">            compactTableCheck (wx.CheckBox): whether to compact the table before passing to output function</span>
+<span class="sd">            mergeTableCheck (wx.CheckBox): Whether to merge multiple files (pass paths in loop)</span>
+<span class="sd">            multipleSettingsCheck (wx.CheckBox): whether to apply the same settings to all files or call separately</span>
+<span class="sd">            writeFormat (str): the format to write data to (from availWrites)</span>
+<span class="sd">            readFormat (str): the format to read data from (from availReads)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">## define the widgets</span>
+        <span class="c1"># define the contents of the first sizer</span>
+
+        <span class="n">input_lbl</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Input&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Load file(s)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
+
+        <span class="n">output_lbl</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Output&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Write to&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">compactTableCheck</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Compact xTable&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mergeTableCheck</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Merge files&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multipleSettingsCheck</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Same settings for all files&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Start&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">controlQuit</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Quit&#39;</span><span class="p">)</span>
+
+        <span class="n">helpButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ContextHelpButton</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">)</span>
+
+        <span class="c1">## create Connects</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_CHOICE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnReadFormat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                             <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Select data-format for input&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_CHOICE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnWriteFormat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                              <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Select data-format for output&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnOpenSwitch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                              <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Opens a dialog to select file for input&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOutputDir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                              <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Opens a dialog to select output dir&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+        <span class="n">controlQuit</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onExit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onStart</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                               <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Start the conversion&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">compactTableCheck</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                               <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Only add minimal columns to xTable&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mergeTableCheck</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                               <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Merge the data from multiple input files into one. Does not work for pLink or xi+xiFDR.&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                               <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;Use the same settings for all processed files.&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+
+        <span class="c1">## define the layout</span>
+        <span class="c1"># define the sizers (main widget layouts) used in the app</span>
+        <span class="n">topSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+        <span class="n">loadSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FlexGridSizer</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vgap</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">hgap</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">loadSizerContainer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">controlSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">checkSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+
+        <span class="c1"># assign the widgets to the sizers</span>
+        <span class="n">loadSizer</span><span class="o">.</span><span class="n">AddMany</span><span class="p">([</span><span class="n">input_lbl</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span><span class="p">,</span>
+                          <span class="n">output_lbl</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span><span class="p">])</span>
+
+        <span class="c1"># allow to resize the second row</span>
+        <span class="n">loadSizer</span><span class="o">.</span><span class="n">AddGrowableCol</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># contain the grid in a BoxSizer to set borders individually</span>
+        <span class="n">loadSizerContainer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">loadSizer</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+
+        <span class="c1"># Set checkboxes</span>
+        <span class="n">checkSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compactTableCheck</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">checkSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mergeTableCheck</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">checkSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1"># Set start and quit buttons</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">controlQuit</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">LEFT</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_RIGHT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">helpButton</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">LEFT</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1"># assign lower sizers to the top-level sizer</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">loadSizerContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="c1"># topSizer.Add(reviewSizer, 0, wx.ALL|wx.EXPAND, 5)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">checkSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">StaticLine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">controlSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="c1"># topSizer.Add(gauge, 0,wx.ALL|wx.EXPAND, 5)</span>
+
+        <span class="c1"># assign the top sizer to the panel i.e. main layout instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">topSizer</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.makeMenuBar"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.makeMenuBar">[docs]</a>    <span class="k">def</span> <span class="nf">makeMenuBar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the top menu for the CroCo MainFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Make a file menu</span>
+        <span class="n">fileMenu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+
+        <span class="c1"># The &quot;\t...&quot; syntax defines an accelerator key that also triggers</span>
+        <span class="c1"># the same event</span>
+        <span class="c1"># menu_load = fileMenu.Append(-1, &quot;&amp;Load file\tCtrl-O&quot;,</span>
+        <span class="c1">#         &quot;Load a new file&quot;)</span>
+        <span class="c1"># fileMenu.AppendSeparator()</span>
+
+        <span class="c1"># When using a stock ID we don&#39;t need to specify the menu item&#39;s</span>
+        <span class="c1"># label</span>
+        <span class="n">exitItem</span> <span class="o">=</span> <span class="n">fileMenu</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_EXIT</span><span class="p">)</span>
+
+        <span class="c1"># Now a help menu for the about item</span>
+        <span class="n">helpMenu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="n">aboutItem</span> <span class="o">=</span> <span class="n">helpMenu</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_ABOUT</span><span class="p">)</span>
+
+        <span class="c1"># Make the menu bar and add the two menus to it. The &#39;&amp;&#39; defines</span>
+        <span class="c1"># that the next letter is the &quot;mnemonic&quot; for the menu item. On the</span>
+        <span class="c1"># platforms that support it those letters are underlined and can be</span>
+        <span class="c1"># triggered from the keyboard.</span>
+        <span class="n">menuBar</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MenuBar</span><span class="p">()</span>
+        <span class="n">menuBar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">fileMenu</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span><span class="p">)</span>
+        <span class="n">menuBar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">helpMenu</span><span class="p">,</span> <span class="s2">&quot;Help&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Give the menu bar to the frame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetMenuBar</span><span class="p">(</span><span class="n">menuBar</span><span class="p">)</span>
+
+        <span class="c1"># Finally, associate a handler function with the EVT_MENU event for</span>
+        <span class="c1"># each of the menu items. That means that when that menu item is</span>
+        <span class="c1"># activated then the associated handler function will be called.</span>
+        <span class="c1"># self.Bind(wx.EVT_MENU, self.OnLoad, menu_load)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_MENU</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onExit</span><span class="p">,</span>  <span class="n">exitItem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_MENU</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAbout</span><span class="p">,</span> <span class="n">aboutItem</span><span class="p">)</span></div>
+
+    <span class="c1">## GUI Functions</span>
+
+<div class="viewcode-block" id="CroCoMainFrame.OnReadFormat"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.OnReadFormat">[docs]</a>    <span class="k">def</span> <span class="nf">OnReadFormat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        function to enable the file input button only after an input format was chosen</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event (wx.Event)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span><span class="o">.</span><span class="n">GetString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readFormat</span><span class="o">.</span><span class="n">GetSelection</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onReadFormat] Reading </span><span class="si">{}</span><span class="s1"> format&#39;</span><span class="o">.</span>\
+            <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputButton</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.OnWriteFormat"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.OnWriteFormat">[docs]</a>    <span class="k">def</span> <span class="nf">OnWriteFormat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        function to enable the file output button only after an input format was chosen</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event (wx.Event)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span><span class="o">.</span><span class="n">GetString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">writeFormat</span><span class="o">.</span><span class="n">GetSelection</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onWriteFormat] Writing </span><span class="si">{}</span><span class="s1"> format&#39;</span><span class="o">.</span>\
+            <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputButton</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.OnOpenSwitch"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.OnOpenSwitch">[docs]</a>    <span class="k">def</span> <span class="nf">OnOpenSwitch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open a dir-opening dialog if pLink was selected, else file-opening</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event (wx.Event)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;pLink&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onInputDir</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onInputFile</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.onInputFile"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onInputFile">[docs]</a>    <span class="k">def</span> <span class="nf">onInputFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open a file dialaog and set the paths</span>
+
+<span class="sd">        Attributes:</span>
+<span class="sd">            theInput (list of str): selected input paths</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose one or multiple files for input&quot;</span><span class="p">,</span>
+                            <span class="n">defaultDir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">,</span>
+                            <span class="n">defaultFile</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                            <span class="n">wildcard</span><span class="o">=</span><span class="s2">&quot;*.*&quot;</span><span class="p">,</span>
+                            <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_MULTIPLE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theInput</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPaths</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onInputFile] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">)))</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">readSet</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">writeSet</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.onInputDir"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onInputDir">[docs]</a>    <span class="k">def</span> <span class="nf">onInputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open a dir dialaog and set the paths</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">DirDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose one or multiple directories for Input:&quot;</span><span class="p">,</span>
+                           <span class="n">defaultPath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">DD_DEFAULT_STYLE</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">DD_DIR_MUST_EXIST</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+            <span class="c1"># self.theInput is always a list of paths</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theInput</span> <span class="o">=</span> <span class="p">[</span><span class="n">dlg</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onInputDir] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">))</span>
+
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">readSet</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">writeSet</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.onOutputDir"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onOutputDir">[docs]</a>    <span class="k">def</span> <span class="nf">onOutputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open a dialog to select an output dir</span>
+
+<span class="sd">        Attributes:</span>
+<span class="sd">            theOutput (str): Path to write output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">DirDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose a directory:&quot;</span><span class="p">,</span>
+                           <span class="n">defaultPath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">DD_DEFAULT_STYLE</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">DD_NEW_DIR_BUTTON</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theOutput</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOutputDir] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">))</span>
+
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeSet</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readSet</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlStart</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.onExit"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onExit">[docs]</a>    <span class="k">def</span> <span class="nf">onExit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Close the frame, terminating the application.&quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+            <span class="s2">&quot;Do you really want to close this application?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Confirm Exit&quot;</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">CANCEL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">ICON_QUESTION</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">onCancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closeProgram</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CroCoMainFrame.onAbout"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onAbout">[docs]</a>    <span class="k">def</span> <span class="nf">onAbout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Show the about dialog&quot;&quot;&quot;</span>
+
+        <span class="n">aboutInfo</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">adv</span><span class="o">.</span><span class="n">AboutDialogInfo</span><span class="p">()</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">SetName</span><span class="p">(</span><span class="s2">&quot;The CroCo cross-link converter&quot;</span><span class="p">)</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">SetVersion</span><span class="p">(</span><span class="s1">&#39;0.5.12&#39;</span><span class="p">)</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">SetDescription</span><span class="p">(</span><span class="s2">&quot;Graphical interface to convert results from &quot;</span><span class="o">+</span>\
+                                 <span class="s2">&quot;data analysis of chemical cross-linking &quot;</span><span class="o">+</span>\
+                                 <span class="s2">&quot;mass-spectrometry experiments.&quot;</span><span class="p">)</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">SetCopyright</span><span class="p">(</span><span class="s2">&quot;(C) 2018&quot;</span><span class="p">)</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">SetWebSite</span><span class="p">(</span><span class="s2">&quot;www.halomem.de&quot;</span><span class="p">)</span>
+        <span class="n">aboutInfo</span><span class="o">.</span><span class="n">AddDeveloper</span><span class="p">(</span><span class="s2">&quot;Julian Bender (jub@halomem.de)&quot;</span><span class="p">)</span>
+
+        <span class="n">wx</span><span class="o">.</span><span class="n">adv</span><span class="o">.</span><span class="n">AboutBox</span><span class="p">(</span><span class="n">aboutInfo</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.Warning"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.Warning">[docs]</a>    <span class="k">def</span> <span class="nf">Warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s1">&#39;Warning!&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Issue a warning on the console and as a wx window</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message (str): Message to send</span>
+<span class="sd">            caption (str): Title for the wx-window</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[WARN] </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_WARNING</span><span class="p">)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.Info"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.Info">[docs]</a>    <span class="k">def</span> <span class="nf">Info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s1">&#39;CroCo&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a message dialog</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message (str): Message to send</span>
+<span class="sd">            caption (str): Title for the wx-window</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_INFORMATION</span><span class="p">)</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+    <span class="c1">## Procedural Functions</span>
+
+<div class="viewcode-block" id="CroCoMainFrame.onStart"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onStart">[docs]</a>    <span class="k">def</span> <span class="nf">onStart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Show dialog if additional user input is required.</span>
+<span class="sd">        Otherwise start the conversion</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if there are options to ask for</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span>\
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="c1"># init the OptionsWindow as child</span>
+            <span class="n">OptionsFrame</span> <span class="o">=</span> <span class="n">CroCoOptionsFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+            <span class="c1"># set the variables in the child window</span>
+            <span class="n">OptionsFrame</span><span class="o">.</span><span class="n">InputOptionsToAsk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">OptionsFrame</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="c1"># update the controls according to the variables</span>
+            <span class="n">OptionsFrame</span><span class="o">.</span><span class="n">updateOptions</span><span class="p">()</span>
+            <span class="c1"># show the window</span>
+            <span class="n">OptionsFrame</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># reset args dicts</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">onRun</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CroCoMainFrame.onRun"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoMainFrame.onRun">[docs]</a>    <span class="k">def</span> <span class="nf">onRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collect all necessary information from self and start the</span>
+<span class="sd">        conversion by calling the actual conversion script</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event (wx.Event)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Going to convert </span><span class="si">{}</span><span class="s1"> from </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">),</span>
+                                                   <span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">)</span> <span class="o">+</span>
+               <span class="s1">&#39;format to </span><span class="si">{}</span><span class="s1"> format&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">))</span>
+
+        <span class="c1"># Displays a busy cursor during the run of the programme</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BusyCursor</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">runCroCo</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Function to wrap up the CroCo call to simplify maintenance.</span>
+
+<span class="sd">            Relies on many variables in self</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                f (list): list of filepaths to call CroCo on</span>
+<span class="sd">            Returns:</span>
+<span class="sd">                outpath (str): path where the files are written</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+
+                        <span class="c1"># init a list of xtables because every single call to</span>
+                        <span class="c1"># croco with a different set of options will</span>
+                        <span class="c1"># generate another table</span>
+                        <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+                            <span class="c1"># Collect the input options for this file by concatenating</span>
+                            <span class="c1"># the options label with the file name</span>
+                            <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                                <span class="n">label</span> <span class="o">=</span> <span class="n">fname</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found input args for file </span><span class="si">{}</span><span class="s1">: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+                            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
+                            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+                        <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found input args for file </span><span class="si">{}</span><span class="s1">: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+                        <span class="n">xtable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra input arguments required.&#39;</span><span class="p">)</span>
+                    <span class="n">xtable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">availReads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">f</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Table(s) successfully read: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="p">)))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Warning</span><span class="p">(</span><span class="s1">&#39;Error while reading Input-file: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] xTable read from input: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">columns</span><span class="p">)))</span>
+
+            <span class="c1"># Compact the xTable if checkbox is checked</span>
+            <span class="n">xtable</span> <span class="o">=</span> <span class="n">croco</span><span class="o">.</span><span class="n">HelperFunctions</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span>
+                                                         <span class="n">col_order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">col_order</span><span class="p">,</span>
+                                                         <span class="n">compact</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compactTableCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">())</span>
+
+            <span class="c1"># if no user-defined output dir use current</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">theOutput</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">theOutput</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="c1"># set filename for output file</span>
+            <span class="n">fileString</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">x</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">f</span><span class="p">])</span>
+            <span class="n">fileString</span> <span class="o">=</span> <span class="n">croco</span><span class="o">.</span><span class="n">HelperFunctions</span><span class="o">.</span><span class="n">alphanum_string</span><span class="p">(</span><span class="n">fileString</span><span class="p">)</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="n">fileString</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">theReadFormat</span> <span class="o">+</span>\
+                    <span class="s1">&#39;_to_&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span>
+
+            <span class="c1"># generate output path w/o extension</span>
+            <span class="n">outpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theOutput</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Writing table in </span><span class="si">{}</span><span class="s1"> format to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">,</span> <span class="n">outpath</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Found output args: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] No extra output arguments required.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">availWrites</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">theWriteFormat</span><span class="p">][</span><span class="mi">0</span><span class="p">](</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onRun] Table successfully written!&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Warning</span><span class="p">(</span><span class="s1">&#39;[onRun] Conversion of </span><span class="si">{}</span><span class="s1"> was &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">+</span>
+                                   <span class="s1">&#39;not successfull:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
+
+            <span class="k">return</span> <span class="n">outpath</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mergeTableCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">outpath</span> <span class="o">=</span> <span class="n">runCroCo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">outpath</span> <span class="o">=</span> <span class="n">runCroCo</span><span class="p">([</span><span class="n">f</span><span class="p">])</span>
+
+        <span class="c1"># ends busy cursor</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="s1">&#39;File(s) successfully written &#39;</span> <span class="o">+</span>
+                 <span class="s1">&#39;to </span><span class="si">{}</span><span class="s1">!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outpath</span><span class="p">),</span>
+                 <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Success!&#39;</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="CroCoOptionsFrame"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame">[docs]</a><span class="k">class</span> <span class="nc">CroCoOptionsFrame</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Child Frame to CroCoMainWindow asking the user for input</span>
+<span class="sd">    regarding the possible options of a submodule</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        parent (wx.Frame): parent frame</span>
+<span class="sd">        currentPath (str): current working directory</span>
+<span class="sd">        InputOptionsToAsk (list): Input options from CroCoMainWindow</span>
+<span class="sd">        InputOptionsToAsk (list): Output options from CroCoMainWindow</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialise the wxFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parent: parent object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wx</span><span class="o">.</span><span class="n">Frame</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                          <span class="n">wx</span><span class="o">.</span><span class="n">GetApp</span><span class="p">()</span><span class="o">.</span><span class="n">TopWindow</span><span class="p">,</span>
+                          <span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span>
+                          <span class="n">style</span><span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">SYSTEM_MENU</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">CAPTION</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">CLOSE_BOX</span><span class="p">,</span>
+                          <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Options&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1">## setting the icon for the frame</span>
+        <span class="c1"># in case of calling croco from the source folder structure...</span>
+        <span class="n">file_dir</span><span class="p">,</span> <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span>
+                                       <span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">)):</span>
+            <span class="n">iconFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span>
+                                                      <span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">))</span>
+        <span class="c1"># ... or calling from a exe-file in a folder-setup with the data folder at top-level</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">):</span>
+            <span class="n">iconFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;./croco/data/croco_logo.ico&#39;</span><span class="p">)</span>
+        <span class="c1"># ... or calling from within a single bundled exe-file</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># PyInstaller creates a temp folder and stores its path in _MEIPASS</span>
+                <span class="n">base_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_MEIPASS</span>
+                <span class="n">iconFile</span> <span class="o">=</span>  <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>\
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;./data/croco_logo.ico&#39;</span><span class="p">))</span>
+            <span class="c1"># ... or something went wrong</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;croco_logo.ico not found&#39;</span><span class="p">)</span>
+        <span class="c1">## end setting the icon</span>
+
+        <span class="n">icon</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">iconFile</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_ICO</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetIcon</span><span class="p">(</span><span class="n">icon</span><span class="p">)</span>
+
+        <span class="c1"># generate a variable containing the parent to allow pushing back</span>
+        <span class="c1"># the user-provided input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+
+        <span class="c1"># set starting path for folder selection GUI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+
+        <span class="c1"># in these variables the options from CroCoMainWindow will be written</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="CroCoOptionsFrame.updateOptions"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.updateOptions">[docs]</a>    <span class="k">def</span> <span class="nf">updateOptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collect the variables that determine the layout of the options window and</span>
+<span class="sd">        compute the window layout</span>
+
+<span class="sd">        Attributes:</span>
+<span class="sd">            textCtrls (dict): mapping text labels to input text fields.</span>
+<span class="sd">                              all inputs done by extra dialog widgets (file and paths) are</span>
+<span class="sd">                              stored upon closing the dialogs. Text and checkbox inputs have to be evaaluated</span>
+<span class="sd">                              when the okay-Button has been pressed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">,</span> <span class="n">listofOptions</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Creates and options widget comprising a label and an input field</span>
+<span class="sd">            (either a button for a file or dir dialog or a free text input)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                option (tuple): (label, type of input)</span>
+<span class="sd">                listOfOptions (list): a list object to append to user-input to</span>
+<span class="sd">                filename (str): if the same options are processed for multiple</span>
+<span class="sd">                                files, add the filename to the options label</span>
+<span class="sd">            Returns:</span>
+<span class="sd">                optionContainer: wx.BoxSizer object</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
+                <span class="c1"># append space to filename to simplify code</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39; - &#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># set the filename to an empty string</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="c1"># when using separate options for multiple files, the filename</span>
+            <span class="c1"># is added to the option to ask for and the combined label</span>
+            <span class="c1"># serves as key for later retrieving the inputs</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">optionLabel</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span>
+                                        <span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span>
+                                        <span class="c1"># name for the label preceding the buttons</span>
+                                        <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                                        <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span><span class="p">)</span>
+            <span class="n">optionLabel</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                             <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Load file&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="c1"># Bind using a lambda function to be able to pass multiple args</span>
+                <span class="c1"># to the called function</span>
+                <span class="c1"># see: https://wiki.wxpython.org/Passing%20Arguments%20to%20Callbacks</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenFile</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;dir&#39;</span><span class="p">:</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Open directory&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="o">=</span><span class="n">listofOptions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOpenDir</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">appendTo</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">:</span>
+                <span class="c1"># The 4th (optional) element of the options tuple is the multi</span>
+                <span class="c1"># purpose field that may contain the default value for the</span>
+                <span class="c1"># input field</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">option</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">defValue</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">defValue</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">defValue</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">optionButton</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">:</span>
+                <span class="n">optionButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">optionButton</span>
+                <span class="n">optionButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_HELP</span><span class="p">,</span>
+                                  <span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Help&#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[createOptionsContainer] Wrong options format for option: </span><span class="si">{}</span><span class="s1">&#39;</span>\
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
+
+            <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+            <span class="n">optionContainer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">optionLabel</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">optionContainer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">optionButton</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">optionContainer</span>
+
+        <span class="c1"># dict mapping text labels to input text fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># lists containign the label, button sizers for passing to higher</span>
+        <span class="c1"># level sizer</span>
+        <span class="n">InputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">OutputOptionContainers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span> <span class="nf">GenerateOutputOptionContainers</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wrapper for routine to generate label/input containers for either</span>
+<span class="sd">            a set of filename/options combinations or for a single</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
+                <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">option</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">,</span>
+                                                         <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">InputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
+                <span class="n">optionContainer</span> <span class="o">=</span> <span class="n">CreateOptionsContainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">option</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">,</span>
+                                                         <span class="n">filename</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">OutputOptionContainers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">optionContainer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">GenerateOutputOptionContainers</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">GenerateOutputOptionContainers</span><span class="p">()</span>
+
+        <span class="c1">### createWidgets</span>
+
+        <span class="n">inputSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+        <span class="n">inputSizer</span><span class="o">.</span><span class="n">AddMany</span><span class="p">(</span><span class="n">InputOptionContainers</span><span class="p">)</span>
+
+        <span class="n">outputSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+        <span class="n">outputSizer</span><span class="o">.</span><span class="n">AddMany</span><span class="p">(</span><span class="n">OutputOptionContainers</span><span class="p">)</span>
+
+        <span class="n">optionSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">optionSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">inputSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">optionSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">outputSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1">## Controls</span>
+        <span class="n">okayButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Okay&#39;</span><span class="p">)</span>
+        <span class="n">closeButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Close&#39;</span><span class="p">)</span>
+        <span class="n">helpButton</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ContextHelpButton</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">)</span>
+
+        <span class="n">controlSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">okayButton</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">closeButton</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">controlSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">helpButton</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">LEFT</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1">## topSizer</span>
+        <span class="n">topSizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">optionSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">StaticLine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">controlSizer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALL</span><span class="o">|</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1"># assign the top sizer to the panel i.e. main layout instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">topSizer</span><span class="p">)</span>
+        <span class="n">topSizer</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">closeButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onCancel</span><span class="p">)</span>
+        <span class="n">okayButton</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onOkay</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">onCancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onCancel] Closing options window&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CroCoOptionsFrame.onOkay"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.onOkay">[docs]</a>    <span class="k">def</span> <span class="nf">onOkay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If the user clicks okay, all inputs will be evaluated, returned to</span>
+<span class="sd">        the parent classe and the onRun method of the parent class will</span>
+<span class="sd">        be called</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">CollectUserOptionsInput</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wrapper for collecting the user input stored as attributes of</span>
+<span class="sd">            CroCoOptionsWindow and return it to the parent class</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="c1"># label, type, help, optional</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutputOptionsToAsk</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>                
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># all inputs done by extra dialog widgets (file and paths) are</span>
+                <span class="c1"># stored upon closing</span>
+                <span class="c1"># the dialogs. Text and checkbox inputs have to be evaaluated</span>
+                <span class="c1"># when the okay-Button has been pressed</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
+                    <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">userInput</span>
+
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">InputOptionsToAsk</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>                
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    
+                <span class="k">if</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
+                    <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">textCtrls</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">userInput</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">multipleSettingsCheck</span><span class="o">.</span><span class="n">GetValue</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">theInput</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">CollectUserOptionsInput</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">CollectUserOptionsInput</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOkay] Options for Input&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">inputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOkay] Options for Output&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">outputOptionsToUserInput</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">onRun</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+        <span class="c1"># Closing options window after passing options to main window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CroCoOptionsFrame.onOpenFile"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.onOpenFile">[docs]</a>    <span class="k">def</span> <span class="nf">onOpenFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dictToAppend</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;File opening method of CroCoOptionsWindow&quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose a file for input&quot;</span><span class="p">,</span>
+                            <span class="n">defaultDir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">,</span>
+                            <span class="n">defaultFile</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                            <span class="n">wildcard</span><span class="o">=</span><span class="s2">&quot;*.*&quot;</span><span class="p">,</span>
+                            <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_MULTIPLE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+             <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">dictToAppend</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOpenFile] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">))</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CroCoOptionsFrame.onOpenDir"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.onOpenDir">[docs]</a>    <span class="k">def</span> <span class="nf">onOpenDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dictToAppend</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dir opening method of CroCoOptionsWindow&quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">DirDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Choose one directory for Input:&quot;</span><span class="p">,</span>
+                           <span class="n">defaultPath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">DD_DEFAULT_STYLE</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">DD_DIR_MUST_EXIST</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span> <span class="o">=</span> <span class="n">dictToAppend</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">dlg</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[onOpenDir] Loaded </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentPath</span><span class="p">))</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CroCoOptionsFrame.Info"><a class="viewcode-back" href="../crocowx.html#croco_wx.CroCoOptionsFrame.Info">[docs]</a>    <span class="k">def</span> <span class="nf">Info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s1">&#39;CroCo&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Info dialog method of CroCoOptionsWindow&quot;&quot;&quot;</span>
+        <span class="n">dlg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_INFORMATION</span><span class="p">)</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+        <span class="n">dlg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># When this module is run (not imported) then create the app, the</span>
+    <span class="c1"># frame, show it, and start the event loop.</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">App</span><span class="p">()</span>
+    <span class="n">frm</span> <span class="o">=</span> <span class="n">CroCoMainFrame</span><span class="p">()</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

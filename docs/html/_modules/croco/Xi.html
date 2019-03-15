@@ -1,0 +1,269 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>croco.Xi &#8212; CroCo  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for croco.Xi</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to read Xi processed crosslink data.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+
+<div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.Xi.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">xi_files</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collects data from Xi spectrum search and returns an xtable data array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        xi_file: path or list of paths to xi file(s)</span>
+<span class="sd">        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable</span>
+<span class="sd">        compact (bool): Whether to compact the xTable to only those columns listed in col_order</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame: xtable data table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">assign_type</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign mono, loop, inter and intra link</span>
+<span class="sd">        based on prot1, prot2, xlink1 and xlink2 entries</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            row (Series): a series or list containing prot1, prot2, xlink1, xlink2</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str or np.nan: type of cross-link (inter, intra, loop, mono)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prot1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">row</span>
+    
+        <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="p">)</span>
+        <span class="n">prot2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot2</span><span class="p">)</span>
+        <span class="n">xlink1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">xlink1</span><span class="p">)</span>
+        <span class="n">xlink2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">xlink2</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="n">prot2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">prot1</span> <span class="o">==</span> <span class="n">prot2</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;intra&#39;</span>
+        <span class="k">elif</span> <span class="n">prot2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;inter&#39;</span>
+        <span class="k">elif</span> <span class="n">prot2</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">xlink2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;loop&#39;</span>
+        <span class="k">elif</span> <span class="n">prot1</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">prot2</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;mono&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">t</span>
+    
+    <span class="k">def</span> <span class="nf">rawfile_from_source</span><span class="p">(</span><span class="n">source_str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Exctracts filename from string like</span>
+<span class="sd">        E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            source_str (str): Path to a rawfile</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: filename from path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">source_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">source_str</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+
+    <span class="c1"># convert to list if the input is only a single path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xi_files</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">xi_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">xi_files</span><span class="p">]</span>
+    
+    <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">xi_files</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading xi-file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">file</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xTable Read] Failed opening file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+    
+    <span class="c1">### Process the data to comply to xTable format</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Scan&#39;</span><span class="p">:</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;PrecoursorCharge&#39;</span><span class="p">:</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;BasePeptide1&#39;</span><span class="p">:</span> <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ProteinLink1&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;BasePeptide2&#39;</span><span class="p">:</span> <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ProteinLink2&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ModificationMasses1&#39;</span><span class="p">:</span> <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ModificationMasses2&#39;</span><span class="p">:</span> <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Modifications1&#39;</span><span class="p">:</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Modifications2&#39;</span><span class="p">:</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span> <span class="s1">&#39;prot1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Start1&#39;</span><span class="p">:</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Start2&#39;</span><span class="p">:</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Link1&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Link2&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ModificationPositions1&#39;</span><span class="p">:</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;ModificationPositions2&#39;</span><span class="p">:</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;match score&#39;</span><span class="p">:</span> <span class="s1">&#39;score&#39;</span>
+                                   <span class="p">})</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Source&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">rawfile_from_source</span><span class="p">)</span>
+
+    <span class="c1"># assign cateogries of cross-links based on identification of prot1 and prot2</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>\
+        <span class="n">assign_type</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;search_engine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;XiSearch&#39;</span>
+
+    <span class="c1"># reassign dtypes for every element in the df</span>
+    <span class="c1"># errors ignore leaves the dtype as object for every</span>
+    <span class="c1"># non-numeric element</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xtable</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="c1"># defines the column headers required for xtable output</span>
+    <span class="n">col_order</span> <span class="o">=</span> <span class="p">[</span> <span class="s1">&#39;rawfile&#39;</span><span class="p">,</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span> <span class="s1">&#39;xtype&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span> <span class="s1">&#39;decoy&#39;</span><span class="p">]</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi&#39;</span><span class="p">)</span>
+    <span class="n">xi_file</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_XiVersion1.6.739.csv&#39;</span>
+
+    <span class="n">xi</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="n">xi_file</span><span class="p">)</span>
+
+    <span class="n">xi</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;test.xls&#39;</span><span class="p">,</span>
+                 <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Julian Bender.
+      
+    </div>
+
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

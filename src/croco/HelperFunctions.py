@@ -6,6 +6,27 @@ HelperFunctions: Function that are used in multiple modules of CroCo
 import pandas as pd
 import numpy as np
 import os
+import re
+
+### variables of repeated use that are centrally stored
+
+regexDict = {'mgfTITLE': r'(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*'}
+
+### Functions that are repeatedly used
+
+def clearMDD(path):
+    pattern = re.compile(r'.*(\w:)')
+    
+    parts = path.split(os.path.sep)
+    try:
+        drive = pattern.match(parts[0]).group(1)
+        parts[0] = drive
+        if os.path.isdir(os.path.sep.join(parts)):
+            return os.path.sep.join(parts)
+        else:
+            raise Exception ['[ClearMDD] Generated path not found on your system']
+    except:
+        raise Exception('[ClearMDD] Error during path generation')
 
 def FSCompatiblePath(raw_path, encoding=None):
     """
@@ -74,17 +95,20 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
     """
 
     if type in ['mono', 'loop']:
+        xpos1 = int(xpos1)
         return '-'.join([str(prot1), str(xpos1)])
-    else:
+    elif type in ['inter', 'intra', 'homomultimeric']:
         xpos1 = int(xpos1)
         xpos2 = int(xpos2)
-        if xpos1 > xpos2:
+        if xpos1 < xpos2:
             return '-'.join([str(prot1), str(xpos1), str(prot2), str(xpos2)])
         elif xpos1 == xpos2:
             prot_list = sorted([str(prot1), str(prot2)])
             return '-'.join([prot_list[0], str(xpos1), prot_list[1], str(xpos2)])
         else:
             return '-'.join([str(prot2), str(xpos2), str(prot1), str(xpos1)])
+    else:
+        return np.nan
 
 def toList(strorList):
     """
@@ -183,6 +207,9 @@ def split_concatenated_lists(dataframe, where, delimiter=';'):
                 
         # iterate over all rows in the input df
         for idx, row in dataframe.iterrows():
+            # skip rows containing NaN
+            if isNaN(row[w]):
+                continue
             # if the delimiter is found at the specified column
             if delimiter in row[w]:
                 # strip the delimiter from the end of the entry

@@ -8,26 +8,19 @@ Functions to read and write xTable data.
 import pandas as pd
 
 if __name__ == '__main__' or __name__ =='xTable':
-    from HelperFunctions import convertToListOf, FSCompatiblePath
+    import HelperFunctions as hf
 else:
-    from .HelperFunctions import convertToListOf, FSCompatiblePath
+    from . import HelperFunctions as hf
 
-
-def init(this_order):
-    """
-    Set required variables for conversion
-    """
-    global col_order
-    col_order = this_order
-
-def Write(xtable, outpath, keep=True):
+def Write(xtable, outpath, col_order=None, compact=False):
     """
     writes an xtable data structure to file (in xlsx format)
 
     Args:
         xtable: data table structure
         outpath to write file (w/o file extension!)
-        keep (optional): whether to restrict columns to the defined xTable cols
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
     """
 
     def convert_list(entry):
@@ -36,29 +29,24 @@ def Write(xtable, outpath, keep=True):
         else:
             return entry
 
-    xtable = xtable.applymap(convert_list)
+    # select only object dtypes as lists will anyways be found only in those
+    # and applymap struggles with nullable int64 dtype
+    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(convert_list)
 
-    if keep is True:
-        # reorder columns to start with the xtable columns
-        all_cols = list(xtable.columns.values)
-        remaining_cols = [x for x in all_cols if x not in col_order]
-        new_order = col_order + remaining_cols
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
-        xtable = xtable[new_order]
-    elif keep is False:
-        xtable = xtable[col_order]
-
-    xtable.to_excel(FSCompatiblePath(outpath) + '.xlsx',
+    xtable.to_excel(hf.FSCompatiblePath(outpath) + '.xlsx',
                     index=False)
 
 
-def Read(xTable_files):
+def Read(xTable_files, col_order=None, compact=False):
     """
     Read an xTable data structure from file
 
     Args:
         xTable_files: path to the xtable file(s)
-
+        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
+        compact (bool): Whether to compact the xTable to only those columns listed in col_order
     Returns:
         xtable: xTable dataframe object
     """
@@ -71,7 +59,7 @@ def Read(xTable_files):
     
     for file in xTable_files:
         try:
-            s = pd.read_excel(FSCompatiblePath(file))
+            s = pd.read_excel(hf.FSCompatiblePath(file))
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
@@ -79,13 +67,15 @@ def Read(xTable_files):
     xtable = pd.concat(allData)
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
-        .applymap(lambda x: convertToListOf(x, float))
+        .applymap(lambda x: hf.convertToListOf(x, float))
 
     xtable[['modpos1', 'modpos2']] = xtable[['modpos1' ,'modpos2']]\
-        .applymap(lambda x: convertToListOf(x, int))
+        .applymap(lambda x: hf.convertToListOf(x, int))
 
     xtable[['mod1', 'mod2']] = xtable[['mod1', 'mod2']]\
-        .applymap(lambda x: convertToListOf(x, str))
+        .applymap(lambda x: hf.convertToListOf(x, str))
+
+    xtable = hf.applyColOrder(xtable, col_order, compact)
 
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 

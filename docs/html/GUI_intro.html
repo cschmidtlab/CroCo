@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>The CroCo graphical User-Interface &#8212; CroCo  documentation</title>
+    <title>The graphical User-Interface &#8212; CroCo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -15,7 +15,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Modules to generate files from xTables" href="write.html" />
+    <link rel="next" title="The CroCoWX Class" href="crocowx.html" />
+    <link rel="prev" title="Functions documentation for write functions" href="write.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -30,92 +31,101 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="the-croco-graphical-user-interface">
-<span id="introgui"></span><h1>The CroCo graphical User-Interface<a class="headerlink" href="#the-croco-graphical-user-interface" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="input-formats">
-<h2>Input formats<a class="headerlink" href="#input-formats" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="kojak">
-<h3>Kojak<a class="headerlink" href="#kojak" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong>: e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.kojak.txt</span></code></li>
-<li>Provide: Rawfile title (e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.raw</span></code>)</li>
+  <div class="section" id="the-graphical-user-interface">
+<span id="introgui"></span><h1>The graphical User-Interface<a class="headerlink" href="#the-graphical-user-interface" title="Permalink to this headline">¶</a></h1>
+<p>A portable GUI to easily transfer cross-link data files and help users focusing on experimental work is the main idea behind CroCo.
+However, usage of the modules inside Python-scripts is possible (and documented at <a class="reference internal" href="read.html#crocoread"><span class="std std-ref">Functions documentation for read functions</span></a> and <a class="reference internal" href="write.html#crocowrite"><span class="std std-ref">Functions documentation for write functions</span></a>).</p>
+</div>
+<div class="section" id="general-usage">
+<h1>General usage<a class="headerlink" href="#general-usage" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Download the compiled GUI from <a class="reference external" href="https://github.com/cschmidtlab/CroCo/releases/latest">https://github.com/cschmidtlab/CroCo/releases/latest</a></dt>
+<dd><ul class="first last">
+<li>If your OS is not supported you can still try <a class="reference internal" href="#starting-the-croco-gui-from-python">Starting the CroCo GUI from Python</a>.</li>
 </ul>
-</div>
-<div class="section" id="kojak-percolator">
-<h3>Kojak &amp; Percolator<a class="headerlink" href="#kojak-percolator" title="Permalink to this headline">¶</a></h3>
-<p>For this script to work, the unpercolated Kojak file
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.kojak.txt</span></code>) has to be in the same directory as the
-percolated file.</p>
-<ul class="simple">
-<li><strong>Load file(s)</strong>: e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.validated.txt</span></code></li>
-<li>Provide: Rawfile title (e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME.raw</span></code>)</li>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Start the programme</dt>
+<dd><ul class="first last">
+<li>If Windows complains about the non-verified origin of the programme, acknowledge and continue</li>
 </ul>
-</div>
-<div class="section" id="stavrox">
-<h3>StavroX<a class="headerlink" href="#stavrox" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong>: StavroX results file (e.g. FILENAME.csv)</li>
-<li>Provide: Path to SSF-file</li>
+</dd>
+</dl>
+</li>
+<li>You should see something like the following</li>
 </ul>
+<div class="figure align-center" id="id1">
+<img alt="The CroCO GUI" src="_images/crocoGUI.png" />
+<p class="caption"><span class="caption-text">The CroCo GUI</span></p>
 </div>
-<div class="section" id="xi">
-<h3>Xi<a class="headerlink" href="#xi" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>Load file(s)</strong>: Path to Xi results file
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_XiVersion1.6.739.csv</span></code>)</li>
+<li><dl class="first docutils">
+<dt>In the <code class="docutils literal notranslate"><span class="pre">Input</span></code> and <code class="docutils literal notranslate"><span class="pre">Output</span></code> dropdown menus, choose a format and select a directory or one or multiple files.</dt>
+<dd><ul class="first last">
+<li>the Start button will only be available once both formats are set and files are selected</li>
 </ul>
-</div>
-<div class="section" id="xi-xifdr">
-<h3>Xi &amp; XiFDR<a class="headerlink" href="#xi-xifdr" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong>: Path to xiFDR file
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_5_FDR_PSM_xiFDR1.0.22.csv</span></code>)</li>
-<li>Provide: Path to corresponding Xi results file
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_XiVersion1.6.739.csv</span></code>)</li>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>If you selected multiple files for input you can use the <code class="docutils literal notranslate"><span class="pre">Merge</span> <span class="pre">files</span></code> and <code class="docutils literal notranslate"><span class="pre">Same</span> <span class="pre">settings</span> <span class="pre">for</span> <span class="pre">all</span> <span class="pre">files</span></code> checkboxes</dt>
+<dd><ul class="first last">
+<li><code class="docutils literal notranslate"><span class="pre">Same</span> <span class="pre">settings</span> <span class="pre">for</span> <span class="pre">all</span> <span class="pre">files</span></code> lets you chose only one set of options (e.g. necessary additional files) that will be used for all files. If the box is unchecked, you will get a separate prompt for each file selected.</li>
+<li><code class="docutils literal notranslate"><span class="pre">Merge</span> <span class="pre">files</span></code> concatenates the tables for all selected files and generates the output from the concatenated table</li>
 </ul>
-</div>
-<div class="section" id="plink1">
-<h3>pLink1<a class="headerlink" href="#plink1" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong> (folder): sample folder within the pLink results dir
-(e.g. <code class="docutils literal notranslate"><span class="pre">2.report\sample1</span></code>)</li>
+</dd>
+</dl>
+</li>
+<li>CroCo transfers all information found in the input files into the generated xTable files. If you want to restrict the xTable headers to the minimum columns necessary, you can choose <code class="docutils literal notranslate"><span class="pre">Compact</span> <span class="pre">xTable</span></code></li>
+<li>Click on <code class="docutils literal notranslate"><span class="pre">Start</span></code></li>
+<li><dl class="first docutils">
+<dt>Depending on your choice of input and output formats, CroCo may require additional information. Therefore a second window may pop up.</dt>
+<dd><ul class="first last">
+<li>Detailed information on how to enter format-specific information can be found at <a class="reference internal" href="read.html#crocoread"><span class="std std-ref">Functions documentation for read functions</span></a> and <a class="reference internal" href="write.html#crocowrite"><span class="std std-ref">Functions documentation for write functions</span></a>.</li>
 </ul>
-</div>
-<div class="section" id="plink2">
-<h3>pLink2<a class="headerlink" href="#plink2" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong> (folder): reports folder within the pLink results
-(e.g. <code class="docutils literal notranslate"><span class="pre">pLink_task_2018.06.12.09.33.10\reports</span></code>)</li>
+</dd>
+</dl>
+</li>
 </ul>
+</div></blockquote>
 </div>
-<div class="section" id="xquest">
-<h3>xQuest<a class="headerlink" href="#xquest" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Load file(s)</strong>: xQuest results file exported as csv
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_xquest.csv</span></code>)</li>
+<div class="section" id="starting-the-croco-gui-from-python">
+<h1>Starting the CroCo GUI from Python<a class="headerlink" href="#starting-the-croco-gui-from-python" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Clone the CroCo repository from <a class="reference external" href="https://github.com/cschmidtlab/CroCo.git">https://github.com/cschmidtlab/CroCo.git</a></dt>
+<dd><ul class="first last">
+<li>If you’re not familiar with github, download and extract the latest version of the CroCo source code from <a class="reference external" href="https://github.com/cschmidtlab/CroCo/archive/master.zip">https://github.com/cschmidtlab/CroCo/archive/master.zip</a></li>
 </ul>
-</div>
-</div>
-<div class="section" id="output-formats">
-<h2>Output formats<a class="headerlink" href="#output-formats" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="dynamxl">
-<h3>DynamXL<a class="headerlink" href="#dynamxl" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Write to</strong>: Directory in which to save the DynamXL file</li>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Install Python 3+</dt>
+<dd><ul class="first last">
+<li>The easiest way is usually to use anaconda Python (<a class="reference external" href="https://www.anaconda.com/distribution/">https://www.anaconda.com/distribution/</a>)</li>
+<li>Install the required python packages for CroCo (see requirements.txt in the CroCo root directory) either via <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PACKAGE</span></code> or via <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">PACKAGE</span></code></li>
 </ul>
-</div>
-<div class="section" id="customtable">
-<h3>customTable<a class="headerlink" href="#customtable" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><strong>Write to</strong>: Directory in which to save the customTable csv file</li>
-<li>Provide: customTable template file</li>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Open a Python-aware command-line</dt>
+<dd><ul class="first last">
+<li>On Windows, use Anaconda Prompt or cmd.exe if you exported Python to your OS PATH-Variable</li>
 </ul>
-<div class="section" id="customtable-format">
-<h4>customTable Format<a class="headerlink" href="#customtable-format" title="Permalink to this headline">¶</a></h4>
-<p>``` [header] Protein 1, Protein 2 [data] [prot1], [pr</p>
-</div>
-</div>
-</div>
+</dd>
+</dl>
+</li>
+<li>Navigate to <code class="docutils literal notranslate"><span class="pre">CroCo/src</span></code></li>
+<li>Start the GUI by typing <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">croco_wx.py</span></code></li>
+</ul>
+</div></blockquote>
 </div>
 
 
@@ -124,46 +134,45 @@ percolated file.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/img/croco_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">The CroCo cross-link data converter</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=cschmidtlab&repo=CroCo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">The CroCo graphical User-Interface</a><ul>
-<li><a class="reference internal" href="#input-formats">Input formats</a><ul>
-<li><a class="reference internal" href="#kojak">Kojak</a></li>
-<li><a class="reference internal" href="#kojak-percolator">Kojak &amp; Percolator</a></li>
-<li><a class="reference internal" href="#stavrox">StavroX</a></li>
-<li><a class="reference internal" href="#xi">Xi</a></li>
-<li><a class="reference internal" href="#xi-xifdr">Xi &amp; XiFDR</a></li>
-<li><a class="reference internal" href="#plink1">pLink1</a></li>
-<li><a class="reference internal" href="#plink2">pLink2</a></li>
-<li><a class="reference internal" href="#xquest">xQuest</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#output-formats">Output formats</a><ul>
-<li><a class="reference internal" href="#dynamxl">DynamXL</a></li>
-<li><a class="reference internal" href="#customtable">customTable</a><ul>
-<li><a class="reference internal" href="#customtable-format">customTable Format</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">The graphical User-Interface</a></li>
+<li><a class="reference internal" href="#general-usage">General usage</a></li>
+<li><a class="reference internal" href="#starting-the-croco-gui-from-python">Starting the CroCo GUI from Python</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="write.html" title="previous chapter">Modules to generate files from xTables</a></li>
+      <li>Previous: <a href="write.html" title="previous chapter">Functions documentation for write functions</a></li>
+      <li>Next: <a href="crocowx.html" title="next chapter">The CroCoWX Class</a></li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/GUI_intro.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -184,14 +193,14 @@ percolated file.</p>
       &copy;2019, Julian Bender.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
       <a href="_sources/GUI_intro.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/cschmidtlab/CroCo" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
     
 
     

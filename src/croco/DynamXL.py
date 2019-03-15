@@ -14,6 +14,7 @@
 """
 
 import pandas as pd
+import numpy as np
 
 if __name__ == '__main__':
     import HelperFunctions as hf
@@ -35,34 +36,44 @@ def Write(xtable, outpath):
         the relative and the absolute position of the cross-link
         
         Args:
-            row (object): xTable row containing pepseq, xlin, and xpos
+            row (object): xTable row containing pepseq, xlink, and xpos
         Returns:
-            str: id1
-            str: id2
+            id1 (str)
+            id2 (str)
         """
-        aa1 = row['pepseq1'][int(row['xlink1'])-1]
-        id1 = str(aa1) + str(row['xpos1'])
+        # prevent error from calculation of AA from entries without xlink
+        if hf.isNaN(row['xlink1']):
+            id1 = np.nan
+        else:
+            aa1 = row['pepseq1'][int(row['xlink1'])-1]
+            id1 = str(aa1) + str(int(row['xpos1']))
 
-        aa2 = row['pepseq2'][int(row['xlink2'])-1]
-        id2 = str(aa2) + str(row['xpos2'])
+        if hf.isNaN(row['xlink2']):
+            id2 = np.nan
+        else:
+            aa2 = row['pepseq2'][int(row['xlink2'])-1]
+            id2 = str(aa2) + str(int(row['xpos2']))
 
         return id1, id2
 
-    def xlink_atom_from_AA(AA):
+    def xlink_atom_from_AA(ID):
         """
         Return the typical cross-linked atom in PDB code
         for a specific amino-acid
         
         Args:
-            AA(str): Amino acid in 1-letter code
+            ID (str): DynamXL ID e.g. K27
         Returns:
             PDB code of cross-linked atom
         """
 
-        if AA == 'K':
-            return 'NZ'
+        if hf.isNaN(ID):
+            return np.nan
         else:
-            return 'CA'
+            if ID[0] == 'K':
+                return 'NZ'
+            else:
+                return 'CA'
 
     print('Converting to dynamXL input file format')
 

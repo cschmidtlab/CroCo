@@ -17,6 +17,7 @@ CroCo Documentation contents
    read
    write
    GUI_intro
+   crocowx
 
 
 Indices and tables
