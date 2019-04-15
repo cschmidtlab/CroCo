@@ -363,7 +363,7 @@ def Read(plinkdirs, col_order=None, compact=False):
         pd.DataFrame(xtable.apply(calculate_abs_pos, axis=1).tolist(), index=xtable.index)
 
     # add a label referring to the ordering in the pLink results table
-    xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].apply(lambda x: ','.join(str(x)), axis=1)
+    xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].astype(str).apply(lambda x: ','.join(x), axis=1)
 
     # set the sequence of loop links to be the same as the corresponding pepseq1
     xtable.loc[xtable['type'] == 'loop', 'pepseq2'] = xtable[xtable['type'] == 'loop']['pepseq1']
@@ -521,4 +521,4 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\pLink2_results\reports', col_order=col_order)
+    xtable = Read(r'C:\Users\User\Documents\02_experiments\10_p38_ag_behrens\20190415_p38_bs2g_insolution01\20190415_p38_bs2g_insolution', col_order=col_order)

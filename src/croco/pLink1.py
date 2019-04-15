@@ -276,7 +276,7 @@ def Read(plinkdirs, col_order=None, compact=False):
                      xtable['xlink2'].astype(int, errors='ignore') + 1
 
     # add a lobel referring to the ordering in the pLink results table
-    xtable['Order'] = xtable[['Order', 'Order2']].apply(lambda x: ','.join(str(x)), axis=1)
+    xtable['Order'] = xtable[['Order', 'Order2']].astype(str).apply(lambda x: ','.join(x), axis=1)
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
