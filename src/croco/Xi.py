@@ -14,7 +14,7 @@ else:
     from . import HelperFunctions as hf
 
 
-def assign_type(row):
+def _assign_type(row):
     """
     Assign mono, loop, inter and intra link
     based on prot1, prot2, xlink1 and xlink2 entries
@@ -43,7 +43,7 @@ def assign_type(row):
         t = np.nan
     return t
 
-def rawfile_from_source(source_str):
+def _rawfile_from_source(source_str):
     """
     Exctracts filename from string like
     E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
@@ -127,11 +127,11 @@ def Read(xi_files, col_order=None, compact=False):
                                    'match score': 'score'
                                    })
 
-    xtable['rawfile'] = xtable['Source'].apply(rawfile_from_source)
+    xtable['rawfile'] = xtable['Source'].apply(_rawfile_from_source)
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
-        assign_type, axis=1)
+        _assign_type, axis=1)
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\

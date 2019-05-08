@@ -18,6 +18,30 @@ else:
     from . import Xi as xi
     from . import HelperFunctions as hf
 
+def _infer_monolinks(mod, modpos, modstring):
+    """
+    Take a list of modifications with their positions and return those modpositions
+    that match a given modification name for the monolinker
+
+    Args:
+        mod (str): a ;-separated list of modification names
+        modpos (str): a also ;-separated list of the corresponding positions
+
+    Returns:
+        position (int or np.nan)
+    """
+    if hf.isNaN(mod):
+        return np.nan
+
+    mods = mod.split(';')
+    modposns = modpos.split(';')
+
+    for idx, m in enumerate(mods):
+        if modstring in m:
+            return int(modposns[idx])
+        else:
+            return np.nan
+
 def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring=None, col_order=None, compact=False):
     """
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.
@@ -33,30 +57,6 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
     Returns:
         xtable: xtable data table
     """
-
-    def inferMonoLinks(mod, modpos):
-        """
-        Take a list of modifications with their positions and return those modpositions
-        that match a given modification name for the monolinker
-
-        Args:
-            mod (str): a ;-separated list of modification names
-            modpos (str): a also ;-separated list of the corresponding positions
-
-        Returns:
-            position (int or np.nan)
-        """
-        if hf.isNaN(mod):
-            return np.nan
-
-        mods = mod.split(';')
-        modposns = modpos.split(';')
-
-        for idx, m in enumerate(mods):
-            if modstring in m:
-                return int(modposns[idx])
-            else:
-                return np.nan
 
     ### Get the standard xi-file ###
 
@@ -172,8 +172,9 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
 
     if modstring != None:
         xtable.loc[xtable['xlink1'].isnull(), 'xlink1'] =\
-            np.vectorize(inferMonoLinks)(xtable.loc[xtable['xlink1'].isnull(), 'mod1'],
-                                         xtable.loc[xtable['xlink1'].isnull(), 'modpos1'])
+            np.vectorize(_infer_monolinks)(xtable.loc[xtable['xlink1'].isnull(), 'mod1'],
+                                         xtable.loc[xtable['xlink1'].isnull(), 'modpos1'],
+                                         modstring)
 
         xtable.loc[xtable['xlink1'].notnull(), 'xpos1'] =\
             xtable.loc[xtable['xlink1'].notnull(), 'pos1'].astype(int) +\
@@ -231,8 +232,8 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\Xi')
+    os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\xi\pXtract_msconvertStyle')
     xi_file = r'XI_results_XiVersion1.6.739.csv'
     xifdr_linksPSM_file = r'XiFDR_5_FDR_Links_PSM_xiFDR1.0.22.csv'
-    xifdr_linearPSM_file = r'XiFDR_5_FDR_Links_Linear_PSM_xiFDR1.0.22.csv'
+    xifdr_linearPSM_file = r'XiFDR_5_FDR_Linear_PSM_xiFDR1.0.22.csv'
     xtable = Read(xi_file, xifdr_linearPSM_file=xifdr_linearPSM_file, xifdr_linksPSM_file=xifdr_linksPSM_file, modstring='bs3', compact=True)

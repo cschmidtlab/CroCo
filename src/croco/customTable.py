@@ -16,6 +16,14 @@ else:
 
 import re
 
+def _from_match(match, row):
+    toReplace = match.group(1)[1:-1]
+    try:
+        return str(row[toReplace])
+    except Exception as e:
+        raise Exception('Could not resolve string from xtable column header: {}'.format(e))
+
+
 def Write(xtable, outpath, customTemplatePath):
     """
     writes an xtable data structure to file (in xtable format) based on a
@@ -50,13 +58,6 @@ def Write(xtable, outpath, customTemplatePath):
     
     substituteMatcher = re.compile(r'(\[.*?\])')
     
-    def fromMatch(match, row):
-        toReplace = match.group(1)[1:-1]
-        try:
-            return str(row[toReplace])
-        except Exception as e:
-            raise Exception('Could not resolve string from xtable column header: {}'.format(e))
-    
     with open(hf.FSCompatiblePath(outpath + '.csv'), 'w') as out:
         print('Writing to {}'.format(outpath + '.csv'))
         # write the header
@@ -64,7 +65,7 @@ def Write(xtable, outpath, customTemplatePath):
         # write the data
         if Templates[1] != '':
             for idx, row in xtable.iterrows():
-                out.write(substituteMatcher.sub(lambda match, row=row: fromMatch(match, row), Templates[1]))
+                out.write(substituteMatcher.sub(lambda match, row=row: _from_match(match, row), Templates[1]))
         # write footer
         out.write(Templates[2])
     

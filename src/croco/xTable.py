@@ -12,6 +12,12 @@ if __name__ == '__main__' or __name__ =='xTable':
 else:
     from . import HelperFunctions as hf
 
+def _join_list_by_semicolon(entry):
+    if isinstance(entry, list):
+        return ';'.join([str(x) for x in entry])
+    else:
+        return entry
+
 def Write(xtable, outpath, col_order=None, compact=False):
     """
     writes an xtable data structure to file (in xlsx format)
@@ -23,15 +29,9 @@ def Write(xtable, outpath, col_order=None, compact=False):
         compact (bool): Whether to compact the xTable to only those columns listed in col_order
     """
 
-    def convert_list(entry):
-        if isinstance(entry, list):
-            return ';'.join([str(x) for x in entry])
-        else:
-            return entry
-
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
-    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(convert_list)
+    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(_join_list_by_semicolon)
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
 

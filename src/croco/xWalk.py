@@ -14,6 +14,47 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
+def _aminoacid_from_sequence(pepseq, xlink):
+    """
+    Return the 3-character amino acid label of the cross-linked AA
+    from a peptide sequence
+    and the relative position of the cross-linker in the sequence
+    
+    Args:
+        pepseq (str): peptide sequence
+        xlink (int): position of the cross-link within the sequence
+    Returns:
+        str: 3-letter amino acid code for the cross-linked amino acid
+    """
+
+    aa_dict = {'R': 'ARG',
+           'H': 'HIS',
+           'K': 'LYS',
+           'D': 'ASP',
+           'E': 'GLU',
+           'S': 'SER',
+           'T': 'THR',
+           'N': 'ASN',
+           'Q': 'GLN',
+           'C': 'CYS',
+           'U': 'SEC',
+           'G': 'GLY',
+           'P': 'PRO',
+           'A': 'ALA',
+           'V': 'VAL',
+           'I': 'ILE',
+           'L': 'LEU',
+           'M': 'MET',
+           'F': 'PHE',
+           'Y': 'TYR',
+           'W': 'TRP'
+           }
+
+    AA = aa_dict[pepseq[int(xlink)-1].upper()]
+
+    return AA
+
+
 def Write(xtable, outpath, pdb, offset, chains, atom):
     """
     Convert xTable into a list format that can be used as
@@ -34,47 +75,6 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
         atom (str): Atom identifier (e.g. CB)
         outpath (str): path to write file
     """
-
-    
-    def AA_from_sequence(pepseq, xlink):
-        """
-        Return the 3-character amino acid label of the cross-linked AA
-        from a peptide sequence
-        and the relative position of the cross-linker in the sequence
-        
-        Args:
-            pepseq (str): peptide sequence
-            xlink (int): position of the cross-link within the sequence
-        Returns:
-            str: 3-letter amino acid code for the cross-linked amino acid
-        """
-    
-        aa_dict = {'R': 'ARG',
-               'H': 'HIS',
-               'K': 'LYS',
-               'D': 'ASP',
-               'E': 'GLU',
-               'S': 'SER',
-               'T': 'THR',
-               'N': 'ASN',
-               'Q': 'GLN',
-               'C': 'CYS',
-               'U': 'SEC',
-               'G': 'GLY',
-               'P': 'PRO',
-               'A': 'ALA',
-               'V': 'VAL',
-               'I': 'ILE',
-               'L': 'LEU',
-               'M': 'MET',
-               'F': 'PHE',
-               'Y': 'TYR',
-               'W': 'TRP'
-               }
-    
-        AA = aa_dict[pepseq[int(xlink)-1].upper()]
-    
-        return AA
 
     pdbBase = os.path.basename(pdb)
 
@@ -110,11 +110,11 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xtable.dropna(subset=['prot1', 'prot2'], inplace=True)
 
     # set the 3-character code for the cross-linked amino acids
-    xtable['linked_aa1'] = np.vectorize(AA_from_sequence)\
+    xtable['linked_aa1'] = np.vectorize(_aminoacid_from_sequence)\
         (xtable['pepseq1'],
          xtable['xlink1'])
 
-    xtable['linked_aa2'] = np.vectorize(AA_from_sequence)\
+    xtable['linked_aa2'] = np.vectorize(_aminoacid_from_sequence)\
         (xtable['pepseq2'],
          xtable['xlink2'])
 

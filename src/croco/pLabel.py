@@ -15,6 +15,167 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
+def _unique_mods(modlist):
+    """
+    Go through a list containing lists of modifications, strings of
+    modifications or NaN and extract all occuring unique mod-strings
+
+    Args:
+        modlist: list of modifications form xtable
+    Returns:
+        Lisr of unique modifications
+    """
+    alist = []
+    for element in modlist:
+        if isinstance(element, list):
+            for e in element:
+                if e not in alist:
+                    alist.append(e)
+
+        elif isinstance(element, float):
+            if not np.isnan(element):
+                if element not in alist:
+                    alist.append(str(element))
+        else:
+            if element not in alist:
+                alist.append(element)
+
+    return list(set(alist))
+
+def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, mod1, mod2, modpos1, modpos2, mods2num):
+    """
+    pep1=3 7 2 VFLLPDKK 22.7634 KKFETK 1 4,1
+    1: 3-1 = cross, loop, mono
+    2: xlink2
+    3: xlink2
+    4: pep1
+    5: score?
+    6: pep2
+    7: unknown, mostly 1
+    8: modification (e.g. 4,1 = modification 1 at position 4)
+
+    """
+
+    if xtype == 'inter':
+        typeno = 3
+    elif xtype == 'intra':
+        typeno = 3
+    elif xtype == 'homomultimeric':
+        typeno = 3
+    elif xtype == 'loop':
+        typeno = 2
+    elif xtype == 'mono':
+        typeno = 1
+
+    if typeno > 1:
+        pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
+                             hf.castIfNotNan(xlink2, int), pepseq1,
+                             '{:.4f}'.format(score), pepseq2, '1']
+    else:
+        pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
+                             pepseq1, '1']
+
+    pepStringElements = [str(x) for x in pepStringElements]
+
+    modlabels = []
+    mods = []
+    modposs = []
+
+    if not hf.isNaN(modpos2):
+
+        # increment the modpos2 position to fit pLabel numbering
+        # add position for: cterm1, xlink, nterm2
+        modpos2 = [x + (len(pepseq1) + 3) for x in modpos2]
+
+        if not hf.isNaN(modpos1):
+            mods.extend(hf.toList(mod1))
+            modposs.extend(hf.toList(modpos1))
+
+        mods.extend(hf.toList(mod2))
+        modposs.extend(hf.toList(modpos2))
+
+    elif not hf.isNaN(modpos1):
+
+        mods.extend(hf.toList(mod1))
+        modposs.extend(hf.toList(modpos1))
+
+    for mod, pos in zip(mods, modposs):
+        modlabels.append('{},{}'.format(int(pos), mods2num[mod]))
+
+    pepStringElements.extend(modlabels)
+
+    return ' '.join(pepStringElements)
+
+def _parse_mgf(filenames, mgfDir):
+    """
+    Parse all mgf files matching to a list of filenames and extract all
+    TITLE arguments as list
+
+    Args:
+        filenames: List of rawfile basenames to look for
+        mgfDir: Path to mgf files
+    Returns:
+        titles2mgfoffset: Dictionary mapping mgf header titles to
+                                the resp rawfile and the position within
+                                the mgf-file
+    """
+
+    titles2mgfoffset = {}
+    localMGFFiles = []
+
+    # collect mgf file names in mgfDir
+    for file in os.listdir(hf.FSCompatiblePath(mgfDir)):
+        if file.endswith('.mgf'):
+            localMGFFiles.append(file)
+
+    # check which files referenced in xtable are present in the dir
+    mgfToOpen = []
+    mgfNotFound = []
+    for file in filenames:
+        if file + '.mgf' in localMGFFiles:
+            mgfToOpen.append(file + '.mgf')
+        # pXtract usually adds the fragmentation method after conversion
+        # allow Orbitrap files to be recognised
+        elif file + '_HCDFT' + '.mgf' in localMGFFiles:
+            mgfToOpen.append(file + '_HCDFT' + '.mgf')
+        else:
+            mgfNotFound.append(file + '.mgf')
+
+    # raise error if file is missing
+    if len(mgfNotFound) > 0:
+        raise Exception('The following mgf files were not found at the ' +
+                        'specified directory: {}'.format(', '.join(mgfNotFound)))
+
+    pattern = re.compile(r'TITLE=([^\.]+\.\d+\.\d+\.\d+\.\d+.*$)')
+
+    # parse the mgf files for titles
+    for f in mgfToOpen:
+        mgfFile = os.path.join(mgfDir, f)
+        with open(hf.FSCompatiblePath(mgfFile)) as inf:
+            offset_last = 0
+            offset_before_last = 0
+            for line in inf.readlines():
+                if line.startswith('TITLE='):
+                    # in case of pXtract:
+                    # TITLE=2017_08_04_SVs_BS3_16.2419.2419.4.dta
+                    # for MSConvert with TPP compatibility:
+                    # TITLE=2017_08_18_SK_3.1093.1093.2 File:"2017_08_18_SK_3.raw", NativeID:"controllerType=0 controllerNumber=1 scan=1093"
+                    # MSConvert w/o TPP:
+                    # TITLE=2017_08_18_SK_3.1093.1093.2
+                    if pattern.match(line):
+                        m = pattern.match(line)
+                        title = m.group(1)
+                    else:
+                        raise(Exception('Title not found'))
+
+                    titles2mgfoffset[title.upper()] = mgfFile, offset_before_last
+                offset_before_last = offset_last
+                offset_last += len(line) + 1
+
+    return titles2mgfoffset
+
+
+
 def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
     """
     Converts xtable data structure to (multiple) input file(s)
@@ -28,169 +189,12 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
     """
 
-    def uniqueMods(modlist):
-        """
-        Go through a list containing lists of modifications, strings of
-        modifications or NaN and extract all occuring unique mod-strings
-
-        Args:
-            modlist: list of modifications form xtable
-        Returns:
-            Lisr of unique modificaitons
-        """
-        alist = []
-        for element in modlist:
-            if isinstance(element, list):
-                for e in element:
-                    if e not in alist:
-                        alist.append(e)
-
-            elif isinstance(element, float):
-                if not np.isnan(element):
-                    if element not in alist:
-                        alist.append(str(element))
-            else:
-                if element not in alist:
-                    alist.append(element)
-
-        return list(set(alist))
-
-    def GeneratepLabelPepString(xtype, xlink1, xlink2, pepseq1, pepseq2, score, mod1, mod2, modpos1, modpos2, mods2num):
-        """
-        pep1=3 7 2 VFLLPDKK 22.7634 KKFETK 1 4,1
-        1: 3-1 = cross, loop, mono
-        2: xlink2
-        3: xlink2
-        4: pep1
-        5: score?
-        6: pep2
-        7: unknown, mostly 1
-        8: modification (e.g. 4,1 = modification 1 at position 4)
-
-        """
-
-        if xtype == 'inter':
-            typeno = 3
-        elif xtype == 'intra':
-            typeno = 3
-        elif xtype == 'homomultimeric':
-            typeno = 3
-        elif xtype == 'loop':
-            typeno = 2
-        elif xtype == 'mono':
-            typeno = 1
-
-        if typeno > 1:
-            pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
-                                 hf.castIfNotNan(xlink2, int), pepseq1,
-                                 '{:.4f}'.format(score), pepseq2, '1']
-        else:
-            pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
-                                 pepseq1, '1']
-
-        pepStringElements = [str(x) for x in pepStringElements]
-
-        modlabels = []
-        mods = []
-        modposs = []
-
-        if not hf.isNaN(modpos2):
-
-            # increment the modpos2 position to fit pLabel numbering
-            # add position for: cterm1, xlink, nterm2
-            modpos2 = [x + (len(pepseq1) + 3) for x in modpos2]
-
-            if not hf.isNaN(modpos1):
-                mods.extend(hf.toList(mod1))
-                modposs.extend(hf.toList(modpos1))
-
-            mods.extend(hf.toList(mod2))
-            modposs.extend(hf.toList(modpos2))
-
-        elif not hf.isNaN(modpos1):
-
-            mods.extend(hf.toList(mod1))
-            modposs.extend(hf.toList(modpos1))
-
-        for mod, pos in zip(mods, modposs):
-            modlabels.append('{},{}'.format(int(pos), mods2num[mod]))
-
-        pepStringElements.extend(modlabels)
-
-        return ' '.join(pepStringElements)
-
-    def ParseMGF(filenames, mgfDir):
-        """
-        Parse all mgf files matching to a list of filenames and extract all
-        TITLE arguments as list
-
-        Args:
-            filenames: List of rawfile basenames to look for
-            mgfDir: Path to mgf files
-        Returns:
-            titles2mgfoffset: Dictionary mapping mgf header titles to
-                                    the resp rawfile and the position within
-                                    the mgf-file
-        """
-
-        titles2mgfoffset = {}
-        localMGFFiles = []
-
-        # collect mgf file names in mgfDir
-        for file in os.listdir(hf.FSCompatiblePath(mgfDir)):
-            if file.endswith('.mgf'):
-                localMGFFiles.append(file)
-
-        # check which files referenced in xtable are present in the dir
-        mgfToOpen = []
-        mgfNotFound = []
-        for file in filenames:
-            if file + '.mgf' in localMGFFiles:
-                mgfToOpen.append(file + '.mgf')
-            else:
-                mgfNotFound.append(file + '.mgf')
-
-        # raise error if file is missing
-        if len(mgfNotFound) > 0:
-            raise Exception('The following mgf files were not found at the ' +
-                            'specified directory: {}'.format(', '.join(mgfNotFound)))
-
-        pattern = re.compile(r'TITLE=([^\.]+\.\d+\.\d+\.\d+\.\d+.*$)')
-
-        # parse the mgf files for titles
-        for f in mgfToOpen:
-            mgfFile = os.path.join(mgfDir, f)
-            with open(hf.FSCompatiblePath(mgfFile)) as inf:
-                offset_last = 0
-                offset_before_last = 0
-                for line in inf.readlines():
-                    if line.startswith('TITLE='):
-                        # in case of pXtract:
-                        # TITLE=2017_08_04_SVs_BS3_16.2419.2419.4.dta
-                        # for MSConvert with TPP compatibility:
-                        # TITLE=2017_08_18_SK_3.1093.1093.2 File:"2017_08_18_SK_3.raw", NativeID:"controllerType=0 controllerNumber=1 scan=1093"
-                        # MSConvert w/o TPP:
-                        # TITLE=2017_08_18_SK_3.1093.1093.2
-                        if pattern.match(line):
-                            m = pattern.match(line)
-                            title = m.group(1)
-                        else:
-                            raise(Exception('Title not found'))
-
-                        titles2mgfoffset[title.upper()] = mgfFile, offset_before_last
-                    offset_before_last = offset_last
-                    offset_last += len(line) + 1
-
-        return titles2mgfoffset
-
-    ## Start of WRITE
-
     rawfiles = xtable['rawfile'].unique().tolist()
 
     if xlinker == '':
         raise Exception('Please provide a name for the cross-linker')
 
-    titles2mgfoffset = ParseMGF(rawfiles, mgfDir)
+    titles2mgfoffset = _parse_mgf(rawfiles, mgfDir)
     allTitles = list(titles2mgfoffset.keys())
 
     if not mergepLabel:
@@ -205,7 +209,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                 out.write('[FilePath]\n')
                 out.write('File_Path=' + os.path.join(mgfDir, rf + '.mgf\n'))
 
-                modifications = uniqueMods(xtablePerRawfile['mod2'].tolist() +\
+                modifications = _unique_mods(xtablePerRawfile['mod2'].tolist() +\
                                            xtablePerRawfile['mod1'].tolist())
 
                 mods2num = {} # dict mapping mod names to indices
@@ -254,7 +258,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     # rawfile name, scanno and precursor charge
                     out.write('name={}\n'.format(title))
 
-                    out.write('pep1={}\n'.format(GeneratepLabelPepString(row['type'],
+                    out.write('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
                                                                          row['xlink1'],
                                                                          row['xlink2'],
                                                                          row['pepseq1'],
@@ -280,7 +284,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
             plabel.write('[FilePath]\n')
             plabel.write('File_Path=' + outMGF + '\n')
 
-            modifications = uniqueMods(xtable['mod2'].tolist() +\
+            modifications = _unique_mods(xtable['mod2'].tolist() +\
                                        xtable['mod1'].tolist())
 
             mods2num = {} # dict mapping mod names to indices
@@ -337,7 +341,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     # rawfile name, scanno and precursor charge
                     toWrite += ('name={}\n'.format(title))
 
-                    toWrite += ('pep1={}\n'.format(GeneratepLabelPepString(row['type'],
+                    toWrite += ('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
                                                                          row['xlink1'],
                                                                          row['xlink2'],
                                                                          row['pepseq1'],
