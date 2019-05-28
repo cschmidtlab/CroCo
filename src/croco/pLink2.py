@@ -279,7 +279,7 @@ def Read(plinkdirs, col_order=None, compact=False):
     for file in plinkdirs:
 
         ### Collect data, convert to pandas format and merge
-        plinkResultFiles = os.listdir(hf.FSCompatiblePath(file))
+        plinkResultFiles = os.listdir(hf.compatible_path(file))
     
         frames = []
     
@@ -293,14 +293,14 @@ def Read(plinkdirs, col_order=None, compact=False):
                     foundPeptidesFile = True
                     
                     print('Reading pLink peptide file: ' + peptidesFile)
-                    peptide_df = _plink2_peptide2pandas(hf.FSCompatiblePath(os.path.join(file, peptidesFile)))
+                    peptide_df = _plink2_peptide2pandas(hf.compatible_path(os.path.join(file, peptidesFile)))
                     
                 if '_spectra.csv' in f:
                     spectraFile = f
                     foundSpectraFile = True               
      
                     print('Reading pLink spectra file: ' + spectraFile)
-                    spectra_df = pd.read_csv(hf.FSCompatiblePath(os.path.join(file, spectraFile)))
+                    spectra_df = pd.read_csv(hf.compatible_path(os.path.join(file, spectraFile)))
     
             if foundPeptidesFile and foundSpectraFile:
                 merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
@@ -346,7 +346,7 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -372,15 +372,15 @@ def Read(plinkdirs, col_order=None, compact=False):
         # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
         intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
         xtable.loc[intraAndInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[intraAndInter]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[intraAndInter]['prot1'],
                                                      xtable[intraAndInter]['pos1'],
                                                      xtable[intraAndInter]['pepseq1'],
                                                      xtable[intraAndInter]['prot2'],
                                                      xtable[intraAndInter]['pos2'],
                                                      xtable[intraAndInter]['pepseq2'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[pLink2 Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[pLink2 Read] skipped inter peptide categorization')
 
     ## generate the mod_dict linking pLink modification names to masses
     # in case of calling croco from the source folder structure...
@@ -433,7 +433,7 @@ def Read(plinkdirs, col_order=None, compact=False):
         this_modpos2 = []
 
         # unmodified peptides
-        if hf.isNaN(modstr):
+        if hf.isnan(modstr):
             this_modmass1 = ''
             this_mod1 = ''
             this_modpos1 = ''
@@ -499,7 +499,7 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink2'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     ### return xtable df
     return xtable

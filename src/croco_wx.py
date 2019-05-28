@@ -9,7 +9,7 @@ mass-spectrometry experiments.
 
 This script creates the GUI in wxPython (https://wxpython.org/pages/overview/)
 """
-import os, sys
+import os, sys, re
 
 import wx
 import wx.adv
@@ -22,6 +22,44 @@ import pandas as pd
 import croco
 #from pandas import read_csv
 
+def clear_multidirdialog_path(path):
+    pattern = re.compile(r'.*(\w:)')
+    
+    parts = path.split(os.path.sep)
+    try:
+        drive = pattern.match(parts[0]).group(1)
+        parts[0] = drive
+        if os.path.isdir(os.path.sep.join(parts)):
+            return os.path.sep.join(parts)
+        else:
+            raise Exception ['[ClearMDD] Generated path not found on your system']
+    except:
+        raise Exception('[ClearMDD] Error during path generation')
+
+def alphanum_string(s):
+    """
+    Method to clean strings from incorrect characters for file output
+    Required for croco_wx
+    """
+    # new compiler that finds non-alphanumeric characters
+    rex = re.compile(r'\W')
+    # actually replace the strings
+    result = rex.sub('_', s)
+
+    # remove double occurences of _ in the string
+    # initialize
+    old_char = ''
+    new_result = ''
+    for char in result:
+        if old_char != char:
+            new_result += char
+        else:
+            # prevent removal of double occurences of other strings than _
+            if old_char != '_':
+                new_result += char
+        old_char = char
+
+    return new_result
 
 
 class CroCoMainFrame(wx.Frame):
@@ -394,7 +432,7 @@ class CroCoMainFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             # self.theInput is always a list of paths
-            self.theInput = [croco.HelperFunctions.clearMDD(x) for x in dlg.GetPaths()]
+            self.theInput = [clear_multidirdialog_path(x) for x in dlg.GetPaths()]
             self.currentPath = os.path.dirname(self.theInput[0])
             print('[onInputDir] Loaded {}'.format(', '.join(self.theInput)))
 
@@ -570,7 +608,7 @@ class CroCoMainFrame(wx.Frame):
             print('[crocoRead] xTable read from input: {}'.format(', '.join(xtable.columns)))
 
             # Compact the xTable if checkbox is checked
-            xtable = croco.HelperFunctions.applyColOrder(xtable,
+            xtable = croco.HelperFunctions.order_columns(xtable,
                                                          col_order=self.col_order,
                                                          compact=self.compactTableCheck.GetValue())
 
@@ -630,7 +668,7 @@ class CroCoMainFrame(wx.Frame):
 
             # set filename for output file
             fileString = '_'.join([os.path.splitext(os.path.basename(x))[0] for x in listOfFilepaths])
-            fileString = croco.HelperFunctions.alphanum_string(fileString)
+            fileString = alphanum_string(fileString)
             outName = fileString + '_' + self.theReadFormat +\
                     '_to_' + self.theWriteFormat
 

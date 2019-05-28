@@ -345,7 +345,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
         print('Reading StavroX-file: {}'.format(file))
 
         try:
-            with open(hf.FSCompatiblePath(file), 'r') as f:
+            with open(hf.compatible_path(file), 'r') as f:
                 firstline = f.readline()
 
             headers = list()
@@ -367,7 +367,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
             print(headers)
 
             # Reassign the column headers to avoid duplicate From and To fields
-            s = pd.read_csv(hf.FSCompatiblePath(file),
+            s = pd.read_csv(hf.compatible_path(file),
                             delimiter=';',
                             header=0,
                             index_col = False,
@@ -435,7 +435,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     print('[StavroX Read] Generated xpos')
 
-    mod2mass, mod2name = _parse_ssf(hf.FSCompatiblePath(ssf_file))
+    mod2mass, mod2name = _parse_ssf(hf.compatible_path(ssf_file))
 
     print('[StavroX Read] parsed SSF')
 
@@ -452,7 +452,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -469,15 +469,15 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
         # Reassign the type for inter xlink to inter/intra/homomultimeric
         onlyInter = xtable['type'] == 'inter'
         xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
                                                      xtable[onlyInter]['pos1'],
                                                      xtable[onlyInter]['pepseq1'],
                                                      xtable[onlyInter]['prot2'],
                                                      xtable[onlyInter]['pos2'],
                                                      xtable[onlyInter]['pepseq1'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[StavroX Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[StavroX Read] skipped inter peptide categorization')
 
     # StavroX already filters decoys
     xtable['decoy'] = False
@@ -487,7 +487,7 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     return xtable
 

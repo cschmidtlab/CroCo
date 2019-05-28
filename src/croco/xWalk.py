@@ -205,7 +205,7 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xWalkTable.reset_index(inplace=True)
 
     xWalkTable.loc[:, ['File name', 'Atom Info 1', 'Atom Info 2']]\
-        .to_csv('{}_{}.tsv'.format(hf.FSCompatiblePath(outpath), 'xWalk'),
+        .to_csv('{}_{}.tsv'.format(hf.compatible_path(outpath), 'xWalk'),
                                    index = True,
                                    index_label = 'Index',
                                    header = True,

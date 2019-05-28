@@ -98,7 +98,7 @@ def Read(xi_files, col_order=None, compact=False):
 
         print('Reading xi-file: {}'.format(file))
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',', dtype=xi_dtypes)
+            s = pd.read_csv(hf.compatible_path(file), delimiter=',', dtype=xi_dtypes)
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
@@ -135,7 +135,7 @@ def Read(xi_files, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -147,7 +147,7 @@ def Read(xi_files, col_order=None, compact=False):
         # Reassign the type for inter xlink to inter/intra/homomultimeric
         onlyInter = xtable['type'] == 'inter'
         xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
                                                      xtable[onlyInter]['pos1'],
                                                      xtable[onlyInter]['pepseq1'],
                                                      xtable[onlyInter]['prot2'],
@@ -161,7 +161,7 @@ def Read(xi_files, col_order=None, compact=False):
 
     xtable['search_engine'] = 'XiSearch'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     return xtable
 

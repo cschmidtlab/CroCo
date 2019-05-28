@@ -68,11 +68,11 @@ def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, m
         typeno = 1
 
     if typeno > 1:
-        pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
-                             hf.castIfNotNan(xlink2, int), pepseq1,
+        pepStringElements = [typeno, _cast_if_not_nan(xlink1, int),
+                             _cast_if_not_nan(xlink2, int), pepseq1,
                              '{:.4f}'.format(score), pepseq2, '1']
     else:
-        pepStringElements = [typeno, hf.castIfNotNan(xlink1, int),
+        pepStringElements = [typeno, _cast_if_not_nan(xlink1, int),
                              pepseq1, '1']
 
     pepStringElements = [str(x) for x in pepStringElements]
@@ -81,23 +81,23 @@ def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, m
     mods = []
     modposs = []
 
-    if not hf.isNaN(modpos2):
+    if not hf.isnan(modpos2):
 
         # increment the modpos2 position to fit pLabel numbering
         # add position for: cterm1, xlink, nterm2
         modpos2 = [x + (len(pepseq1) + 3) for x in modpos2]
 
-        if not hf.isNaN(modpos1):
-            mods.extend(hf.toList(mod1))
-            modposs.extend(hf.toList(modpos1))
+        if not hf.isnan(modpos1):
+            mods.extend(_make_list(mod1))
+            modposs.extend(_make_list(modpos1))
 
-        mods.extend(hf.toList(mod2))
-        modposs.extend(hf.toList(modpos2))
+        mods.extend(_make_list(mod2))
+        modposs.extend(_make_list(modpos2))
 
-    elif not hf.isNaN(modpos1):
+    elif not hf.isnan(modpos1):
 
-        mods.extend(hf.toList(mod1))
-        modposs.extend(hf.toList(modpos1))
+        mods.extend(_make_list(mod1))
+        modposs.extend(_make_list(modpos1))
 
     for mod, pos in zip(mods, modposs):
         modlabels.append('{},{}'.format(int(pos), mods2num[mod]))
@@ -124,7 +124,7 @@ def _parse_mgf(filenames, mgfDir):
     localMGFFiles = []
 
     # collect mgf file names in mgfDir
-    for file in os.listdir(hf.FSCompatiblePath(mgfDir)):
+    for file in os.listdir(hf.compatible_path(mgfDir)):
         if file.endswith('.mgf'):
             localMGFFiles.append(file)
 
@@ -151,7 +151,7 @@ def _parse_mgf(filenames, mgfDir):
     # parse the mgf files for titles
     for f in mgfToOpen:
         mgfFile = os.path.join(mgfDir, f)
-        with open(hf.FSCompatiblePath(mgfFile)) as inf:
+        with open(hf.compatible_path(mgfFile)) as inf:
             offset_last = 0
             offset_before_last = 0
             for line in inf.readlines():
@@ -174,6 +174,26 @@ def _parse_mgf(filenames, mgfDir):
 
     return titles2mgfoffset
 
+
+def _make_list(strorList):
+    """
+    take lists, floats or strings as input and return either the list or
+    a one-element list of the string or float
+    """
+    if isinstance(strorList, list):
+        return strorList
+
+    elif isinstance(strorList, float):
+        if not np.isnan(strorList):
+            return [strorList]
+    else:
+        return [strorList]
+
+def _cast_if_not_nan(input, typefunc):
+    if not hf.isnan(input):
+        return typefunc(input)
+    else:
+        return input
 
 
 def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
@@ -205,7 +225,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
             # separate per type within rawfile
             outfile = os.path.join(outpath + '_' + rf + '.pLabel')
             print('Opening {} to write'.format(outfile))
-            with open(hf.FSCompatiblePath(outfile), 'w') as out:
+            with open(hf.compatible_path(outfile), 'w') as out:
                 out.write('[FilePath]\n')
                 out.write('File_Path=' + os.path.join(mgfDir, rf + '.mgf\n'))
 
@@ -279,7 +299,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         filesWithOffsetToCopy = []
 
         print('[pLabel] Opening {} to write'.format(outfile))
-        with open(hf.FSCompatiblePath(outfile), 'w') as plabel:
+        with open(hf.compatible_path(outfile), 'w') as plabel:
 
             plabel.write('[FilePath]\n')
             plabel.write('File_Path=' + outMGF + '\n')
@@ -357,10 +377,10 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         print('[pLabel] Merging MGF files')
         # Generate merged MGF file containing only the matching spectra
         print('Opening {} to write'.format(outMGF))
-        with open(hf.FSCompatiblePath(outMGF), 'w') as mgf:
+        with open(hf.compatible_path(outMGF), 'w') as mgf:
             templates = set([file for file, offset in filesWithOffsetToCopy])
             for template in templates:
-                with open(hf.FSCompatiblePath(template), 'r') as t:
+                with open(hf.compatible_path(template), 'r') as t:
                     print('Opening {} to read'.format(template))
 
                     offsets = []

@@ -36,7 +36,7 @@ def Write(xtable, outpath, customTemplatePath):
     
     """
     
-    with open(hf.FSCompatiblePath(customTemplatePath), 'r') as tmpl:
+    with open(hf.compatible_path(customTemplatePath), 'r') as tmpl:
         
         headerTemp = ''
         dataTemp = ''
@@ -58,7 +58,7 @@ def Write(xtable, outpath, customTemplatePath):
     
     substituteMatcher = re.compile(r'(\[.*?\])')
     
-    with open(hf.FSCompatiblePath(outpath + '.csv'), 'w') as out:
+    with open(hf.compatible_path(outpath + '.csv'), 'w') as out:
         print('Writing to {}'.format(outpath + '.csv'))
         # write the header
         out.write(Templates[0])

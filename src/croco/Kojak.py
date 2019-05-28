@@ -51,7 +51,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
         # only called if kojak_file is not None
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(file),
+            s = pd.read_csv(hf.compatible_path(file),
                             skiprows = 1, # skip the Kojak version
                             dtype=kojak_dtypes,
                             na_values = '-',
@@ -119,7 +119,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     xtable['search_engine'] = 'Kojak'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     ### return xtable df
     return xtable

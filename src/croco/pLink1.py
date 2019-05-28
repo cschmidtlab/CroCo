@@ -207,7 +207,7 @@ def Read(plinkdirs, col_order=None, compact=False):
         loop_file = None
         mono_file = None
 
-        for e in os.listdir(hf.FSCompatiblePath(file)):
+        for e in os.listdir(hf.compatible_path(file)):
             if '_inter_combine.protein.xls' in e:
                 inter_file = e
     
@@ -221,17 +221,17 @@ def Read(plinkdirs, col_order=None, compact=False):
         # only called if inter_file is not None
         if inter_file:
             print('Reading pLink inter-file: ' + inter_file)
-            inter_df = _plink_protein2pandas(hf.FSCompatiblePath(os.path.join(file, inter_file)))
+            inter_df = _plink_protein2pandas(hf.compatible_path(os.path.join(file, inter_file)))
             inter_df['type'] = 'inter'
             frames.append(inter_df)
         if loop_file:
             print('Reading pLink loop-file: ' + loop_file)
-            loop_df = _plink_protein2pandas(hf.FSCompatiblePath(os.path.join(file, loop_file)))
+            loop_df = _plink_protein2pandas(hf.compatible_path(os.path.join(file, loop_file)))
             loop_df['type'] = 'loop'
             frames.append(loop_df)
         if mono_file:
             print('Reading pLink mono-file: ' + mono_file)
-            mono_df =  _plink_protein2pandas(hf.FSCompatiblePath(os.path.join(file, mono_file)))
+            mono_df =  _plink_protein2pandas(hf.compatible_path(os.path.join(file, mono_file)))
             mono_df['type'] = 'mono'
             frames.append(mono_df)
     
@@ -257,7 +257,7 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -280,15 +280,15 @@ def Read(plinkdirs, col_order=None, compact=False):
         # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
         intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
         xtable.loc[intraAndInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[intraAndInter]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[intraAndInter]['prot1'],
                                                      xtable[intraAndInter]['pos1'],
                                                      xtable[intraAndInter]['pepseq1'],
                                                      xtable[intraAndInter]['prot2'],
                                                      xtable[intraAndInter]['pos2'],
                                                      xtable[intraAndInter]['pepseq1'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[pLink Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[pLink Read] skipped inter peptide categorization')
 
     # manually set decoy to reverse as pLink hat its own internal target-decoy
     # algorithm
@@ -393,7 +393,7 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink1'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     ### return xtable df
     return xtable

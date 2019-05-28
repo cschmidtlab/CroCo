@@ -34,13 +34,13 @@ def _aa_and_pos(row):
         id2 (str)
     """
     # prevent error from calculation of AA from entries without xlink
-    if hf.isNaN(row['xlink1']):
+    if hf.isnan(row['xlink1']):
         id1 = np.nan
     else:
         aa1 = row['pepseq1'][int(row['xlink1'])-1]
         id1 = str(aa1) + str(int(row['xpos1']))
 
-    if hf.isNaN(row['xlink2']):
+    if hf.isnan(row['xlink2']):
         id2 = np.nan
     else:
         aa2 = row['pepseq2'][int(row['xlink2'])-1]
@@ -59,7 +59,7 @@ def _xlink_atom_from_aminoacid(ID):
         PDB code of cross-linked atom
     """
 
-    if hf.isNaN(ID):
+    if hf.isnan(ID):
         return np.nan
     else:
         if ID[0] == 'K':
@@ -91,7 +91,7 @@ def Write(xtable, outpath):
     # reorder df
     dynamxl = dynamxl[['ID1', 'atom1', 'ID2', 'atom2', 'score']]
 
-    dynamxl.to_csv(hf.FSCompatiblePath(outpath + '.txt'),
+    dynamxl.to_csv(hf.compatible_path(outpath + '.txt'),
                    sep = '\t',
                    header=False,
                    float_format='%.3f',

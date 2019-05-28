@@ -38,8 +38,8 @@ def extract_peptide(xtable):
                      index=xtable.loc[pep2notNull, 'Peptide #2'].index)
 
     # use the modification masses as labels
-    xtable['mod1'] = xtable['modmass1'].apply(lambda x: x if hf.isNaN(x) else [str(y) for y in x])
-    xtable['mod2'] = xtable['modmass2'].apply(lambda x: x if hf.isNaN(x) else [str(y) for y in x])
+    xtable['mod1'] = xtable['modmass1'].apply(lambda x: x if hf.isnan(x) else [str(y) for y in x])
+    xtable['mod2'] = xtable['modmass2'].apply(lambda x: x if hf.isnan(x) else [str(y) for y in x])
 
     return xtable
 
@@ -98,7 +98,7 @@ def assign_ID_and_type(xtable):
     # only perform if the selection is not all false
     if sum(isInterLink) > 0:
         xtable.loc[isInterLink, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[isInterLink]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[isInterLink]['prot1'],
                                                      xtable[isInterLink]['pos1'],
                                                      xtable[isInterLink]['pepseq1'],
                                                      xtable[isInterLink]['prot2'],
@@ -110,7 +110,7 @@ def assign_ID_and_type(xtable):
     type_identified = xtable['type'].notna()
     # generate an ID for every crosslink position within the protein(s)
     xtable.loc[type_identified, 'ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],

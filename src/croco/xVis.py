@@ -45,7 +45,7 @@ def Write(xtable, outpath):
                 inplace=True)
 
     if outpath.endswith('.csv'):
-        xvis.to_csv(hf.FSCompatiblePath(outpath), index=False)
+        xvis.to_csv(hf.compatible_path(outpath), index=False)
     else:
-        xvis.to_csv(hf.FSCompatiblePath(outpath) + '.csv',
+        xvis.to_csv(hf.compatible_path(outpath) + '.csv',
                 index=False)

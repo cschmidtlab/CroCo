@@ -49,7 +49,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
         print('Reading Percolator-file: ' + p_file)
     
         try:
-            percolated = pd.read_csv(hf.FSCompatiblePath(p_file),
+            percolated = pd.read_csv(hf.compatible_path(p_file),
                                      delimiter='\t',
                                      usecols=range(5),
                                      index_col=False, # avoid taking the first col as index
@@ -66,7 +66,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
         print('Reading Percolator input: ' + unperc_file)
     
         try:
-            unpercolated = pd.read_csv(hf.FSCompatiblePath(unperc_file),
+            unpercolated = pd.read_csv(hf.compatible_path(unperc_file),
                                       delimiter = '\t',
                                       usecols=range(10),
                                       engine='python',
@@ -85,7 +85,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
         print('Reading Kojak-file: ' + kojak_file)
     
         try:
-            kojak = pd.read_csv(hf.FSCompatiblePath(kojak_file),
+            kojak = pd.read_csv(hf.compatible_path(kojak_file),
                                 skiprows = 1, # skip the Kojak version
                                 dtype=kojak_dtypes,
                                 na_values='-',
@@ -158,7 +158,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
 
     xtable['search_engine'] = 'Kojak and Percolator'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
     
     return xtable
 
