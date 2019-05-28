@@ -18,188 +18,137 @@ else:
     from . import Xi as xi
     from . import HelperFunctions as hf
 
-def _infer_monolinks(mod, modpos, modstring):
+def _assign_type(row):
     """
-    Take a list of modifications with their positions and return those modpositions
-    that match a given modification name for the monolinker
+    Assign mono, loop, inter and intra link
+    based on prot1, prot2, xlink1 and xlink2 entries
 
     Args:
-        mod (str): a ;-separated list of modification names
-        modpos (str): a also ;-separated list of the corresponding positions
-
+        row (Series): a series or list containing prot1, prot2, xlink1, xlink2
     Returns:
-        position (int or np.nan)
+        str or np.nan: type of cross-link (inter, intra, loop, mono)
     """
-    if hf.isNaN(mod):
-        return np.nan
+    prot1, prot2, xlink1, xlink2 = row
 
-    mods = mod.split(';')
-    modposns = modpos.split(';')
+    prot1 = str(prot1)
+    prot2 = str(prot2)
+    xlink1 = str(xlink1)
+    xlink2 = str(xlink2)
 
-    for idx, m in enumerate(mods):
-        if modstring in m:
-            return int(modposns[idx])
+    if prot2 != 'nan' and prot1 == prot2:
+        t = 'intra'
+    elif prot2 != 'nan':
+        t = 'inter'
+    elif prot2 == 'nan' and xlink2 != 'nan':
+        t = 'loop'
+    elif prot1 != 'nan' and prot2 == 'nan' and xlink1 != 'nan':
+        t = 'mono'
+    else:
+        t = np.nan
+    return t
+
+def _modifications_from_sequence(sequence):
+    """
+    Extract a modification name and its position from a sequence containing
+    the modifications as lowercase characters
+    
+    Args:
+        sequence (str): a sequence to be parsed
+    Returns:
+        str: sequence without the modification characters
+        list of str: modification names
+        list of int: modification positions within the peptide
+    """
+    mods = []
+    modposns = []
+    
+    cur_pos = 0
+    this_mod = ''
+    clean_sequence = ''
+    
+    for char in sequence:
+        if char.isupper():
+            if this_mod != '':
+                mods.append(this_mod)
+                modposns.append(cur_pos)
+            this_mod = ''
+            clean_sequence += char
+            cur_pos += 1
         else:
-            return np.nan
+            this_mod += char
+            
+    return clean_sequence, mods, modposns
 
-def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring=None, col_order=None, compact=False):
+def Read(xifdr_files, modstring=None, col_order=None, compact=False):
     """
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.
 
     Args:
-        xi_file: path to percolated Kojak file
-        xifdr_linksPSM_file: xlink results file from xiFDR (contains PSM_xiFDR)
-        xifdr_linearPSM_file: linear peptide results file from xiFDR (contains PSM_xiFDR)
-        modstring (str): a string (like 'bs3') that is part of the monolink modification name in Xi
+        xifdr_files: path or list of paths to xiFDR file(s)
         col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
-        keep (bool): Whether to keep the columns of the original dataframe or not
+        compact (bool): Whether to keep the columns of the original dataframe or not
 
     Returns:
         xtable: xtable data table
     """
+    # convert to list if the input is only a single path
+    if not isinstance(xifdr_files, list):
+        xifdr_files = [xifdr_files]
 
-    ### Get the standard xi-file ###
+    allData = list()
 
-    if isinstance(xi_file, list):
-        if len(xi_file) > 1:
-            raise Exception('[xiFDR Read] Sorry! Only one xi-file file per conversion is allowed to unambiguously relate it to a xi-file')
-        xi_file = xi_file[0]
+    xifdr_dtypes = {'scan': pd.Int64Dtype(),
+                   'exp charge': pd.Int64Dtype(),
+                   'PepSeq1': str,
+                   'PepSeq2': str,
+                   'LinkPos1': pd.Int16Dtype(),
+                   'LinkPos2': pd.Int16Dtype(),
+                   'Protein1': str,
+                   'Protein2': str,
+                   'ProteinLinkPos1': pd.Int16Dtype(),
+                   'ProteinLinkPos2': pd.Int16Dtype(),
+                   'PepPos1': pd.Int16Dtype(),
+                   'PepPos2': pd.Int16Dtype(),
+                   }
 
-    print('[xiFDR Read] Reading xi-file: {}'.format(xi_file))
+    for file in xifdr_files:
 
-    xi_dtypes = {'Scan': pd.Int64Dtype(),
-                 'PrecoursorCharge': pd.Int64Dtype(),
-                 'BasePeptide1': str,
-                 'ProteinLink1': pd.Int16Dtype(),
-                 'BasePeptide2': str,
-                 'ProteinLink2': pd.Int16Dtype(),
-                 'Protein1': str,
-                 'Protein2': str,
-                 'Start1': pd.Int32Dtype(),
-                 'Start2': pd.Int32Dtype(),
-                 'Link1': pd.Int16Dtype(),
-                 'Link2': pd.Int16Dtype(),
-                 'match score': float
-                 }
-
-    try:
-        xiraw = pd.read_csv(hf.FSCompatiblePath(xi_file), delimiter=',', dtype=xi_dtypes)
-    except:
-        raise Exception('[xTable Read] Failed opening file: {}'.format(xi_file))
-
-    # list to collect the tables from the FDR processed files
-    allFDR = list()
-
-    ### get the xiFDR file containing the cross-links ###
-    if xifdr_linksPSM_file != None:
-        if not 'PSM_xiFDR' in xifdr_linksPSM_file:
-            raise Exception('[xiFDR Read] The string "PSM_xiFDR" is missing in your input file. Did you choose the right file?')
-
-        print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linksPSM_file))
-
+        print('Reading xiFDR-file: {}'.format(file))
         try:
-            linkXiFDR = pd.read_csv(hf.FSCompatiblePath(xifdr_linksPSM_file), delimiter=',')
+            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',', dtype=xifdr_dtypes)
+            allData.append(s)
+        except:
+            raise Exception('[xTable Read] Failed opening file: {}'.format(file))
 
-            linkXiFDR.rename(columns={'run': 'Run',
-                                      'scan': 'Scan',
-                                      'Protein1': 'Protein1_FDR',
-                                      'Protein2': 'Protein2_FDR'}, inplace=True)
-        except Exception as e:
-            raise Exception('[xiFDR Read] Error while reading the xiFDR file: {}'.format(e))
-
-        # Merge with left join (only keys that are in the percolated DF will be re-
-        # tained)
-        s = pd.merge(linkXiFDR, xiraw, on=['Run', 'Scan'], how='left')
-
-        allFDR.append(s)
-
-    ### get the xiFDR file containing the monlinks ###
-
-    if xifdr_linearPSM_file != None:
-
-        if not 'Linear_PSM_xiFDR' in xifdr_linearPSM_file:
-            raise Exception('[xiFDR Read] The string "Linear_PSM_xiFDR" is missing in your input file. Did you choose the right file?')
-
-        print('[xiFDR Read] Reading xiFDR-file: {}'.format(xifdr_linearPSM_file))
-
-        try:
-            linaerXiFDR = pd.read_csv(hf.FSCompatiblePath(xifdr_linearPSM_file), delimiter=',')
-
-            linaerXiFDR.rename(columns={'run': 'Run',
-                                        'scan': 'Scan',
-                                        'Protein1': 'Protein1_FDR',
-                                        'Protein2': 'Protein2_FDR'}, inplace=True)
-        except Exception as e:
-            raise Exception('[xiFDR Read] Error while reading the xiFDR file: {}'.format(e))
-
-        # Merge with left join (only keys that are in the percolated DF will be re-
-        # tained)
-        s = pd.merge(linaerXiFDR, xiraw, on=['Run', 'Scan'], how='left')
-
-        allFDR.append(s)
-
-    # only continue if at least one of the FDR-processed files has been provided
-    if len(allFDR) == 0:
-        raise Exception('[xiFDR] YOu must provide either a linear or a PSM FDR file!')
-    else:
-        data = pd.concat(allFDR)
+    xtable = pd.concat(allData)
 
     ### Process the data to comply to xTable format
-    xtable = data.rename(columns={'Scan': 'scanno',
-                                  'PrecoursorCharge': 'prec_ch',
-                                  'BasePeptide1': 'pepseq1',
-                                  'ProteinLink1': 'xpos1',
-                                  'BasePeptide2': 'pepseq2',
-                                  'ProteinLink2': 'xpos2',
-                                  'ModificationMasses1': 'modmass1',
-                                  'ModificationMasses2': 'modmass2',
-                                  'Modifications1': 'mod1',
-                                  'Modifications2': 'mod2',
-                                  'Protein1': 'prot1',
-                                  'Protein2': 'prot2',
-                                  'Start1': 'pos1',
-                                  'Start2': 'pos2',
-                                  'Link1': 'xlink1',
-                                  'Link2': 'xlink2',
-                                  'ModificationPositions1': 'modpos1',
-                                  'ModificationPositions2': 'modpos2',
-                                  'match score': 'score'
-                                  })
+    xtable = xtable.rename(columns={'scan': 'scanno',
+                                    'exp charge': 'prec_ch',
+                                    'PepSeq1': 'pepseq1',
+                                    'LinkPos1': 'xlink1',
+                                    'PepSeq2': 'pepseq2',
+                                    'LinkPos2': 'xlink2',
+                                    # modmass1
+                                    # modmass2
+                                    'Protein1': 'prot1',
+                                    'ProteinLinkPos1': 'xpos1',
+                                    'Protein2': 'prot2',
+                                    'ProteinLinkPos2': 'xpos2',
+                                    'PepPos1': 'pos1',
+                                    'PepPos2': 'pos2',
+                                    })
 
-    xtable['rawfile'] = xtable['Source'].apply(xi.rawfile_from_source)
-
-    print('[xiFDR Read] Rawfile from source')
-
-    if modstring != None:
-        xtable.loc[xtable['xlink1'].isnull(), 'xlink1'] =\
-            np.vectorize(_infer_monolinks)(xtable.loc[xtable['xlink1'].isnull(), 'mod1'],
-                                         xtable.loc[xtable['xlink1'].isnull(), 'modpos1'],
-                                         modstring)
-
-        xtable.loc[xtable['xlink1'].notnull(), 'xpos1'] =\
-            xtable.loc[xtable['xlink1'].notnull(), 'pos1'].astype(int) +\
-            xtable.loc[xtable['xlink1'].notnull(), 'xlink1'].astype(int)
-
-        print('[xiFDR Read] Inferred monolinks from modifications')
+    # Extract clean sequence and modificiations from the sequence string
+    xtable[['pepseq1', 'mod1', 'modpos1']] =\
+        pd.DataFrame(xtable['pepseq1'].apply(_modifications_from_sequence).tolist(), index=xtable.index)
+    xtable[['pepseq2', 'mod2', 'modpos2']] =\
+        pd.DataFrame(xtable['pepseq2'].apply(_modifications_from_sequence).tolist(), index=xtable.index)
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
-        xi.assign_type, axis=1)
-
-    print('[xiFDR Read] assigned Type')
-
-    # generate an ID for every crosslink position within the protein(s)
-    xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
-                               otypes=['object'])(xtable['type'],
-                                                  xtable['prot1'],
-                                                  xtable['xpos1'],
-                                                  xtable['prot2'],
-                                                  xtable['xpos2']),
-                 index=xtable.index).replace('nan', np.nan)
-
-    print('[xiFDR Read] generated ID')
-
+          _assign_type, axis=1)
+    
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for inter xlink to inter/intra/homomultimeric
         onlyInter = xtable['type'] == 'inter'
@@ -210,17 +159,31 @@ def Read(xi_file, xifdr_linksPSM_file=None, xifdr_linearPSM_file=None, modstring
                                                      xtable[onlyInter]['prot2'],
                                                      xtable[onlyInter]['pos2'],
                                                      xtable[onlyInter]['pepseq1'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[xiFDR Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[xiFDR Read] skipped inter peptide categorization')    
+ 
+    
+    # generate an ID for every crosslink position within the protein(s)
+    xtable['ID'] =\
+        pd.Series(np.vectorize(hf.generateID,
+                               otypes=['object'])(xtable['type'],
+                                                  xtable['prot1'],
+                                                  xtable['xpos1'],
+                                                  xtable['prot2'],
+                                                  xtable['xpos2']),
+                index=xtable.index).replace('nan', np.nan)
+
+    xtable['decoy'] = xtable['Decoy1'] | xtable['Decoy2']
 
     xtable['xtype'] = np.nan
 
-    xtable['search_engine'] = 'XiSearch and XiFDR'
+    xtable['search_engine'] = 'XiSearchFDR'
 
     xtable = hf.applyColOrder(xtable, col_order, compact)
-
+    
     return xtable
+
 if __name__ == '__main__':
 
     # defines the column headers required for xtable output
@@ -233,7 +196,5 @@ if __name__ == '__main__':
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
     os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\xi\pXtract_msconvertStyle')
-    xi_file = r'XI_results_XiVersion1.6.739.csv'
-    xifdr_linksPSM_file = r'XiFDR_5_FDR_Links_PSM_xiFDR1.0.22.csv'
-    xifdr_linearPSM_file = r'XiFDR_5_FDR_Linear_PSM_xiFDR1.0.22.csv'
-    xtable = Read(xi_file, xifdr_linearPSM_file=xifdr_linearPSM_file, xifdr_linksPSM_file=xifdr_linksPSM_file, modstring='bs3', compact=True)
+    xifdr_files = r'XiFDR_5_FDR_PSM_PSM_xiFDR1.0.22.csv'
+    xtable = Read(xifdr_files, compact=True)
