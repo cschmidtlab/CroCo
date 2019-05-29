@@ -46,7 +46,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
     for p_file in perc_files:
         ### Collect data and convert to pandas format
     
-        print('Reading Percolator-file: ' + p_file)
+        print('[Kojak Perc Read] Reading Percolator-file: ' + p_file)
     
         try:
             percolated = pd.read_csv(hf.compatible_path(p_file),
@@ -54,16 +54,18 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
                                      usecols=range(5),
                                      index_col=False, # avoid taking the first col as index
                                      engine='python')
+            
+            if len(percolated) == 0:
+                raise Exception("The file {} seems to be empty and cannot be converted".format(p_file))
+            
         except FileNotFoundError:
             raise Exception("Could not find the percolated file %s." % p_file)
     
         percolated.rename(columns={'PSMId': 'SpecId'}, inplace=True)
-        
-        print(validated_string)
-        
+               
         unperc_file = p_file.replace(validated_string, '')
     
-        print('Reading Percolator input: ' + unperc_file)
+        print('[Kojak Perc Read] Reading Percolator input: ' + unperc_file)
     
         try:
             unpercolated = pd.read_csv(hf.compatible_path(unperc_file),
@@ -77,7 +79,9 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
         # Merge with left join (only keys that are in tje percolated DF will be re-
         # tained)
         xtable = pd.merge(percolated, unpercolated, on='SpecId', how='left')
-    
+
+        xtable = xtable.rename(columns={'score': 'percolator_score'})
+
         # Reading the Kojak-file is required to get additional information on the
         # matches such as the corresponding protein names
         kojak_file = unperc_file[0:unperc_file.find(percolator_string)] + '.kojak.txt'
@@ -147,6 +151,8 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
     # Generate ID for the xlinks
     xtable = kj.assign_ID_and_type(xtable)
 
+    print('[Kojak Perc Read] Calculated Positions and assigned IDs')
+
     #sets the column decoy based on whether the decoy string is present in the
     # protein name or not
     xtable = kj.set_decoy(xtable, decoy_string)
@@ -173,7 +179,7 @@ if __name__ == '__main__':
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
     perc_file = [r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.intra.validated.txt',
-                 r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.loop.validated.txt',
+                 #r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.loop.validated.txt',
                  r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak_perc\20180615_KS_CL_9_msconvert.perc.single.validated.txt']
 
     xtable = Read(perc_file)

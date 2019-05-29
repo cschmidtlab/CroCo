@@ -39,7 +39,9 @@ def categorize_inter_peptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
         return 'inter'
     
     else:
-        if (pos2 <= pepend1 <= pepend2) or (pos1 <= pepend2 <= pepend1):
+        if (pos2 <= pepend1) and (pepend1 <= pepend2):
+            return 'homomultimeric'
+        elif (pos1 <= pepend2) and (pepend2 <= pepend1):
             return 'homomultimeric'
         else:
             return 'intra'

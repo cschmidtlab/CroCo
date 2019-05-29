@@ -33,9 +33,14 @@ def extract_peptide(xtable):
         pd.DataFrame(xtable.loc[pep1notNull, 'Peptide #1'].apply(process_kojak_peptide).tolist(),
                      index=xtable.loc[pep1notNull, 'Peptide #1'].index)
 
-    xtable[['modmass2', 'modpos2', 'pepseq2']] =\
-        pd.DataFrame(xtable.loc[pep2notNull, 'Peptide #2'].apply(process_kojak_peptide).tolist(),
-                     index=xtable.loc[pep2notNull, 'Peptide #2'].index)
+    if sum(pep2notNull) > 0:
+        xtable[['modmass2', 'modpos2', 'pepseq2']] =\
+            pd.DataFrame(xtable.loc[pep2notNull, 'Peptide #2'].apply(process_kojak_peptide).tolist(),
+                         index=xtable.loc[pep2notNull, 'Peptide #2'].index)
+    else:
+        xtable['modmass2'] = np.nan
+        xtable['modpos2'] = np.nan
+        xtable['pepseq2'] = np.nan
 
     # use the modification masses as labels
     xtable['mod1'] = xtable['modmass1'].apply(lambda x: x if hf.isnan(x) else [str(y) for y in x])
@@ -54,14 +59,14 @@ def extract_protein(xtable):
         pandas.DataFrame: xTable with prot and xpos
     """
     xtable[['prot1', 'xpos1']] =\
-        xtable['Protein #1'].str.extract(r'^(.+)\((\d+)\);$')
+        xtable['Protein #1'].str.extract(r'^(\w+)(?:\((.*?)\))?;$')
 
     xtable.loc[xtable['xpos1'].notnull(), 'xpos1'] =\
         xtable.loc[xtable['xpos1'].notnull(), 'xpos1'].astype(int)
     xtable['xpos1'] = xtable['xpos1'].astype(pd.Int64Dtype())
 
     xtable[['prot2', 'xpos2']] =\
-        xtable['Protein #2'].str.extract(r'^(.+)\((\d+)\);$')
+        xtable['Protein #2'].str.extract(r'^(\w+)(?:\((.*?)\))?;$')
 
     xtable.loc[xtable['xpos2'].notnull(), 'xpos2'] =\
         xtable.loc[xtable['xpos2'].notnull(), 'xpos2'].astype(int)
@@ -99,11 +104,11 @@ def assign_ID_and_type(xtable):
     if sum(isInterLink) > 0:
         xtable.loc[isInterLink, 'type'] =\
             np.vectorize(hf.categorize_inter_peptides)(xtable[isInterLink]['prot1'],
-                                                     xtable[isInterLink]['pos1'],
-                                                     xtable[isInterLink]['pepseq1'],
-                                                     xtable[isInterLink]['prot2'],
-                                                     xtable[isInterLink]['pos2'],
-                                                     xtable[isInterLink]['pepseq1'])
+                                                       xtable[isInterLink]['pos1'],
+                                                       xtable[isInterLink]['pepseq1'],
+                                                       xtable[isInterLink]['prot2'],
+                                                       xtable[isInterLink]['pos2'],
+                                                       xtable[isInterLink]['pepseq2'])
 
     # only apply the operation requiring at least prot1 and xpos1 to those
     # lines that are loop, intra or interlinks

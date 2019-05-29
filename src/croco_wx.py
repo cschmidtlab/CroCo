@@ -573,7 +573,7 @@ class CroCoMainFrame(wx.Frame):
             """
             try:
                 if len(self.inputOptionsToUserInput) > 0 : # are there options given at all?
-                    if self.sameSettingsCheck.GetValue() is False: # are the options all the same?
+                    if self.sameSettingsCheck.GetValue() is False: # the options are differing for each file
 
                         # init a list of xtables because every single call to
                         # croco with a different set of options will
@@ -592,9 +592,9 @@ class CroCoMainFrame(wx.Frame):
                             s = self.availReads[self.theReadFormat][0](file, *args, col_order=self.col_order)
                             allData.append(s)
 
-                        xtable = pd.concat(allData, sort=False)
+                        xtable = pd.concat(allData, axis=0, ignore_index=True)
 
-                    else:
+                    else: #options are all the same
                         args = list(self.inputOptionsToUserInput.values())
                         print('[croco_read] Found input args for file {}: "{}"'.format(listOfFilepaths, ', '.join(args)))
                         xtable = self.availReads[self.theReadFormat][0](listOfFilepaths, *args, col_order=self.col_order)
@@ -1013,13 +1013,15 @@ class CroCoOptionsFrame(wx.Frame):
             collect_user_options_input()
             collect_user_options_output()
 
-        print('[on_okay] Options for Input')
-        for key in self.parent.inputOptionsToUserInput:
-            print('\t{}: {}'.format(key, self.parent.inputOptionsToUserInput[key]))
+        if len(self.parent.inputOptionsToUserInput) > 0:
+            print('[on_okay] Options for Input')
+            for key in self.parent.inputOptionsToUserInput:
+                print('\t{}: {}'.format(key, self.parent.inputOptionsToUserInput[key]))
 
-        print('[on_okay] Options for Output')
-        for key in self.parent.outputOptionsToUserInput:
-            print('\t{}: {}'.format(key, self.parent.outputOptionsToUserInput[key]))
+        if len(self.parent.outputOptionsToUserInput) > 0:
+            print('[on_okay] Options for Output')
+            for key in self.parent.outputOptionsToUserInput:
+                print('\t{}: {}'.format(key, self.parent.outputOptionsToUserInput[key]))
 
 
         self.parent.on_run(event)
