@@ -153,9 +153,9 @@ def Read(xi_files, col_order=None, compact=False):
                                                      xtable[onlyInter]['prot2'],
                                                      xtable[onlyInter]['pos2'],
                                                      xtable[onlyInter]['pepseq1'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[Xi Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[Xi Read] skipped inter peptide categorization')
 
     xtable['xtype'] = np.nan
 
