@@ -136,12 +136,9 @@ class CroCoMainFrame(wx.Frame):
                                                              'file',
                                                              'Please provide an SSF file as returned by StavroX')]],
                            'Xi': [croco.Xi.Read, []],
-                           'Xi+XiFDR': [croco.XiSearchFDR.Read,[('xiFDR crosslink PSM file',
-                                                                 'file',
-                                                                 'Please provide file with xiFDR filtered crosslinks'),
-                                                                ('xiFDR Linear PSM file',
-                                                                 'file',
-                                                                 'Please provide file with xiFDR filtered linear peptides')]],
+                           'Xi+XiFDR': [croco.XiSearchFDR.Read, [('xi config file',
+                                                                  'file',
+                                                                  'Path to corresponding xi_config file')]],
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 

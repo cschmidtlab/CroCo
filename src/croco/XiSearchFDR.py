@@ -9,7 +9,9 @@ This script is part of the CroCo cross-link converter project
 import numpy as np
 import pandas as pd
 
-import os
+import os, re
+
+from collections import defaultdict
 
 if __name__ == '__main__':
     import HelperFunctions as hf
@@ -47,13 +49,14 @@ def _assign_type(row):
         t = np.nan
     return t
 
-def _modifications_from_sequence(sequence):
+def _modifications_from_sequence(sequence, moddict):
     """
     Extract a modification name and its position from a sequence containing
     the modifications as lowercase characters
     
     Args:
         sequence (str): a sequence to be parsed
+        moddict (dict): a dictionary mapping symbols for modified amino acids to tuples of corresponding amino acids and their masses
     Returns:
         str: sequence without the modification characters
         list of str: modification names
@@ -61,30 +64,61 @@ def _modifications_from_sequence(sequence):
     """
     mods = []
     modposns = []
-    
-    cur_pos = 0
-    this_mod = ''
-    clean_sequence = ''
-    
-    for char in sequence:
-        if char.isupper():
-            if this_mod != '':
-                mods.append(this_mod)
-                modposns.append(cur_pos)
-            this_mod = ''
-            clean_sequence += char
-            cur_pos += 1
-        else:
-            this_mod += char
-            
-    return clean_sequence, mods, modposns
+    modmasses = []
+       
+    # list containign the symbal, start position, end position of the
+    # symbol in the original sequence
+    found = list()
+    for symbol in moddict.keys():
+        if symbol in sequence:
+            for m in re.finditer(symbol, sequence):
+                found.append((symbol, m.start(), m.end()))
+            sequence = re.sub(symbol, moddict[symbol][0], sequence)
 
-def Read(xifdr_files, modstring=None, col_order=None, compact=False):
+    # sort in place
+    found.sort(key=lambda x: x[1])
+    
+    bias = 0
+    for match in found:
+        mods.append(match[0])
+        modmasses.append(moddict[match[0]][1])
+        modposns.append(1+match[1]-bias)
+        bias += len(match[0]) - len(moddict[match[0]][0])
+
+    return sequence, mods, modposns, modmasses
+
+def _mods_from_xi_config(xi_config):
+    """
+    Extract a modifications dictionary from a xi config file
+    
+    Args:
+        xi_config (str): path to xi_config file
+    
+    Returns:
+        dict: dictionary mapping modification symbols to a list of their unmodified counterpart and the modified mass
+    """
+    
+    moddict = dict()
+    
+    modification_pattern = re.compile(r'modification:\w+::SYMBOL:(\w+);MODIFIED:(\w+);MASS:(\d+(?:\.\d+))')
+    
+    with open(xi_config) as xcfg:
+        for line in xcfg.readlines():
+            if modification_pattern.match(line):
+                match = modification_pattern.match(line)
+                symbol, aa, mass = match.groups()
+                moddict[symbol] = aa, float(mass)
+                
+    return moddict
+        
+
+def Read(xifdr_files, xi_config, col_order=None, compact=False):
     """
     Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.
 
     Args:
         xifdr_files: path or list of paths to xiFDR file(s)
+        xi_config: path to corresponding xi_config file
         col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
         compact (bool): Whether to keep the columns of the original dataframe or not
 
@@ -123,27 +157,34 @@ def Read(xifdr_files, modstring=None, col_order=None, compact=False):
     xtable = pd.concat(allData)
 
     ### Process the data to comply to xTable format
-    xtable = xtable.rename(columns={'scan': 'scanno',
+
+    xtable = xtable.rename(columns={#rawfile
                                     'exp charge': 'prec_ch',
-                                    'PepSeq1': 'pepseq1',
                                     'LinkPos1': 'xlink1',
-                                    'PepSeq2': 'pepseq2',
                                     'LinkPos2': 'xlink2',
-                                    # modmass1
-                                    # modmass2
                                     'Protein1': 'prot1',
                                     'ProteinLinkPos1': 'xpos1',
                                     'Protein2': 'prot2',
                                     'ProteinLinkPos2': 'xpos2',
                                     'PepPos1': 'pos1',
                                     'PepPos2': 'pos2',
+                                    'Score': 'score'
                                     })
 
+    # split the run column from Xi into two columns: rawfile and scanno
+    xtable['rawfile'], xtable['scanno'] = xtable['run'].str.split('.', 1).str
+
+    moddict = _mods_from_xi_config(xi_config)
+
     # Extract clean sequence and modificiations from the sequence string
-    xtable[['pepseq1', 'mod1', 'modpos1']] =\
-        pd.DataFrame(xtable['pepseq1'].apply(_modifications_from_sequence).tolist(), index=xtable.index)
-    xtable[['pepseq2', 'mod2', 'modpos2']] =\
-        pd.DataFrame(xtable['pepseq2'].apply(_modifications_from_sequence).tolist(), index=xtable.index)
+    xtable[['pepseq1', 'mod1', 'modpos1', 'modmass1']] =\
+        pd.DataFrame(xtable['PepSeq1'].apply(lambda x: _modifications_from_sequence(x, moddict)).tolist(), index=xtable.index)
+    xtable[['pepseq2', 'mod2', 'modpos2', 'modmass2']] =\
+        pd.DataFrame(xtable['PepSeq2'].apply(lambda x: _modifications_from_sequence(x, moddict)).tolist(), index=xtable.index)
+
+    # modmasses cannot be extracted directly
+    xtable['modmass1'] = np.nan
+    xtable['modmass2'] = np.nan
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
@@ -197,4 +238,5 @@ if __name__ == '__main__':
 
     os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\xi\pXtract_msconvertStyle')
     xifdr_files = r'XiFDR_5_FDR_PSM_PSM_xiFDR1.0.22.csv'
-    xtable = Read(xifdr_files, compact=True)
+    xi_config = r'xi_config.conf'
+    xtable = Read(xifdr_files, xi_config, compact=False)
