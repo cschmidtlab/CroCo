@@ -50,7 +50,10 @@ def _aminoacid_from_sequence(pepseq, xlink):
            'W': 'TRP'
            }
 
-    AA = aa_dict[pepseq[int(xlink)-1].upper()]
+    try:
+        AA = aa_dict[pepseq[int(xlink)-1].upper()]
+    except:
+        raise Exception('[xWalk] Could not translate amino acid {} from the sequence {} into 3-letter code. Please manually correct the sequence.'.format(pepseq[int(xlink)-1].upper(), pepseq))
 
     return AA
 
@@ -95,10 +98,11 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
             chains = [x.strip() for x in chains.split(',')]
         try:
             for annotation in chains:
-                protein, chain = annotation.strip().split(':')
-                # by generating a list of the string, all characters will be represented
-                # as single chain identifiers
-                chainDict[protein] = list(chain.upper())
+                if annotation != '':
+                    protein, chain = annotation.strip().split(':')
+                    # by generating a list of the string, all characters will be represented
+                    # as single chain identifiers
+                    chainDict[protein] = list(chain.upper())
         except:
             raise Exception('[xWalk Write] Please specify protein:chain in an comma-separated list from the GUI or as a dict')
 
@@ -214,12 +218,12 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
 if __name__ == '__main__':
     from xTable import Read
 
-    pdb = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\1aqf.pdb'
+    pdb = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\1pkn.pdb'
     atom = 'CB'
-    out = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\xWalk'
-    chains = 'SPA_STAAU:AD, IgG4_heavy:BC'
-    offset = 'SPA_STAAU:1, IgG4_heavy:0'
+    out = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\xTable_to_vis\xWalk'
+    chains = 'P11974:A'
+    offset = 'P11974:-1'
 
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\pLink1_xtable_xTable_to_xTable.xlsx')
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable.xlsx')
 
     xtable = Write(xtable=xtable, outpath=out, pdb=pdb, offset=offset, chains=chains, atom=atom)

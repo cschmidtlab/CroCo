@@ -100,14 +100,76 @@ def _mods_from_xi_config(xi_config):
     
     moddict = dict()
     
-    modification_pattern = re.compile(r'modification:\w+::SYMBOL:(\w+);MODIFIED:(\w+);MASS:(\d+(?:\.\d+))')
+    modification_w_mass_pattern = re.compile(r'modification:\w+::SYMBOL:(\w+);MODIFIED:(\w+);MASS:(\d+(?:\.\d+))')
+    modification_w_deltamass_pattern = re.compile(r'modification:\w+::SYMBOLEXT:(\w+);MODIFIED:([\w,]+);DELTAMASS:(\d+(?:\.\d+))')
+    
+    # dict with aa masses to calculate exact masses from deltamasses
+    aa2mass = {'G': 57.02147,
+               'A': 71.03712,
+               'S': 87.03203,
+               'P': 97.05277,
+               'V': 99.06842,
+               'T': 101.04768,
+               'C': 103.00919,
+               'I': 113.08407,
+               'L': 113.08407,
+               'N': 114.04293,
+               'D': 115.02695,
+               'Q': 128.05858,
+               'K': 128.09497,
+               'E': 129.0426,
+               'M': 131.04049,
+               'H': 137.05891,
+               'F': 147.06842,
+               'R': 156.10112,
+               'Y': 163.06333,
+               'W': 186.07932}
     
     with open(xi_config) as xcfg:
         for line in xcfg.readlines():
-            if modification_pattern.match(line):
-                match = modification_pattern.match(line)
-                symbol, aa, mass = match.groups()
-                moddict[symbol] = aa, float(mass)
+            if line.startswith('#'):
+                continue
+            # amino acids can contain modifications
+            if line.startswith('modification:'):
+                # does this line look like a modification line with exact mass
+                if modification_w_mass_pattern.match(line):
+                    print('Found mass instead of deltamass')
+                    match = modification_w_mass_pattern.match(line)
+                    symbol, aa, mass = match.groups()
+                    # calculate the deltamass based on amino acids masses
+                    deltamass = float(mass) - aa2mass[aa]
+                    moddict[symbol] = aa, float(deltamass)
+                # or does it look like a deltamass modline
+                elif modification_w_deltamass_pattern.match(line):
+                    match = modification_w_deltamass_pattern.match(line)
+                    symbolext, aas, deltamass = match.groups()
+                    # deltamass lines can contain multiple aminoacids to be modified
+                    for aa in aas.split(','):
+                        symbol = aa + symbolext
+                        moddict[symbol] = aa, float(deltamass)
+            # or monolinked cross-linkers
+            elif line.startswith('crosslinker:SymetricSingleAminoAcidRestrictedCrossLinker:'):
+                # at pos 57 the string "crosslinker:SymetricSingleAminoAcidRestrictedCrossLinker:" ends
+                for element in line[57:].split(';'): 
+                    element_key, element_val = element.split(':')
+                    if element_key == 'Name':
+                        xl_name = element_val
+                    elif element_key == 'MASS':
+                        mass = float(element_val)
+                    elif element_key == 'LINKEDAMINOACIDS':
+                        aas = element_val
+                    elif element_key == 'MODIFICATIONS':
+                        mod_symbols = list()
+                        mod_masses = list()
+                        for i, e in enumerate(element_val.split(',')):
+                            if i%2 == 0: #even indices
+                                mod_symbols.append(e)
+                            else:
+                                mod_masses.append(e)
+                for aa in aas.split(','):
+                    for idx, symbolext in enumerate(mod_symbols):
+                        symbol = aa + xl_name.lower() + symbolext.lower()
+                        moddict[symbol] = aa, float(mass) + float(mod_masses[idx])
                 
     return moddict
         
@@ -182,10 +244,6 @@ def Read(xifdr_files, xi_config, col_order=None, compact=False):
     xtable[['pepseq2', 'mod2', 'modpos2', 'modmass2']] =\
         pd.DataFrame(xtable['PepSeq2'].apply(lambda x: _modifications_from_sequence(x, moddict)).tolist(), index=xtable.index)
 
-    # modmasses cannot be extracted directly
-    xtable['modmass1'] = np.nan
-    xtable['modmass2'] = np.nan
-
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
           _assign_type, axis=1)
@@ -236,7 +294,7 @@ if __name__ == '__main__':
                   'prot1', 'xpos1', 'prot2',
                   'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\xi\pXtract_msconvertStyle')
+    os.chdir(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\input\xi_xiFDR')
     xifdr_files = r'XiFDR_5_FDR_PSM_PSM_xiFDR1.0.22.csv'
     xi_config = r'xi_config.conf'
     xtable = Read(xifdr_files, xi_config, compact=False)

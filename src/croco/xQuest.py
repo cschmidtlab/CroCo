@@ -74,7 +74,7 @@ def _process_xquest_id(Id_string):
         match = monolink_pattern.match(Id_string)
         # pepseq1, pepseq2, xlink1, xlink2
         pepseq, xlink = match.groups()
-        
+
 #                return pepseq, np.nan, xlink, np.nan
         return pepseq, np.nan, int(xlink), np.nan
     else:
@@ -222,6 +222,8 @@ def Read(xQuest_files, col_order=None, compact=False):
     # UNKNOWN
     for header in ['xtype', 'modmass1', 'modpos1', 'modmass2', 'modpos2']:
         xtable[header] = np.nan
+
+    xtable['search_engine'] = 'xQuest'
 
     xtable = hf.order_columns(xtable, col_order, compact)
 

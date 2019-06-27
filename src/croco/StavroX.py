@@ -94,44 +94,7 @@ def _calc_xpos2(t, pos1, pos2, xlink2):
     except:
         return np.nan
 
-def _pepseqs_from_peptides(peptide1, peptide2):
-    """
-    Extract the peptide sequences for peptide 1 and peptide 2 from the
-    StavroX Peptide entry.
-    Set peptide2 to np.nan for monolinks and to peptide1 for loop-links
-
-    Args:
-        peptide1 (str): Stavrox peptide string for peptide 1
-        peptide2 (str): Stavrox peptide string for peptide 2
-
-    Returns:
-        pepseq1 (str): corrected sequence for peptide1
-        pepseq2 (str): corrected sequence for peptide2
-    """
-
-    def clear_pepname(peptide_string):
-        """
-        Remove the preceding and trailing identifiers for free N- and C-termini
-        []{} denote N- and C-termini in StavroX
-        """
-
-        if peptide_string[0] in '[]{}':
-            peptide_string = peptide_string[1:]
-        if peptide_string[-1] in '[]{}':
-            peptide_string = peptide_string[:-1]
-        # make all upper case to allow parsing in later programmes
-        return peptide_string.upper()
-
-    if str(peptide2) == '0': # mono-link
-        peptide2 = np.nan
-        return clear_pepname(peptide1), ''
-    elif str(peptide2) == '1': # loop-link
-        peptide2 = peptide1
-        return clear_pepname(peptide1), clear_pepname(peptide2)
-    else: # regular inter-peptide link
-        return clear_pepname(peptide1), clear_pepname(peptide2)
-
-def _mods_from_peptides(peptide1, peptide2, mod2name, mod2mass):
+def _mods_and_sequences_from_peptides(peptide1, peptide2, mod_dict):
     """
     Extract modification position and name from two StavroX peptide strings.
     Set peptide2 to np.nan for monolinks and to peptide1 for loop-links
@@ -139,8 +102,7 @@ def _mods_from_peptides(peptide1, peptide2, mod2name, mod2mass):
     Args:
         peptide1 (str): Entry of the StavroX Peptide 1 column
         peptide2 (str): Entry of the StavroX Peptide 2 column
-        mod2name (dict): dict mapping modification abbreviations to names
-        mod2mass (dict): dict mapping modification abbreviations to masses
+        mod_dict (dict): dict mapping modification abbreviations to lists of [Modified AA, Modification name, Modification mass]
     Returns:
         list: name of the modification(s) of peptide1
         list: position of the modification(s) of peptide1
@@ -152,33 +114,31 @@ def _mods_from_peptides(peptide1, peptide2, mod2name, mod2mass):
 
     if str(peptide2) == '0': # mono-link
         peptide2 = np.nan
-        (mod1, modpos1, modmass1), (mod2, modpos2, modmass2) =\
+        (mod1, modpos1, modmass1, sequence1), (mod2, modpos2, modmass2, sequence2) =\
             _calculate_mod_modpos_modmass(peptide1), ([], [], [])
     elif str(peptide2) == '1': # loop-link
-        peptide2 = peptide1
-        (mod1, modpos1, modmass1), (mod2, modpos2, modmass2) =\
-            _calculate_mod_modpos_modmass(peptide1, mod2name, mod2mass), _calculate_mod_modpos_modmass(peptide2, mod2name, mod2mass)
+        (mod1, modpos1, modmass1, sequence1), (mod2, modpos2, modmass2, sequence2) =\
+            _calculate_mod_modpos_modmass(peptide1, mod_dict), _calculate_mod_modpos_modmass(peptide1, mod_dict)
     else: # regular inter-peptide link
-        (mod1, modpos1, modmass1), (mod2, modpos2, modmass2) =\
-            _calculate_mod_modpos_modmass(peptide1, mod2name, mod2mass), _calculate_mod_modpos_modmass(peptide2, mod2name, mod2mass)
+        (mod1, modpos1, modmass1, sequence1), (mod2, modpos2, modmass2, sequence2) =\
+            _calculate_mod_modpos_modmass(peptide1, mod_dict), _calculate_mod_modpos_modmass(peptide2, mod_dict)
 
+    return mod1, modpos1, modmass1, sequence1, mod2, modpos2, modmass2, sequence2
 
-    return mod1, modpos1, modmass1, mod2, modpos2, modmass2
-
-def _calculate_mod_modpos_modmass(peptide_string, mod2name, mod2mass):
+def _calculate_mod_modpos_modmass(peptide_string, mod_dict):
     """
     Extraction modification, name of the modification and modification mass
     from a StavroX peptide string
 
     Args:
         peptide_string (str): Entry of the StavroX Peptide 1/2 column
-        mod2name (dict): dict mapping modification abbreviations to names
-        mod2mass (dict): dict mapping modification abbreviations to masses
+        mod_dict (dict): dict mapping modification abbreviations to lists of [Modified AA, Modification name, Modification mass]
 
     Returns:
         list: name of the modification(s)
         list: position of the modification(s)
         list: mass(es) of the modification(s)
+        str: sequence without modification(s)
     """
 
     # if there is no peptide, there are no modifications
@@ -189,27 +149,23 @@ def _calculate_mod_modpos_modmass(peptide_string, mod2name, mod2mass):
         else:
             raise Exception('Unusual peptide string recognised: {}'.format(a_float))
     except:
-        # clean up peptide string
-        if peptide_string[1] in '[]{}':
-            peptide_string = peptide_string[1:]
-        if peptide_string[-1] in '[]{}':
-            peptide_string = peptide_string[:-1]
-
         modpos = []
         modmass= []
         mod = []
 
-        position = 0
-        for char in peptide_string:
-            if char in mod2name.keys():
+        sequence = ''
+        for idx, char in enumerate(peptide_string):
+            if char in mod_dict.keys():
                 # avoid setting N- and C-terminal ends as modification
-                if char not in '[]{}':
-                    position += 1
-                    mod.append(mod2name[char])
-                    modmass.append(mod2mass[char])
-                    modpos.append(position)
+                mod.append(mod_dict[char][1])
+                modmass.append(mod_dict[char][2])
+                modpos.append(idx)
+                char = mod_dict[char][0]
+            if char in '[]{}':
+                continue
+            sequence += char
 
-        return mod, modpos, modmass
+        return mod, modpos, modmass, sequence
 
 
 def _parse_ssf(ssf_file):
@@ -221,8 +177,7 @@ def _parse_ssf(ssf_file):
         ssf_file (str): path to the properties.ssf file from StavroX
 
     Returns:
-        dict: Dict mapping modification identifiers to their mass
-        dict: Dict mapping modification identifiers to their name
+        dict: Dict mapping modification identifiers a list of [modified AA, name of modification, modmass]
     """
     ssf_dict = {}
     current_list = None
@@ -236,6 +191,12 @@ def _parse_ssf(ssf_file):
             elif 'AMINOACIDS' in line:
                 current_list = 'AAs'
                 ssf_dict[current_list] = []
+            elif 'VARMODIFICATION' in line:
+                current_list = 'varmods'
+                ssf_dict[current_list] = []
+            elif 'STATMODIFICATION' in line:
+                current_list = 'fixedmods'
+                ssf_dict[current_list] = []
             elif 'END' in line:
                 current_list = None
             elif current_list != None:
@@ -246,22 +207,45 @@ def _parse_ssf(ssf_file):
 
     AA2formula = dict((y,z) for x,y,z in ssf_dict['AAs'])
     AA2name = dict((y,x) for x,y,z in ssf_dict['AAs'])
+    
+    mod_dict = dict()
+    for x,y,z in ssf_dict['varmods']:
+        mod_dict[y] = [x,]
+    for x,y in ssf_dict['fixedmods']:
+        mod_dict[y] = [x,]
 
-    mod2mass = {}
-    mod2name = {}
+    for symbol in mod_dict.keys():
+        modformula = AA2formula[symbol]
+        elements, stoichiometries = _elemental_composition(modformula, elements2mass)
+        modmass = 0
+        for element, amount in zip(elements, stoichiometries):
+            modmass += int(amount) * float(elements2mass[element])
+            
+        unmodformula = AA2formula[mod_dict[symbol][0]]
+        elements, stoichiometries = _elemental_composition(unmodformula, elements2mass)
+        unmodmass = 0
+        for element, amount in zip(elements, stoichiometries):
+            unmodmass += int(amount) * float(elements2mass[element])
+        
+        mod_dict[symbol].append(AA2name[symbol])
+        mod_dict[symbol].append(modmass-unmodmass)
 
-    for AA in AA2formula:
-        if AA not in 'RHKDESTNQCUGPAVILMFYW':
-            formula = AA2formula[AA]
-            elements, stoichiometries = _elemental_composition(formula, elements2mass)
-            mass = 0
-            for element, amount in zip(elements, stoichiometries):
-                mass += int(amount) * float(elements2mass[element])
+#
+#    mod2mass = {}
+#    mod2name = {}
+#
+#    for AA in AA2formula:
+#        if AA not in 'RHKDESTNQCUGPAVILMFYW':
+#            formula = AA2formula[AA]
+#            elements, stoichiometries = _elemental_composition(formula, elements2mass)
+#            mass = 0
+#            for element, amount in zip(elements, stoichiometries):
+#                mass += int(amount) * float(elements2mass[element])
+#
+#            mod2mass[AA] = mass
+#            mod2name[AA] = AA2name[AA]
 
-            mod2mass[AA] = mass
-            mod2name[AA] = AA2name[AA]
-
-    return mod2mass, mod2name
+    return mod_dict
 
 
 def _elemental_composition(formula, elements2mass):
@@ -403,13 +387,6 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     print('[StavroX Read] changed xlink positions')
 
-    # Extract the Peptide sequence e.g. from [KPDT]AGT]
-    #xtable[['pepseq1', 'pepseq2']] = data[['Peptide 1', 'Peptide 2']].apply(_pepseqs_from_peptides, axis=1)
-    xtable['pepseq1'], xtable['pepseq2'] =\
-        np.vectorize(_pepseqs_from_peptides)(xtable['Peptide 1'], xtable['Peptide 2'])
-
-    print('[StavroX Read] Reformatted pepseqs')
-
     # remove for example preceding > in UniProt headers
     xtable['prot1'] = xtable['Protein 1'].apply(_clear_protname)
     xtable['prot2'] = xtable['Protein 2'].apply(_clear_protname)
@@ -435,20 +412,19 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
 
     print('[StavroX Read] Generated xpos')
 
-    mod2mass, mod2name = _parse_ssf(hf.compatible_path(ssf_file))
+    mod_dict = _parse_ssf(hf.compatible_path(ssf_file))
 
     print('[StavroX Read] parsed SSF')
 
     # Extract the modification mass and position from the peptide string
-    xtable[['mod1', 'modpos1', 'modmass1', 'mod2', 'modpos2', 'modmass2']] =\
+    xtable[['mod1', 'modpos1', 'modmass1', 'pepseq1', 'mod2', 'modpos2', 'modmass2', 'pepseq2']] =\
         pd.DataFrame(xtable[['Peptide 1', 'Peptide 2']].apply(\
-            lambda row: _mods_from_peptides(row['Peptide 1'],
+            lambda row: _mods_and_sequences_from_peptides(row['Peptide 1'],
                                            row['Peptide 2'],
-                                           mod2name,
-                                           mod2mass),
+                                           mod_dict),
                     axis=1).tolist(), index=xtable.index)
 
-    print('[StavroX Read] Extracted modifications')
+    print('[StavroX Read] Extracted modifications and sequences')
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
@@ -486,6 +462,8 @@ def Read(stavrox_files, ssf_file, col_order=None, compact=False):
     # errors ignore leaves the dtype as object for every
     # non-numeric element
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+
+    xtable['search_engine'] = 'StavroX'
 
     xtable = hf.order_columns(xtable, col_order, compact)
 

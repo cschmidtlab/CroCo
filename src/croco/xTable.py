@@ -64,7 +64,7 @@ def Read(xTable_files, col_order=None, compact=False):
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
     
-    xtable = pd.concat(allData)
+    xtable = pd.concat(allData, sort=False)
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
         .applymap(lambda x: hf.convert_to_list_of(x, float))
