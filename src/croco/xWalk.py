@@ -84,6 +84,12 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     if not pdbBase.endswith('.pdb'):
         raise Exception('Please provide a valid PDB file')
 
+    # drop duplicates
+    xtable.drop_duplicates(inplace=True,
+                           keep='first',
+                           subset='ID')
+
+
     xtable['File name'] = pdbBase
 
     if len(atom.strip()) > 4:
@@ -207,12 +213,14 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xWalkTable = xWalkTable[xWalkTable['Atom Info 1'] != xWalkTable['Atom Info 2']]
 
     xWalkTable.reset_index(inplace=True)
+    # increase df index by 1
+    xWalkTable.index = range(1,len(xWalkTable)+1)
 
     xWalkTable.loc[:, ['File name', 'Atom Info 1', 'Atom Info 2']]\
         .to_csv('{}_{}.tsv'.format(hf.compatible_path(outpath), 'xWalk'),
+                                   header=False,
                                    index = True,
                                    index_label = 'Index',
-                                   header = True,
                                    sep='\t')
 
 if __name__ == '__main__':
@@ -224,6 +232,6 @@ if __name__ == '__main__':
     chains = 'P11974:A'
     offset = 'P11974:-1'
 
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable.xlsx')
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable_intra.xlsx')
 
     xtable = Write(xtable=xtable, outpath=out, pdb=pdb, offset=offset, chains=chains, atom=atom)
