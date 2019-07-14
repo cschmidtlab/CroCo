@@ -271,7 +271,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                             break
 
                     if nothingFound:
-                        raise Exception('[pLabel writer] couldnt find a matching spectrum for {}'.\
+                        raise Exception('[pLabel writer] couldnt find a matching spectrum for {}. If converting an xTable that was not generated from pLink input searched with the same mgf-file, please activate the merge-pLabel-option'.\
                                             format('.'.join([rf, scanno, scanno, prec_ch]).upper()))
 
                     # Generate the spectrum title as used by pLabel from
@@ -297,6 +297,9 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         outMGF = outpath + '.mgf'
 
         filesWithOffsetToCopy = []
+        # a list with new mgf spectrum titles to integrate non-pLink results
+        # into the pLabel viewer
+        new_titles_and_charges_for_copy = []
 
         print('[pLabel] Opening {} to write'.format(outfile))
         with open(hf.compatible_path(outfile), 'w') as plabel:
@@ -319,7 +322,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
             plabel.write('[Total]\n')
             plabel.write('total={}\n'.format(len(xtable.index)))
 
-            idx = 1
+            plabel_specno = 1
             for rf in rawfiles:
 
                 xtablePerRawfile = xtable[xtable['rawfile'] == rf].copy()
@@ -328,29 +331,35 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
                     toWrite = ''
 
-                    toWrite += ('[Spectrum{}]\n'.format(idx))
-                    idx += 1
+                    toWrite += ('[Spectrum{}]\n'.format(plabel_specno))
+                    plabel_specno += 1
 
                     scanno = str(int(row['scanno']))
                     prec_ch = str(int(row['prec_ch']))
 
-                    title = ''
                     nothingFound = True
+                    title = ''
                     for idx, t in enumerate(allTitles):
                         # add the scanno twice to the search string to avoid
                         # matching of substrings e.g. 2516 to 25164
-                        if '.'.join([rf, scanno, scanno, prec_ch]).upper() in t:
-                            title = t
+                        # the charge is not considered here as charge assignment
+                        # can vary between different prorgammes
+                        if '.'.join([rf, scanno, scanno]).upper() in t:     
+                            # generate a new mgf-spectrum title unique for this
+                            # entry (pLabel cannot take a spectrum twice)
+                            counter = 0
+                            while '.'.join([rf, scanno, scanno, prec_ch, str(counter)]) in new_titles_and_charges_for_copy:
+                                counter +=1
+                            title = '.'.join([rf, scanno, scanno, prec_ch, str(counter)])
+                            new_titles_and_charges_for_copy.append((title, prec_ch))
+
                             # save the position of each title in the MGF file
                             # for MGF-file merging
-                            filesWithOffsetToCopy.append(titles2mgfoffset[title])
+                            filesWithOffsetToCopy.append(titles2mgfoffset[t])
                             # set the variable to check if any matching title
                             # was found for a row
                             nothingFound = False
-                            # remove the title from the list to avoid setting
-                            # the same title twice
-                            del allTitles[idx]
-                            # leave the loop once the title has been removed
+                            # leave the loop
                             break
 
                     if nothingFound:
@@ -378,18 +387,25 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         # Generate merged MGF file containing only the matching spectra
         print('Opening {} to write'.format(outMGF))
         with open(hf.compatible_path(outMGF), 'w') as mgf:
+            # sequentially open all MGF-files to copy from
             templates = set([file for file, offset in filesWithOffsetToCopy])
             for template in templates:
                 with open(hf.compatible_path(template), 'r') as t:
                     print('Opening {} to read'.format(template))
 
                     offsets = []
-                    for file, offset in filesWithOffsetToCopy:
+                    new_titles_and_charges = []
+                    for idx, (file, offset) in enumerate(filesWithOffsetToCopy):
                         if file == template:
+                            # parts to read from that file
                             offsets.append(offset)
+                            # new titles to generate for each part read
+                            new_titles_and_charges.append(new_titles_and_charges_for_copy[idx])
 
-                    for o in offsets:
+                    for idx, o in enumerate(offsets):
+                        # move to the part of the file where the spectrum is stored
                         t.seek(o, 0)
+                        new_title_and_charge = new_titles_and_charges[idx]
                         while True:
                             # loop through the lines of the spectrum until end-signa
                             line = t.readline()
@@ -397,6 +413,12 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                                 # leave loop if the current spectrum ends
                                 mgf.write(line)
                                 break
+                            elif line.startswith('TITLE'):
+                                # change the title line
+                                mgf.write('TITLE={}\n'.format(new_title_and_charge[0]))
+                            elif line.startswith('CHARGE'):
+                                # change the charge line
+                                mgf.write('CHARGE={}+\n'.format(new_title_and_charge[1]))                                
                             else:
                                 mgf.write(line)
 
@@ -406,10 +428,10 @@ if __name__ == '__main__':
 
     import croco
 
-    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel\test_xTable.xlsx'
+    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable_intra.xlsx'
     xTable = croco.xTable.Read(infile)
 
-    outpath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel\test_xTable'
-    mgfDir = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel'
+    outpath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\xTable_to_vis\pLabel'
+    mgfDir = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final'
 
     Write(xTable, outpath, mgfDir, 'BS3', mergepLabel = True)

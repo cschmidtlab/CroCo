@@ -14,7 +14,7 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def Read(perc_files, rawfile=None, validated_string='.validated', percolator_string='.perc', decoy_string='REVERSE', compact=False, col_order=None):
+def Read(perc_files, rawfile=None, validated_string='.validated', percolator_string='.perc', decoy_string='decoy', compact=False, col_order=None):
     """
     Collects unprocessed and percolated results and returns an xtable data array.
 

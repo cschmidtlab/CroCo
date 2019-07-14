@@ -93,9 +93,9 @@ def _categorize_xquest_type(XQType):
 
     if XQType == 'xlink':
         return 'inter'
-    elif XQType in ['loop', 'looplink']:
+    elif XQType == 'intralink':
         return 'loop'
-    elif XQType in ['mono', 'monolink']:
+    elif XQType == 'monolink':
         return 'mono'
     else:
         return np.nan
@@ -136,6 +136,7 @@ def Read(xQuest_files, col_order=None, compact=False):
 #        try:
         s = pd.read_csv(hf.compatible_path(file),
                         delimiter='\t',
+                        na_values='-',
                         dtype=xQuest_dtypes)
         allData.append(s)
 #        except:
@@ -186,15 +187,15 @@ def Read(xQuest_files, col_order=None, compact=False):
     xtable['type'] = xtable['Type'].apply(_categorize_xquest_type)
 
     if len(xtable[xtable['type'] == 'inter']) > 0:
-        # Reassign the type for inter xlink to inter/intra/homomultimeric
-        onlyInter = xtable['type'] == 'inter'
-        xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
-                                                     xtable[onlyInter]['pos1'],
-                                                     xtable[onlyInter]['pepseq1'],
-                                                     xtable[onlyInter]['prot2'],
-                                                     xtable[onlyInter]['pos2'],
-                                                     xtable[onlyInter]['pepseq1'])
+        # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
+        intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
+        xtable.loc[intraAndInter, 'type'] =\
+            np.vectorize(hf.categorize_inter_peptides)(xtable[intraAndInter]['prot1'],
+                                                     xtable[intraAndInter]['pos1'],
+                                                     xtable[intraAndInter]['pepseq1'],
+                                                     xtable[intraAndInter]['prot2'],
+                                                     xtable[intraAndInter]['pos2'],
+                                                     xtable[intraAndInter]['pepseq2'])
         print('[xQuest Read] categorized inter peptides')
     else:
         print('[xQuest Read] skipped inter peptide categorization')
