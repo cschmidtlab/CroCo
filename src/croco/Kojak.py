@@ -15,7 +15,7 @@ else:
     from . import HelperFunctions as hf
     from . import KojakFunctions as kj
 
-def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, compact=False):
+def Read(kojak_files, rawfile=None, decoy_string='decoy', col_order=None, compact=False):
     """
     Read Kojak results file, calculate and process missing values required
     for xTable and return the xTable.
@@ -51,7 +51,7 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
         # only called if kojak_file is not None
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(file),
+            s = pd.read_csv(hf.compatible_path(file),
                             skiprows = 1, # skip the Kojak version
                             dtype=kojak_dtypes,
                             na_values = '-',
@@ -119,13 +119,13 @@ def Read(kojak_files, rawfile=None, decoy_string='REVERSE', col_order=None, comp
 
     xtable['search_engine'] = 'Kojak'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     ### return xtable df
     return xtable
 
 if __name__ == '__main__':
-    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\PK\kojak\20180615_KS_CL_9_msconvert.kojak.txt'
+    kojak_file = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\input\kojak\20180615_KS_CL_9_msconvert.kojak.txt'
 
     col_order = ['rawfile', 'scanno', 'prec_ch',
                  'pepseq1', 'xlink1',
@@ -135,4 +135,4 @@ if __name__ == '__main__':
                  'prot1', 'xpos1', 'prot2',
                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    xtable = Read(kojak_file, col_order=col_order, rawfile='Test')
+    xtable = Read(kojak_file, col_order=col_order, rawfile='20180615_KS_CL_9')

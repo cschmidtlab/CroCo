@@ -14,6 +14,50 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
+def _aminoacid_from_sequence(pepseq, xlink):
+    """
+    Return the 3-character amino acid label of the cross-linked AA
+    from a peptide sequence
+    and the relative position of the cross-linker in the sequence
+    
+    Args:
+        pepseq (str): peptide sequence
+        xlink (int): position of the cross-link within the sequence
+    Returns:
+        str: 3-letter amino acid code for the cross-linked amino acid
+    """
+
+    aa_dict = {'R': 'ARG',
+           'H': 'HIS',
+           'K': 'LYS',
+           'D': 'ASP',
+           'E': 'GLU',
+           'S': 'SER',
+           'T': 'THR',
+           'N': 'ASN',
+           'Q': 'GLN',
+           'C': 'CYS',
+           'U': 'SEC',
+           'G': 'GLY',
+           'P': 'PRO',
+           'A': 'ALA',
+           'V': 'VAL',
+           'I': 'ILE',
+           'L': 'LEU',
+           'M': 'MET',
+           'F': 'PHE',
+           'Y': 'TYR',
+           'W': 'TRP'
+           }
+
+    try:
+        AA = aa_dict[pepseq[int(xlink)-1].upper()]
+    except:
+        raise Exception('[xWalk] Could not translate amino acid {} from the sequence {} into 3-letter code. Please manually correct the sequence.'.format(pepseq[int(xlink)-1].upper(), pepseq))
+
+    return AA
+
+
 def Write(xtable, outpath, pdb, offset, chains, atom):
     """
     Convert xTable into a list format that can be used as
@@ -35,51 +79,16 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
         outpath (str): path to write file
     """
 
-    
-    def AA_from_sequence(pepseq, xlink):
-        """
-        Return the 3-character amino acid label of the cross-linked AA
-        from a peptide sequence
-        and the relative position of the cross-linker in the sequence
-        
-        Args:
-            pepseq (str): peptide sequence
-            xlink (int): position of the cross-link within the sequence
-        Returns:
-            str: 3-letter amino acid code for the cross-linked amino acid
-        """
-    
-        aa_dict = {'R': 'ARG',
-               'H': 'HIS',
-               'K': 'LYS',
-               'D': 'ASP',
-               'E': 'GLU',
-               'S': 'SER',
-               'T': 'THR',
-               'N': 'ASN',
-               'Q': 'GLN',
-               'C': 'CYS',
-               'U': 'SEC',
-               'G': 'GLY',
-               'P': 'PRO',
-               'A': 'ALA',
-               'V': 'VAL',
-               'I': 'ILE',
-               'L': 'LEU',
-               'M': 'MET',
-               'F': 'PHE',
-               'Y': 'TYR',
-               'W': 'TRP'
-               }
-    
-        AA = aa_dict[pepseq[int(xlink)-1].upper()]
-    
-        return AA
-
     pdbBase = os.path.basename(pdb)
 
     if not pdbBase.endswith('.pdb'):
         raise Exception('Please provide a valid PDB file')
+
+    # drop duplicates
+    xtable.drop_duplicates(inplace=True,
+                           keep='first',
+                           subset='ID')
+
 
     xtable['File name'] = pdbBase
 
@@ -95,10 +104,11 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
             chains = [x.strip() for x in chains.split(',')]
         try:
             for annotation in chains:
-                protein, chain = annotation.strip().split(':')
-                # by generating a list of the string, all characters will be represented
-                # as single chain identifiers
-                chainDict[protein] = list(chain.upper())
+                if annotation != '':
+                    protein, chain = annotation.strip().split(':')
+                    # by generating a list of the string, all characters will be represented
+                    # as single chain identifiers
+                    chainDict[protein] = list(chain.upper())
         except:
             raise Exception('[xWalk Write] Please specify protein:chain in an comma-separated list from the GUI or as a dict')
 
@@ -110,11 +120,11 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xtable.dropna(subset=['prot1', 'prot2'], inplace=True)
 
     # set the 3-character code for the cross-linked amino acids
-    xtable['linked_aa1'] = np.vectorize(AA_from_sequence)\
+    xtable['linked_aa1'] = np.vectorize(_aminoacid_from_sequence)\
         (xtable['pepseq1'],
          xtable['xlink1'])
 
-    xtable['linked_aa2'] = np.vectorize(AA_from_sequence)\
+    xtable['linked_aa2'] = np.vectorize(_aminoacid_from_sequence)\
         (xtable['pepseq2'],
          xtable['xlink2'])
 
@@ -203,23 +213,25 @@ def Write(xtable, outpath, pdb, offset, chains, atom):
     xWalkTable = xWalkTable[xWalkTable['Atom Info 1'] != xWalkTable['Atom Info 2']]
 
     xWalkTable.reset_index(inplace=True)
+    # increase df index by 1
+    xWalkTable.index = range(1,len(xWalkTable)+1)
 
     xWalkTable.loc[:, ['File name', 'Atom Info 1', 'Atom Info 2']]\
-        .to_csv('{}_{}.tsv'.format(hf.FSCompatiblePath(outpath), 'xWalk'),
+        .to_csv('{}_{}.tsv'.format(hf.compatible_path(outpath), 'xWalk'),
+                                   header=False,
                                    index = True,
                                    index_label = 'Index',
-                                   header = True,
                                    sep='\t')
 
 if __name__ == '__main__':
     from xTable import Read
 
-    pdb = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\1aqf.pdb'
+    pdb = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\1pkn.pdb'
     atom = 'CB'
-    out = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\xWalk'
-    chains = 'SPA_STAAU:AD, IgG4_heavy:BC'
-    offset = 'SPA_STAAU:1, IgG4_heavy:0'
+    out = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\xTable_to_vis\xWalk'
+    chains = 'P11974:A'
+    offset = 'P11974:-1'
 
-    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\xWalk\pLink1_xtable_xTable_to_xTable.xlsx')
+    xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable_intra.xlsx')
 
     xtable = Write(xtable=xtable, outpath=out, pdb=pdb, offset=offset, chains=chains, atom=atom)

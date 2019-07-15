@@ -12,6 +12,12 @@ if __name__ == '__main__' or __name__ =='xTable':
 else:
     from . import HelperFunctions as hf
 
+def _join_list_by_semicolon(entry):
+    if isinstance(entry, list):
+        return ';'.join([str(x) for x in entry])
+    else:
+        return entry
+
 def Write(xtable, outpath, col_order=None, compact=False):
     """
     writes an xtable data structure to file (in xlsx format)
@@ -23,19 +29,13 @@ def Write(xtable, outpath, col_order=None, compact=False):
         compact (bool): Whether to compact the xTable to only those columns listed in col_order
     """
 
-    def convert_list(entry):
-        if isinstance(entry, list):
-            return ';'.join([str(x) for x in entry])
-        else:
-            return entry
-
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
-    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(convert_list)
+    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(_join_list_by_semicolon)
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
-    xtable.to_excel(hf.FSCompatiblePath(outpath) + '.xlsx',
+    xtable.to_excel(hf.compatible_path(outpath) + '.xlsx',
                     index=False)
 
 
@@ -59,23 +59,23 @@ def Read(xTable_files, col_order=None, compact=False):
     
     for file in xTable_files:
         try:
-            s = pd.read_excel(hf.FSCompatiblePath(file))
+            s = pd.read_excel(hf.compatible_path(file))
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
     
-    xtable = pd.concat(allData)
+    xtable = pd.concat(allData, sort=False)
     # convert only those columns to lists where lists are expected
     xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
-        .applymap(lambda x: hf.convertToListOf(x, float))
+        .applymap(lambda x: hf.convert_to_list_of(x, float))
 
     xtable[['modpos1', 'modpos2']] = xtable[['modpos1' ,'modpos2']]\
-        .applymap(lambda x: hf.convertToListOf(x, int))
+        .applymap(lambda x: hf.convert_to_list_of(x, int))
 
     xtable[['mod1', 'mod2']] = xtable[['mod1', 'mod2']]\
-        .applymap(lambda x: hf.convertToListOf(x, str))
+        .applymap(lambda x: hf.convert_to_list_of(x, str))
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
 

@@ -60,7 +60,7 @@ def Write(xtable, outpath):
                  inplace=True)
 
     if outpath.endswith('.csv'):
-        xinet.to_csv(hf.FSCompatiblePath(outpath), index=False)
+        xinet.to_csv(hf.compatible_path(outpath), index=False)
     else:
-        xinet.to_csv(hf.FSCompatiblePath(outpath) + '.csv',
+        xinet.to_csv(hf.compatible_path(outpath) + '.csv',
                     index=False)

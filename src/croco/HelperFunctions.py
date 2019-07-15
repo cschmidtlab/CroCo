@@ -6,29 +6,13 @@ HelperFunctions: Function that are used in multiple modules of CroCo
 import pandas as pd
 import numpy as np
 import os
-import re
 
 ### variables of repeated use that are centrally stored
 
 regexDict = {'mgfTITLE': r'(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*'}
 
 ### Functions that are repeatedly used
-
-def clearMDD(path):
-    pattern = re.compile(r'.*(\w:)')
-    
-    parts = path.split(os.path.sep)
-    try:
-        drive = pattern.match(parts[0]).group(1)
-        parts[0] = drive
-        if os.path.isdir(os.path.sep.join(parts)):
-            return os.path.sep.join(parts)
-        else:
-            raise Exception ['[ClearMDD] Generated path not found on your system']
-    except:
-        raise Exception('[ClearMDD] Error during path generation')
-
-def FSCompatiblePath(raw_path, encoding=None):
+def compatible_path(raw_path, encoding=None):
     """
     Convert paths on Win to overcome the win32 pathlength limit
     """
@@ -37,14 +21,14 @@ def FSCompatiblePath(raw_path, encoding=None):
         raw_path = raw_path.decode(encoding)
     path = os.path.abspath(raw_path)
     if (os.name == 'nt') and (len(path) > 255):
-        print('[FSCompatiblePath] converting to Windows extended path')
+        print('[compatible_path] converting to Windows extended path')
         if path.startswith(u"\\\\"):
             return u"\\\\?\\UNC\\" + path[2:]
         return u"\\\\?\\" + path
     else:
         return path
 
-def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
+def categorize_inter_peptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
     """
     Categorizes cross-linked peptides into inter, intra, homomultimeric
     """
@@ -55,16 +39,14 @@ def categorizeInterPeptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
         return 'inter'
     
     else:
-        if (pos2 <= pepend1 <= pepend2) or (pos1 <= pepend2 <= pepend1):
+        if (pos2 <= pepend1) and (pepend1 <= pepend2):
+            return 'homomultimeric'
+        elif (pos1 <= pepend2) and (pepend2 <= pepend1):
             return 'homomultimeric'
         else:
             return 'intra'
             
-def testVariable(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
-    
-    return ', '.join([str(prot1), str(pos1), str(pepseq1), str(prot2), str(pos2), str(pepseq2)])
-
-def applyColOrder(xtable, col_order, compact):
+def order_columns(xtable, col_order, compact):
     """
     Sort columns of xtable by col_order and return the whole xtable including
     columns mentioned in col_order if keep is true. Otherwise only return a
@@ -83,13 +65,13 @@ def applyColOrder(xtable, col_order, compact):
             try:
                 xtable = xtable[col_order]
             except Exception as e:
-                raise Exception('[ApplyColOrder] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
+                raise Exception('[order_columns] Couldnt apply col order. Did you pass compact=True and a list of column-titles?')
         else:
-            raise Exception('Compact argument passed to applyColOrder must be either True or False')
+            raise Exception('Compact argument passed to order_columns must be either True or False')
         
     return xtable
 
-def generateID(type, prot1, xpos1, prot2, xpos2):
+def generate_id(type, prot1, xpos1, prot2, xpos2):
     """
     Return a link ID based on the type of the xlink
     """
@@ -110,24 +92,10 @@ def generateID(type, prot1, xpos1, prot2, xpos2):
     else:
         return np.nan
 
-def toList(strorList):
-    """
-    take lists, floats or strings as input and return either the list or
-    a one-element list of the string or float
-    """
-    if isinstance(strorList, list):
-        return strorList
-
-    elif isinstance(strorList, float):
-        if not np.isnan(strorList):
-            return [strorList]
-    else:
-        return [strorList]
-
-def isNaN(num):
+def isnan(num):
     return num != num
 
-def convertToListOf(input, typefunc, delimiter=';'):
+def convert_to_list_of(input, typefunc, delimiter=';'):
     """
     Take an object that is not NaN, check if it contains a delimiter, split
     by delimiter and return list of elements of type typefunc
@@ -139,7 +107,7 @@ def convertToListOf(input, typefunc, delimiter=';'):
     Returns:
         List of objects of type typefunc
     """
-    if not isNaN(input):
+    if not isnan(input):
         if not isinstance(input, str):
             return [input]
         else:
@@ -147,37 +115,6 @@ def convertToListOf(input, typefunc, delimiter=';'):
             return [typefunc(x) for x in inputList]
     else:
         return input
-
-def castIfNotNan(input, typefunc):
-    if not isNaN(input):
-        return typefunc(input)
-    else:
-        return input
-
-def alphanum_string(s):
-    """
-    Method to clean strings from incorrect characters for file output
-    """
-    import re
-    # new compiler that finds non-alphanumeric characters
-    rex = re.compile(r'\W')
-    # actually replace the strings
-    result = rex.sub('_', s)
-
-    # remove double occurences of _ in the string
-    # initialize
-    old_char = ''
-    new_result = ''
-    for char in result:
-        if old_char != char:
-            new_result += char
-        else:
-            # prevent removal of double occurences of other strings than _
-            if old_char != '_':
-                new_result += char
-        old_char = char
-
-    return new_result
 
 def split_concatenated_lists(dataframe, where, delimiter=';'):
     """
@@ -208,7 +145,7 @@ def split_concatenated_lists(dataframe, where, delimiter=';'):
         # iterate over all rows in the input df
         for idx, row in dataframe.iterrows():
             # skip rows containing NaN
-            if isNaN(row[w]):
+            if isnan(row[w]):
                 continue
             # if the delimiter is found at the specified column
             if delimiter in row[w]:

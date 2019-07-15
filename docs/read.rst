@@ -88,8 +88,6 @@ Xi & XiFDR
 
 -  **Load file(s)**: Path to xiFDR file
    (e.g. ``FILENAME_5_FDR_PSM_xiFDR1.0.22.csv``)
--  OptionsWindow: Path to corresponding Xi results file
-   (e.g. ``FILENAME_XiVersion1.6.739.csv``)
 
    
 .. automodule:: croco.XiSearchFDR

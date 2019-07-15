@@ -14,7 +14,7 @@ else:
     from . import HelperFunctions as hf
 
 
-def assign_type(row):
+def _assign_type(row):
     """
     Assign mono, loop, inter and intra link
     based on prot1, prot2, xlink1 and xlink2 entries
@@ -43,7 +43,7 @@ def assign_type(row):
         t = np.nan
     return t
 
-def rawfile_from_source(source_str):
+def _rawfile_from_source(source_str):
     """
     Exctracts filename from string like
     E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
@@ -98,7 +98,7 @@ def Read(xi_files, col_order=None, compact=False):
 
         print('Reading xi-file: {}'.format(file))
         try:
-            s = pd.read_csv(hf.FSCompatiblePath(file), delimiter=',', dtype=xi_dtypes)
+            s = pd.read_csv(hf.compatible_path(file), delimiter=',', dtype=xi_dtypes)
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
@@ -127,15 +127,15 @@ def Read(xi_files, col_order=None, compact=False):
                                    'match score': 'score'
                                    })
 
-    xtable['rawfile'] = xtable['Source'].apply(rawfile_from_source)
+    xtable['rawfile'] = xtable['Source'].apply(_rawfile_from_source)
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
-        assign_type, axis=1)
+        _assign_type, axis=1)
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generateID,
+        pd.Series(np.vectorize(hf.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -147,21 +147,21 @@ def Read(xi_files, col_order=None, compact=False):
         # Reassign the type for inter xlink to inter/intra/homomultimeric
         onlyInter = xtable['type'] == 'inter'
         xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorizeInterPeptides)(xtable[onlyInter]['prot1'],
+            np.vectorize(hf.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
                                                      xtable[onlyInter]['pos1'],
                                                      xtable[onlyInter]['pepseq1'],
                                                      xtable[onlyInter]['prot2'],
                                                      xtable[onlyInter]['pos2'],
                                                      xtable[onlyInter]['pepseq1'])
-        print('[xQuest Read] categorized inter peptides')
+        print('[Xi Read] categorized inter peptides')
     else:
-        print('[xQuest Read] skipped inter peptide categorization')
+        print('[Xi Read] skipped inter peptide categorization')
 
     xtable['xtype'] = np.nan
 
     xtable['search_engine'] = 'XiSearch'
 
-    xtable = hf.applyColOrder(xtable, col_order, compact)
+    xtable = hf.order_columns(xtable, col_order, compact)
 
     return xtable
 
