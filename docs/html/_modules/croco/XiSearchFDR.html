@@ -41,7 +41,9 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
@@ -50,100 +52,269 @@
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">Xi</span> <span class="k">as</span> <span class="n">xi</span>
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
 
-<div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.XiSearchFDR.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">xifdr_file</span><span class="p">,</span> <span class="n">xi_file</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_assign_type</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assign mono, loop, inter and intra link</span>
+<span class="sd">    based on prot1, prot2, xlink1 and xlink2 entries</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        row (Series): a series or list containing prot1, prot2, xlink1, xlink2</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str or np.nan: type of cross-link (inter, intra, loop, mono)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prot1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">row</span>
+
+    <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="p">)</span>
+    <span class="n">prot2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot2</span><span class="p">)</span>
+    <span class="n">xlink1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">xlink1</span><span class="p">)</span>
+    <span class="n">xlink2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">xlink2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prot2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">prot1</span> <span class="o">==</span> <span class="n">prot2</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;intra&#39;</span>
+    <span class="k">elif</span> <span class="n">prot2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;inter&#39;</span>
+    <span class="k">elif</span> <span class="n">prot2</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">xlink2</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;loop&#39;</span>
+    <span class="k">elif</span> <span class="n">prot1</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">prot2</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span> <span class="ow">and</span> <span class="n">xlink1</span> <span class="o">!=</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="s1">&#39;mono&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">t</span>
+
+<span class="k">def</span> <span class="nf">_modifications_from_sequence</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">moddict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract a modification name and its position from a sequence containing</span>
+<span class="sd">    the modifications as lowercase characters</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        sequence (str): a sequence to be parsed</span>
+<span class="sd">        moddict (dict): a dictionary mapping symbols for modified amino acids to tuples of corresponding amino acids and their masses</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: sequence without the modification characters</span>
+<span class="sd">        list of str: modification names</span>
+<span class="sd">        list of int: modification positions within the peptide</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mods</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">modposns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">modmasses</span> <span class="o">=</span> <span class="p">[]</span>
+       
+    <span class="c1"># list containign the symbal, start position, end position of the</span>
+    <span class="c1"># symbol in the original sequence</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">moddict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">symbol</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">(),</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()))</span>
+            <span class="n">sequence</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">moddict</span><span class="p">[</span><span class="n">symbol</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sequence</span><span class="p">)</span>
+
+    <span class="c1"># sort in place</span>
+    <span class="n">found</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="n">bias</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">found</span><span class="p">:</span>
+        <span class="n">mods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">modmasses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">moddict</span><span class="p">[</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">modposns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">match</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">bias</span><span class="p">)</span>
+        <span class="n">bias</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">moddict</span><span class="p">[</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">mods</span><span class="p">,</span> <span class="n">modposns</span><span class="p">,</span> <span class="n">modmasses</span>
+
+<span class="k">def</span> <span class="nf">_mods_from_xi_config</span><span class="p">(</span><span class="n">xi_config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract a modifications dictionary from a xi config file</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        xi_config (str): path to xi_config file</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: dictionary mapping modification symbols to a list of their unmodified counterpart and the modified mass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">moddict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    
+    <span class="n">modification_w_mass_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;modification:\w+::SYMBOL:(\w+);MODIFIED:(\w+);MASS:(\d+(?:\.\d+))&#39;</span><span class="p">)</span>
+    <span class="n">modification_w_deltamass_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;modification:\w+::SYMBOLEXT:(\w+);MODIFIED:([\w,]+);DELTAMASS:(\d+(?:\.\d+))&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># dict with aa masses to calculate exact masses from deltamasses</span>
+    <span class="n">aa2mass</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="mf">57.02147</span><span class="p">,</span>
+               <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="mf">71.03712</span><span class="p">,</span>
+               <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="mf">87.03203</span><span class="p">,</span>
+               <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mf">97.05277</span><span class="p">,</span>
+               <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="mf">99.06842</span><span class="p">,</span>
+               <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="mf">101.04768</span><span class="p">,</span>
+               <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mf">103.00919</span><span class="p">,</span>
+               <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="mf">113.08407</span><span class="p">,</span>
+               <span class="s1">&#39;L&#39;</span><span class="p">:</span> <span class="mf">113.08407</span><span class="p">,</span>
+               <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="mf">114.04293</span><span class="p">,</span>
+               <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="mf">115.02695</span><span class="p">,</span>
+               <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="mf">128.05858</span><span class="p">,</span>
+               <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="mf">128.09497</span><span class="p">,</span>
+               <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="mf">129.0426</span><span class="p">,</span>
+               <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="mf">131.04049</span><span class="p">,</span>
+               <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="mf">137.05891</span><span class="p">,</span>
+               <span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="mf">147.06842</span><span class="p">,</span>
+               <span class="s1">&#39;R&#39;</span><span class="p">:</span> <span class="mf">156.10112</span><span class="p">,</span>
+               <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="mf">163.06333</span><span class="p">,</span>
+               <span class="s1">&#39;W&#39;</span><span class="p">:</span> <span class="mf">186.07932</span><span class="p">}</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xi_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">xcfg</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">xcfg</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="c1"># amino acids can contain modifications</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;modification:&#39;</span><span class="p">):</span>
+                <span class="c1"># does this line look like a modification line with exact mass</span>
+                <span class="k">if</span> <span class="n">modification_w_mass_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found mass instead of deltamass&#39;</span><span class="p">)</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">modification_w_mass_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                    <span class="n">symbol</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">mass</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                    <span class="c1"># calculate the deltamass based on amino acids masses</span>
+                    <span class="n">deltamass</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span> <span class="o">-</span> <span class="n">aa2mass</span><span class="p">[</span><span class="n">aa</span><span class="p">]</span>
+                    <span class="n">moddict</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">aa</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">deltamass</span><span class="p">)</span>
+                <span class="c1"># or does it look like a deltamass modline</span>
+                <span class="k">elif</span> <span class="n">modification_w_deltamass_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">modification_w_deltamass_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                    <span class="n">symbolext</span><span class="p">,</span> <span class="n">aas</span><span class="p">,</span> <span class="n">deltamass</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                    <span class="c1"># deltamass lines can contain multiple aminoacids to be modified</span>
+                    <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">aas</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+                        <span class="n">symbol</span> <span class="o">=</span> <span class="n">aa</span> <span class="o">+</span> <span class="n">symbolext</span>
+                        <span class="n">moddict</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">aa</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">deltamass</span><span class="p">)</span>
+            <span class="c1"># or monolinked cross-linkers</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;crosslinker:SymetricSingleAminoAcidRestrictedCrossLinker:&#39;</span><span class="p">):</span>
+                <span class="c1"># at pos 57 the string &quot;crosslinker:SymetricSingleAminoAcidRestrictedCrossLinker:&quot; ends</span>
+                <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">line</span><span class="p">[</span><span class="mi">57</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">):</span> 
+                    <span class="n">element_key</span><span class="p">,</span> <span class="n">element_val</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">element_key</span> <span class="o">==</span> <span class="s1">&#39;Name&#39;</span><span class="p">:</span>
+                        <span class="n">xl_name</span> <span class="o">=</span> <span class="n">element_val</span>
+                    <span class="k">elif</span> <span class="n">element_key</span> <span class="o">==</span> <span class="s1">&#39;MASS&#39;</span><span class="p">:</span>
+                        <span class="n">mass</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">element_val</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">element_key</span> <span class="o">==</span> <span class="s1">&#39;LINKEDAMINOACIDS&#39;</span><span class="p">:</span>
+                        <span class="n">aas</span> <span class="o">=</span> <span class="n">element_val</span>
+                    <span class="k">elif</span> <span class="n">element_key</span> <span class="o">==</span> <span class="s1">&#39;MODIFICATIONS&#39;</span><span class="p">:</span>
+                        <span class="n">mod_symbols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                        <span class="n">mod_masses</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">element_val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)):</span>
+                            <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1">#even indices</span>
+                                <span class="n">mod_symbols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">mod_masses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">aas</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">symbolext</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mod_symbols</span><span class="p">):</span>
+                        <span class="n">symbol</span> <span class="o">=</span> <span class="n">aa</span> <span class="o">+</span> <span class="n">xl_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">symbolext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                        <span class="n">moddict</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">aa</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">mod_masses</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+                
+    <span class="k">return</span> <span class="n">moddict</span>
+        
+
+<div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.XiSearchFDR.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">xifdr_files</span><span class="p">,</span> <span class="n">xi_config</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        xifdr_file: results file from xiFDR (contains PSM_xiFDR)</span>
-<span class="sd">        xi_file: path to percolated Kojak file</span>
-<span class="sd">        keep (bool): Whether to keep the columns of the original dataframe or not</span>
+<span class="sd">        xifdr_files: path or list of paths to xiFDR file(s)</span>
+<span class="sd">        xi_config: path to corresponding xi_config file</span>
+<span class="sd">        col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable</span>
+<span class="sd">        compact (bool): Whether to keep the columns of the original dataframe or not</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        xtable: xtable data table</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xifdr_file</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xifdr_file</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xiFDR Read] Sorry! Only one xiFDR file per conversion is allowed to unambiguously relate it to a xi-file&#39;</span><span class="p">)</span>
-        <span class="n">xifdr_file</span> <span class="o">=</span> <span class="n">xifdr_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># convert to list if the input is only a single path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xifdr_files</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">xifdr_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">xifdr_files</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;PSM_xiFDR&#39;</span> <span class="ow">in</span> <span class="n">xifdr_file</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xiFDR Read] The string &quot;PSM_xiFDR&quot; is missing in your input file. Did you choose the right file?&#39;</span><span class="p">)</span>
+    <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading xiFDR-file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xifdr_file</span><span class="p">))</span>
+    <span class="n">xifdr_dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;scan&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int64Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;exp charge&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int64Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;PepSeq1&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                   <span class="s1">&#39;PepSeq2&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                   <span class="s1">&#39;LinkPos1&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;LinkPos2&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                   <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                   <span class="s1">&#39;ProteinLinkPos1&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;ProteinLinkPos2&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;PepPos1&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="s1">&#39;PepPos2&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Int16Dtype</span><span class="p">(),</span>
+                   <span class="p">}</span>
 
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">xifdr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">xifdr_file</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-    
-        <span class="n">xifdr</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;run&#39;</span><span class="p">:</span> <span class="s1">&#39;Run&#39;</span><span class="p">,</span>
-                              <span class="s1">&#39;scan&#39;</span><span class="p">:</span> <span class="s1">&#39;Scan&#39;</span><span class="p">,</span>
-                              <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span> <span class="s1">&#39;Protein1_FDR&#39;</span><span class="p">,</span>
-                              <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="s1">&#39;Protein2_FDR&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xiFDR Read] Error while reading the xiFDR file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">xifdr_files</span><span class="p">:</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading xi-file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xi_file</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading xiFDR-file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">file</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">xifdr_dtypes</span><span class="p">)</span>
+            <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[xTable Read] Failed opening file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
 
-    <span class="n">xiraw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">xi_file</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-
-    <span class="c1"># Merge with left join (only keys that are in tje percolated DF will be re-</span>
-    <span class="c1"># tained)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">xifdr</span><span class="p">,</span> <span class="n">xiraw</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Run&#39;</span><span class="p">,</span> <span class="s1">&#39;Scan&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
 
     <span class="c1">### Process the data to comply to xTable format</span>
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Scan&#39;</span><span class="p">:</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;PrecoursorCharge&#39;</span><span class="p">:</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;BasePeptide1&#39;</span><span class="p">:</span> <span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ProteinLink1&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;BasePeptide2&#39;</span><span class="p">:</span> <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ProteinLink2&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ModificationMasses1&#39;</span><span class="p">:</span> <span class="s1">&#39;modmass1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ModificationMasses2&#39;</span><span class="p">:</span> <span class="s1">&#39;modmass2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Modifications1&#39;</span><span class="p">:</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Modifications2&#39;</span><span class="p">:</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span> <span class="s1">&#39;prot1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Start1&#39;</span><span class="p">:</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Start2&#39;</span><span class="p">:</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Link1&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;Link2&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ModificationPositions1&#39;</span><span class="p">:</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;ModificationPositions2&#39;</span><span class="p">:</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span>
-                                  <span class="s1">&#39;match score&#39;</span><span class="p">:</span> <span class="s1">&#39;score&#39;</span>
-                                  <span class="p">})</span>
 
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Source&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">xi</span><span class="o">.</span><span class="n">rawfile_from_source</span><span class="p">)</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="c1">#rawfile</span>
+                                    <span class="s1">&#39;exp charge&#39;</span><span class="p">:</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;LinkPos1&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;LinkPos2&#39;</span><span class="p">:</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Protein1&#39;</span><span class="p">:</span> <span class="s1">&#39;prot1&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;ProteinLinkPos1&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Protein2&#39;</span><span class="p">:</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;ProteinLinkPos2&#39;</span><span class="p">:</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;PepPos1&#39;</span><span class="p">:</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;PepPos2&#39;</span><span class="p">:</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;Score&#39;</span><span class="p">:</span> <span class="s1">&#39;score&#39;</span>
+                                    <span class="p">})</span>
+
+    <span class="c1"># split the run column from Xi into two columns: rawfile and scanno</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;scanno&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;run&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">str</span>
+
+    <span class="n">moddict</span> <span class="o">=</span> <span class="n">_mods_from_xi_config</span><span class="p">(</span><span class="n">xi_config</span><span class="p">)</span>
+
+    <span class="c1"># Extract clean sequence and modificiations from the sequence string</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span> <span class="s1">&#39;mod1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;modmass1&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;PepSeq1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_modifications_from_sequence</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">moddict</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span> <span class="s1">&#39;mod2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;modmass2&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;PepSeq2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_modifications_from_sequence</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">moddict</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
     <span class="c1"># assign cateogries of cross-links based on identification of prot1 and prot2</span>
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>\
-        <span class="n">xi</span><span class="o">.</span><span class="n">assign_type</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
+          <span class="n">_assign_type</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
+        <span class="n">onlyInter</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span>
+        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
+            <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorize_inter_peptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">onlyInter</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[xiFDR Read] categorized inter peptides&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[xiFDR Read] skipped inter peptide categorization&#39;</span><span class="p">)</span>    
+ 
+    
     <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generate_id</span><span class="p">,</span>
+                               <span class="n">otypes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">])(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]),</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
-    <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
-    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;decoy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Decoy1&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Decoy2&#39;</span><span class="p">]</span>
 
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;search_engine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;XiSearch and XiFDR&#39;</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;search_engine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;XiSearchFDR&#39;</span>
 
-    <span class="c1"># reassign dtypes for every element in the df</span>
-    <span class="c1"># errors ignore leaves the dtype as object for every</span>
-    <span class="c1"># non-numeric element</span>
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">order_columns</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
     
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
-
     <span class="k">return</span> <span class="n">xtable</span></div>
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
 
     <span class="c1"># defines the column headers required for xtable output</span>
@@ -155,14 +326,10 @@
                   <span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
                   <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span> <span class="s1">&#39;decoy&#39;</span><span class="p">]</span>
 
-    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi&#39;</span><span class="p">)</span>
-    <span class="n">xi_file</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_XiVersion1.6.739.csv&#39;</span>
-    <span class="n">xifdr_file</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\Xi\20180612_croco_testfiles_5_FDR_PSM_xiFDR1.0.22.csv&#39;</span>
-    <span class="n">xi_df</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="n">xi_file</span><span class="p">,</span> <span class="n">xifdr_file</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">xi_df</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;test.xls&#39;</span><span class="p">,</span>
-                   <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\final\input\xi_xiFDR&#39;</span><span class="p">)</span>
+    <span class="n">xifdr_files</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;XiFDR_5_FDR_PSM_PSM_xiFDR1.0.22.csv&#39;</span>
+    <span class="n">xi_config</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;xi_config.conf&#39;</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="n">xifdr_files</span><span class="p">,</span> <span class="n">xi_config</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 
           </div>

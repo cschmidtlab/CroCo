@@ -50,7 +50,7 @@ A detailed workflow how to obtain the FDR-filtered table can be found at <a clas
 search engine.</p>
 <dl class="function">
 <dt id="croco.Kojak.Read">
-<code class="descclassname">croco.Kojak.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>kojak_files</em>, <em>rawfile=None</em>, <em>decoy_string='REVERSE'</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/Kojak.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.Kojak.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.Kojak.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>kojak_files</em>, <em>rawfile=None</em>, <em>decoy_string='decoy'</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/Kojak.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.Kojak.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read Kojak results file, calculate and process missing values required
 for xTable and return the xTable.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -89,7 +89,7 @@ percolated file.</p>
 <span class="target" id="module-croco.KojakPercolator"></span><p>Functions to read Percolator processed Kojak data.</p>
 <dl class="function">
 <dt id="croco.KojakPercolator.Read">
-<code class="descclassname">croco.KojakPercolator.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>perc_files</em>, <em>percolator_string='.validated'</em>, <em>decoy_string='REVERSE'</em>, <em>rawfile=None</em>, <em>compact=False</em>, <em>col_order=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/KojakPercolator.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.KojakPercolator.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.KojakPercolator.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>perc_files</em>, <em>rawfile=None</em>, <em>validated_string='.validated'</em>, <em>percolator_string='.perc'</em>, <em>decoy_string='decoy'</em>, <em>compact=False</em>, <em>col_order=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/KojakPercolator.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.KojakPercolator.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collects unprocessed and percolated results and returns an xtable data array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -97,7 +97,8 @@ percolated file.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>perc_file</strong> (<em>str</em>) – path or list of paths to percolated Kojak file(s)</li>
-<li><strong>percolator_string</strong> (<em>str</em>) – user-defined string appended to the percolated filenames</li>
+<li><strong>validated_string</strong> (<em>str</em>) – user-defined string appended to the percolated filenames</li>
+<li><strong>percolator_string</strong> (<em>str</em>) – user-defined string appended to the file prepared for percolating</li>
 <li><strong>decoy_string</strong> (<em>optional</em>) – string used in kojak to label decoys</li>
 <li><strong>rawfile</strong> (<em>str</em>) – name of the corresponding rawfile</li>
 <li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
@@ -197,27 +198,6 @@ list of int or np.nan: list of modification positions within the peptide
 str: peptide sequence without modifications</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list of float or np.nan</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="croco.KojakFunctions.process_kojak_protein">
-<code class="descclassname">croco.KojakFunctions.</code><code class="descname">process_kojak_protein</code><span class="sig-paren">(</span><em>protein_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/KojakFunctions.html#process_kojak_protein"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.KojakFunctions.process_kojak_protein" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return protein name and absolute cross-link position from
-a kojak string such as
-sp|P07340|AT1B1_RAT Sodium/potassium-transporting ATPase subunit beta-1 OS=Rattus norvegicus GN=Atp1(13);</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>protein_string</strong> (<em>str</em>) – a kojak protein string</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">protein name
-int or np.nan: position</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str or np.nan</td>
 </tr>
 </tbody>
 </table>
@@ -326,7 +306,7 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>stavrox_files</strong> – path to StavroX output file</li>
+<li><strong>stavrox_files</strong> – path or list of paths to StavroX output file(s)</li>
 <li><strong>ssf_file</strong> – properties.ssf to load modification IDs and masses</li>
 <li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
 <li><strong>compact</strong> (<em>bool</em>) – Whether to compact the xTable to only those columns listed in col_order</li>
@@ -385,23 +365,22 @@ Support for MeroX (the analogue of StavroX that targets cleavable cross-linker) 
 <ul class="simple">
 <li><strong>Load file(s)</strong>: Path to xiFDR file
 (e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_5_FDR_PSM_xiFDR1.0.22.csv</span></code>)</li>
-<li>OptionsWindow: Path to corresponding Xi results file
-(e.g. <code class="docutils literal notranslate"><span class="pre">FILENAME_XiVersion1.6.739.csv</span></code>)</li>
 </ul>
 <span class="target" id="module-croco.XiSearchFDR"></span><p>Functions to read Xi processed crosslink data filtered with xiFDR.</p>
 <p>This script is part of the CroCo cross-link converter project</p>
 <dl class="function">
 <dt id="croco.XiSearchFDR.Read">
-<code class="descclassname">croco.XiSearchFDR.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xifdr_file</em>, <em>xi_file</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/XiSearchFDR.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.XiSearchFDR.Read" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">croco.XiSearchFDR.</code><code class="descname">Read</code><span class="sig-paren">(</span><em>xifdr_files</em>, <em>xi_config</em>, <em>col_order=None</em>, <em>compact=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/croco/XiSearchFDR.html#Read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#croco.XiSearchFDR.Read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collects data from Xi spectrum search filtered by xiFDR and returns an xtable data array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>xifdr_file</strong> – results file from xiFDR (contains PSM_xiFDR)</li>
-<li><strong>xi_file</strong> – path to percolated Kojak file</li>
-<li><strong>keep</strong> (<em>bool</em>) – Whether to keep the columns of the original dataframe or not</li>
+<li><strong>xifdr_files</strong> – path or list of paths to xiFDR file(s)</li>
+<li><strong>xi_config</strong> – path to corresponding xi_config file</li>
+<li><strong>col_order</strong> (<em>list</em>) – List of xTable column titles that are used to sort and compress the resulting datatable</li>
+<li><strong>compact</strong> (<em>bool</em>) – Whether to keep the columns of the original dataframe or not</li>
 </ul>
 </td>
 </tr>

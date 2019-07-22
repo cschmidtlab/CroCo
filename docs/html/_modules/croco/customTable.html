@@ -48,6 +48,14 @@
 
 <span class="kn">import</span> <span class="nn">re</span>
 
+<span class="k">def</span> <span class="nf">_from_match</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+    <span class="n">toReplace</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">toReplace</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not resolve string from xtable column header: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+
 <div class="viewcode-block" id="Write"><a class="viewcode-back" href="../../write.html#croco.customTable.Write">[docs]</a><span class="k">def</span> <span class="nf">Write</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">customTemplatePath</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    writes an xtable data structure to file (in xtable format) based on a</span>
@@ -60,7 +68,7 @@
 <span class="sd">    </span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">customTemplatePath</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmpl</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">customTemplatePath</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmpl</span><span class="p">:</span>
         
         <span class="n">headerTemp</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="n">dataTemp</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -82,21 +90,14 @@
     
     <span class="n">substituteMatcher</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\[.*?\])&#39;</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">fromMatch</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
-        <span class="n">toReplace</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">toReplace</span><span class="p">])</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not resolve string from xtable column header: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-    
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Writing to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">))</span>
         <span class="c1"># write the header</span>
         <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Templates</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="c1"># write the data</span>
         <span class="k">if</span> <span class="n">Templates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">xtable</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">substituteMatcher</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">:</span> <span class="n">fromMatch</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">Templates</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">substituteMatcher</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">:</span> <span class="n">_from_match</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">Templates</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
         <span class="c1"># write footer</span>
         <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Templates</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
     

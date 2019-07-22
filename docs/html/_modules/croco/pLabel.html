@@ -47,6 +47,187 @@
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
 
+<span class="k">def</span> <span class="nf">_unique_mods</span><span class="p">(</span><span class="n">modlist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Go through a list containing lists of modifications, strings of</span>
+<span class="sd">    modifications or NaN and extract all occuring unique mod-strings</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        modlist: list of modifications form xtable</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Lisr of unique modifications</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">modlist</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">element</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
+                    <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">element</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
+                    <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
+                <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">alist</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">_generate_plabel_pepstring</span><span class="p">(</span><span class="n">xtype</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span><span class="p">,</span> <span class="n">pepseq1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">mod1</span><span class="p">,</span> <span class="n">mod2</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">mods2num</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    pep1=3 7 2 VFLLPDKK 22.7634 KKFETK 1 4,1</span>
+<span class="sd">    1: 3-1 = cross, loop, mono</span>
+<span class="sd">    2: xlink2</span>
+<span class="sd">    3: xlink2</span>
+<span class="sd">    4: pep1</span>
+<span class="sd">    5: score?</span>
+<span class="sd">    6: pep2</span>
+<span class="sd">    7: unknown, mostly 1</span>
+<span class="sd">    8: modification (e.g. 4,1 = modification 1 at position 4)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
+        <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;intra&#39;</span><span class="p">:</span>
+        <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;homomultimeric&#39;</span><span class="p">:</span>
+        <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
+        <span class="n">typeno</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
+        <span class="n">typeno</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">typeno</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="n">typeno</span><span class="p">,</span> <span class="n">_cast_if_not_nan</span><span class="p">(</span><span class="n">xlink1</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+                             <span class="n">_cast_if_not_nan</span><span class="p">(</span><span class="n">xlink2</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="n">pepseq1</span><span class="p">,</span>
+                             <span class="s1">&#39;</span><span class="si">{:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score</span><span class="p">),</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="n">typeno</span><span class="p">,</span> <span class="n">_cast_if_not_nan</span><span class="p">(</span><span class="n">xlink1</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+                             <span class="n">pepseq1</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]</span>
+
+    <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pepStringElements</span><span class="p">]</span>
+
+    <span class="n">modlabels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mods</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">modposs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">modpos2</span><span class="p">):</span>
+
+        <span class="c1"># increment the modpos2 position to fit pLabel numbering</span>
+        <span class="c1"># add position for: cterm1, xlink, nterm2</span>
+        <span class="n">modpos2</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pepseq1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">modpos2</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">modpos1</span><span class="p">):</span>
+            <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">mod1</span><span class="p">))</span>
+            <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">modpos1</span><span class="p">))</span>
+
+        <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">mod2</span><span class="p">))</span>
+        <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">modpos2</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">modpos1</span><span class="p">):</span>
+
+        <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">mod1</span><span class="p">))</span>
+        <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_make_list</span><span class="p">(</span><span class="n">modpos1</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">mod</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="n">modposs</span><span class="p">):</span>
+        <span class="n">modlabels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="n">mods2num</span><span class="p">[</span><span class="n">mod</span><span class="p">]))</span>
+
+    <span class="n">pepStringElements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">modlabels</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pepStringElements</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_parse_mgf</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse all mgf files matching to a list of filenames and extract all</span>
+<span class="sd">    TITLE arguments as list</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filenames: List of rawfile basenames to look for</span>
+<span class="sd">        mgfDir: Path to mgf files</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        titles2mgfoffset: Dictionary mapping mgf header titles to</span>
+<span class="sd">                                the resp rawfile and the position within</span>
+<span class="sd">                                the mgf-file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">titles2mgfoffset</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">localMGFFiles</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># collect mgf file names in mgfDir</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">mgfDir</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.mgf&#39;</span><span class="p">):</span>
+            <span class="n">localMGFFiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+    <span class="c1"># check which files referenced in xtable are present in the dir</span>
+    <span class="n">mgfToOpen</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mgfNotFound</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span> <span class="ow">in</span> <span class="n">localMGFFiles</span><span class="p">:</span>
+            <span class="n">mgfToOpen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span><span class="p">)</span>
+        <span class="c1"># pXtract usually adds the fragmentation method after conversion</span>
+        <span class="c1"># allow Orbitrap files to be recognised</span>
+        <span class="k">elif</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;_HCDFT&#39;</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span> <span class="ow">in</span> <span class="n">localMGFFiles</span><span class="p">:</span>
+            <span class="n">mgfToOpen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;_HCDFT&#39;</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mgfNotFound</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span><span class="p">)</span>
+
+    <span class="c1"># raise error if file is missing</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mgfNotFound</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;The following mgf files were not found at the &#39;</span> <span class="o">+</span>
+                        <span class="s1">&#39;specified directory: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mgfNotFound</span><span class="p">)))</span>
+
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;TITLE=([^\.]+\.\d+\.\d+\.\d+\.\d+.*$)&#39;</span><span class="p">)</span>
+
+    <span class="c1"># parse the mgf files for titles</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">mgfToOpen</span><span class="p">:</span>
+        <span class="n">mgfFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mgfDir</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">mgfFile</span><span class="p">))</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+            <span class="n">offset_last</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">offset_before_last</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">inf</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;TITLE=&#39;</span><span class="p">):</span>
+                    <span class="c1"># in case of pXtract:</span>
+                    <span class="c1"># TITLE=2017_08_04_SVs_BS3_16.2419.2419.4.dta</span>
+                    <span class="c1"># for MSConvert with TPP compatibility:</span>
+                    <span class="c1"># TITLE=2017_08_18_SK_3.1093.1093.2 File:&quot;2017_08_18_SK_3.raw&quot;, NativeID:&quot;controllerType=0 controllerNumber=1 scan=1093&quot;</span>
+                    <span class="c1"># MSConvert w/o TPP:</span>
+                    <span class="c1"># TITLE=2017_08_18_SK_3.1093.1093.2</span>
+                    <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                        <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                        <span class="n">title</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span><span class="p">(</span><span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Title not found&#39;</span><span class="p">))</span>
+
+                    <span class="n">titles2mgfoffset</span><span class="p">[</span><span class="n">title</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span> <span class="o">=</span> <span class="n">mgfFile</span><span class="p">,</span> <span class="n">offset_before_last</span>
+                <span class="n">offset_before_last</span> <span class="o">=</span> <span class="n">offset_last</span>
+                <span class="n">offset_last</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">titles2mgfoffset</span>
+
+
+<span class="k">def</span> <span class="nf">_make_list</span><span class="p">(</span><span class="n">strorList</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    take lists, floats or strings as input and return either the list or</span>
+<span class="sd">    a one-element list of the string or float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strorList</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">strorList</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strorList</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">strorList</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">strorList</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">strorList</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">_cast_if_not_nan</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">typefunc</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">typefunc</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">input</span>
+
+
 <div class="viewcode-block" id="Write"><a class="viewcode-back" href="../../write.html#croco.pLabel.Write">[docs]</a><span class="k">def</span> <span class="nf">Write</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">,</span> <span class="n">xlinker</span><span class="p">,</span> <span class="n">mergepLabel</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts xtable data structure to (multiple) input file(s)</span>
@@ -60,169 +241,12 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">uniqueMods</span><span class="p">(</span><span class="n">modlist</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Go through a list containing lists of modifications, strings of</span>
-<span class="sd">        modifications or NaN and extract all occuring unique mod-strings</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            modlist: list of modifications form xtable</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            Lisr of unique modificaitons</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">alist</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">modlist</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">element</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
-                        <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">element</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
-                        <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">alist</span><span class="p">:</span>
-                    <span class="n">alist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">alist</span><span class="p">))</span>
-
-    <span class="k">def</span> <span class="nf">GeneratepLabelPepString</span><span class="p">(</span><span class="n">xtype</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span><span class="p">,</span> <span class="n">pepseq1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">mod1</span><span class="p">,</span> <span class="n">mod2</span><span class="p">,</span> <span class="n">modpos1</span><span class="p">,</span> <span class="n">modpos2</span><span class="p">,</span> <span class="n">mods2num</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        pep1=3 7 2 VFLLPDKK 22.7634 KKFETK 1 4,1</span>
-<span class="sd">        1: 3-1 = cross, loop, mono</span>
-<span class="sd">        2: xlink2</span>
-<span class="sd">        3: xlink2</span>
-<span class="sd">        4: pep1</span>
-<span class="sd">        5: score?</span>
-<span class="sd">        6: pep2</span>
-<span class="sd">        7: unknown, mostly 1</span>
-<span class="sd">        8: modification (e.g. 4,1 = modification 1 at position 4)</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
-            <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
-        <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;intra&#39;</span><span class="p">:</span>
-            <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
-        <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;homomultimeric&#39;</span><span class="p">:</span>
-            <span class="n">typeno</span> <span class="o">=</span> <span class="mi">3</span>
-        <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
-            <span class="n">typeno</span> <span class="o">=</span> <span class="mi">2</span>
-        <span class="k">elif</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
-            <span class="n">typeno</span> <span class="o">=</span> <span class="mi">1</span>
-
-        <span class="k">if</span> <span class="n">typeno</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="n">typeno</span><span class="p">,</span> <span class="n">hf</span><span class="o">.</span><span class="n">castIfNotNan</span><span class="p">(</span><span class="n">xlink1</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
-                                 <span class="n">hf</span><span class="o">.</span><span class="n">castIfNotNan</span><span class="p">(</span><span class="n">xlink2</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="n">pepseq1</span><span class="p">,</span>
-                                 <span class="s1">&#39;</span><span class="si">{:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score</span><span class="p">),</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="n">typeno</span><span class="p">,</span> <span class="n">hf</span><span class="o">.</span><span class="n">castIfNotNan</span><span class="p">(</span><span class="n">xlink1</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
-                                 <span class="n">pepseq1</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]</span>
-
-        <span class="n">pepStringElements</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pepStringElements</span><span class="p">]</span>
-
-        <span class="n">modlabels</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">mods</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">modposs</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">modpos2</span><span class="p">):</span>
-
-            <span class="c1"># increment the modpos2 position to fit pLabel numbering</span>
-            <span class="c1"># add position for: cterm1, xlink, nterm2</span>
-            <span class="n">modpos2</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pepseq1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">modpos2</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">modpos1</span><span class="p">):</span>
-                <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">mod1</span><span class="p">))</span>
-                <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">modpos1</span><span class="p">))</span>
-
-            <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">mod2</span><span class="p">))</span>
-            <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">modpos2</span><span class="p">))</span>
-
-        <span class="k">elif</span> <span class="ow">not</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">modpos1</span><span class="p">):</span>
-
-            <span class="n">mods</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">mod1</span><span class="p">))</span>
-            <span class="n">modposs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">modpos1</span><span class="p">))</span>
-
-        <span class="k">for</span> <span class="n">mod</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="n">modposs</span><span class="p">):</span>
-            <span class="n">modlabels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="n">mods2num</span><span class="p">[</span><span class="n">mod</span><span class="p">]))</span>
-
-        <span class="n">pepStringElements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">modlabels</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pepStringElements</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">ParseMGF</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Parse all mgf files matching to a list of filenames and extract all</span>
-<span class="sd">        TITLE arguments as list</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            filenames: List of rawfile basenames to look for</span>
-<span class="sd">            mgfDir: Path to mgf files</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            titles2mgfoffset: Dictionary mapping mgf header titles to</span>
-<span class="sd">                                    the resp rawfile and the position within</span>
-<span class="sd">                                    the mgf-file</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">titles2mgfoffset</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">localMGFFiles</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># collect mgf file names in mgfDir</span>
-        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">mgfDir</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.mgf&#39;</span><span class="p">):</span>
-                <span class="n">localMGFFiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-
-        <span class="c1"># check which files referenced in xtable are present in the dir</span>
-        <span class="n">mgfToOpen</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">mgfNotFound</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span> <span class="ow">in</span> <span class="n">localMGFFiles</span><span class="p">:</span>
-                <span class="n">mgfToOpen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">mgfNotFound</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span><span class="p">)</span>
-
-        <span class="c1"># raise error if file is missing</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mgfNotFound</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;The following mgf files were not found at the &#39;</span> <span class="o">+</span>
-                            <span class="s1">&#39;specified directory: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mgfNotFound</span><span class="p">)))</span>
-
-        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;TITLE=([^\.]+\.\d+\.\d+\.\d+\.\d+.*$)&#39;</span><span class="p">)</span>
-
-        <span class="c1"># parse the mgf files for titles</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">mgfToOpen</span><span class="p">:</span>
-            <span class="n">mgfFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mgfDir</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">mgfFile</span><span class="p">))</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
-                <span class="n">offset_last</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">offset_before_last</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">inf</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;TITLE=&#39;</span><span class="p">):</span>
-                        <span class="c1"># in case of pXtract:</span>
-                        <span class="c1"># TITLE=2017_08_04_SVs_BS3_16.2419.2419.4.dta</span>
-                        <span class="c1"># for MSConvert with TPP compatibility:</span>
-                        <span class="c1"># TITLE=2017_08_18_SK_3.1093.1093.2 File:&quot;2017_08_18_SK_3.raw&quot;, NativeID:&quot;controllerType=0 controllerNumber=1 scan=1093&quot;</span>
-                        <span class="c1"># MSConvert w/o TPP:</span>
-                        <span class="c1"># TITLE=2017_08_18_SK_3.1093.1093.2</span>
-                        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-                            <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-                            <span class="n">title</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="k">raise</span><span class="p">(</span><span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Title not found&#39;</span><span class="p">))</span>
-
-                        <span class="n">titles2mgfoffset</span><span class="p">[</span><span class="n">title</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span> <span class="o">=</span> <span class="n">mgfFile</span><span class="p">,</span> <span class="n">offset_before_last</span>
-                    <span class="n">offset_before_last</span> <span class="o">=</span> <span class="n">offset_last</span>
-                    <span class="n">offset_last</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-
-        <span class="k">return</span> <span class="n">titles2mgfoffset</span>
-
-    <span class="c1">## Start of WRITE</span>
-
     <span class="n">rawfiles</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">xlinker</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Please provide a name for the cross-linker&#39;</span><span class="p">)</span>
 
-    <span class="n">titles2mgfoffset</span> <span class="o">=</span> <span class="n">ParseMGF</span><span class="p">(</span><span class="n">rawfiles</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">)</span>
+    <span class="n">titles2mgfoffset</span> <span class="o">=</span> <span class="n">_parse_mgf</span><span class="p">(</span><span class="n">rawfiles</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">)</span>
     <span class="n">allTitles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">titles2mgfoffset</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">mergepLabel</span><span class="p">:</span>
@@ -233,11 +257,11 @@
             <span class="c1"># separate per type within rawfile</span>
             <span class="n">outfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">rf</span> <span class="o">+</span> <span class="s1">&#39;.pLabel&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Opening </span><span class="si">{}</span><span class="s1"> to write&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outfile</span><span class="p">))</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outfile</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">outfile</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
                 <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[FilePath]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;File_Path=&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mgfDir</span><span class="p">,</span> <span class="n">rf</span> <span class="o">+</span> <span class="s1">&#39;.mgf</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
 
-                <span class="n">modifications</span> <span class="o">=</span> <span class="n">uniqueMods</span><span class="p">(</span><span class="n">xtablePerRawfile</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span>\
+                <span class="n">modifications</span> <span class="o">=</span> <span class="n">_unique_mods</span><span class="p">(</span><span class="n">xtablePerRawfile</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span>\
                                            <span class="n">xtablePerRawfile</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 
                 <span class="n">mods2num</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># dict mapping mod names to indices</span>
@@ -279,14 +303,14 @@
                             <span class="k">break</span>
 
                     <span class="k">if</span> <span class="n">nothingFound</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[pLabel writer] couldnt find a matching spectrum for </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>\
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;[pLabel writer] couldnt find a matching spectrum for </span><span class="si">{}</span><span class="s1">. If converting an xTable that was not generated from pLink input searched with the same mgf-file, please activate the merge-pLabel-option&#39;</span><span class="o">.</span>\
                                             <span class="nb">format</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">rf</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">prec_ch</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
 
                     <span class="c1"># Generate the spectrum title as used by pLabel from</span>
                     <span class="c1"># rawfile name, scanno and precursor charge</span>
                     <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;name=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">title</span><span class="p">))</span>
 
-                    <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pep1=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">GeneratepLabelPepString</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pep1=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_generate_plabel_pepstring</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
@@ -305,14 +329,17 @@
         <span class="n">outMGF</span> <span class="o">=</span> <span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.mgf&#39;</span>
 
         <span class="n">filesWithOffsetToCopy</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># a list with new mgf spectrum titles to integrate non-pLink results</span>
+        <span class="c1"># into the pLabel viewer</span>
+        <span class="n">new_titles_and_charges_for_copy</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[pLabel] Opening </span><span class="si">{}</span><span class="s1"> to write&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outfile</span><span class="p">))</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outfile</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">plabel</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">outfile</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">plabel</span><span class="p">:</span>
 
             <span class="n">plabel</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[FilePath]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">plabel</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;File_Path=&#39;</span> <span class="o">+</span> <span class="n">outMGF</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-            <span class="n">modifications</span> <span class="o">=</span> <span class="n">uniqueMods</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span>\
+            <span class="n">modifications</span> <span class="o">=</span> <span class="n">_unique_mods</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span>\
                                        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 
             <span class="n">mods2num</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># dict mapping mod names to indices</span>
@@ -327,7 +354,7 @@
             <span class="n">plabel</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Total]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">plabel</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;total=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)))</span>
 
-            <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">plabel_specno</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">for</span> <span class="n">rf</span> <span class="ow">in</span> <span class="n">rawfiles</span><span class="p">:</span>
 
                 <span class="n">xtablePerRawfile</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">rf</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -336,29 +363,35 @@
 
                     <span class="n">toWrite</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
-                    <span class="n">toWrite</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;[Spectrum</span><span class="si">{}</span><span class="s1">]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
-                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">toWrite</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;[Spectrum</span><span class="si">{}</span><span class="s1">]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">plabel_specno</span><span class="p">))</span>
+                    <span class="n">plabel_specno</span> <span class="o">+=</span> <span class="mi">1</span>
 
                     <span class="n">scanno</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;scanno&#39;</span><span class="p">]))</span>
                     <span class="n">prec_ch</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;prec_ch&#39;</span><span class="p">]))</span>
 
-                    <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
                     <span class="n">nothingFound</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
                     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">allTitles</span><span class="p">):</span>
                         <span class="c1"># add the scanno twice to the search string to avoid</span>
                         <span class="c1"># matching of substrings e.g. 2516 to 25164</span>
-                        <span class="k">if</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">rf</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">prec_ch</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">t</span><span class="p">:</span>
-                            <span class="n">title</span> <span class="o">=</span> <span class="n">t</span>
+                        <span class="c1"># the charge is not considered here as charge assignment</span>
+                        <span class="c1"># can vary between different prorgammes</span>
+                        <span class="k">if</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">rf</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">scanno</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">t</span><span class="p">:</span>     
+                            <span class="c1"># generate a new mgf-spectrum title unique for this</span>
+                            <span class="c1"># entry (pLabel cannot take a spectrum twice)</span>
+                            <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+                            <span class="k">while</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">rf</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">prec_ch</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">counter</span><span class="p">)])</span> <span class="ow">in</span> <span class="n">new_titles_and_charges_for_copy</span><span class="p">:</span>
+                                <span class="n">counter</span> <span class="o">+=</span><span class="mi">1</span>
+                            <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">rf</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">prec_ch</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">counter</span><span class="p">)])</span>
+                            <span class="n">new_titles_and_charges_for_copy</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">title</span><span class="p">,</span> <span class="n">prec_ch</span><span class="p">))</span>
+
                             <span class="c1"># save the position of each title in the MGF file</span>
                             <span class="c1"># for MGF-file merging</span>
-                            <span class="n">filesWithOffsetToCopy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">titles2mgfoffset</span><span class="p">[</span><span class="n">title</span><span class="p">])</span>
+                            <span class="n">filesWithOffsetToCopy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">titles2mgfoffset</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
                             <span class="c1"># set the variable to check if any matching title</span>
                             <span class="c1"># was found for a row</span>
                             <span class="n">nothingFound</span> <span class="o">=</span> <span class="kc">False</span>
-                            <span class="c1"># remove the title from the list to avoid setting</span>
-                            <span class="c1"># the same title twice</span>
-                            <span class="k">del</span> <span class="n">allTitles</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-                            <span class="c1"># leave the loop once the title has been removed</span>
+                            <span class="c1"># leave the loop</span>
                             <span class="k">break</span>
 
                     <span class="k">if</span> <span class="n">nothingFound</span><span class="p">:</span>
@@ -369,7 +402,7 @@
                     <span class="c1"># rawfile name, scanno and precursor charge</span>
                     <span class="n">toWrite</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;name=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">title</span><span class="p">))</span>
 
-                    <span class="n">toWrite</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;pep1=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">GeneratepLabelPepString</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
+                    <span class="n">toWrite</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;pep1=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_generate_plabel_pepstring</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">],</span>
                                                                          <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
@@ -385,19 +418,26 @@
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[pLabel] Merging MGF files&#39;</span><span class="p">)</span>
         <span class="c1"># Generate merged MGF file containing only the matching spectra</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Opening </span><span class="si">{}</span><span class="s1"> to write&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outMGF</span><span class="p">))</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outMGF</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mgf</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">outMGF</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mgf</span><span class="p">:</span>
+            <span class="c1"># sequentially open all MGF-files to copy from</span>
             <span class="n">templates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">filesWithOffsetToCopy</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">template</span> <span class="ow">in</span> <span class="n">templates</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">template</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">template</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Opening </span><span class="si">{}</span><span class="s1"> to read&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">template</span><span class="p">))</span>
 
                     <span class="n">offsets</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">filesWithOffsetToCopy</span><span class="p">:</span>
+                    <span class="n">new_titles_and_charges</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filesWithOffsetToCopy</span><span class="p">):</span>
                         <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="n">template</span><span class="p">:</span>
+                            <span class="c1"># parts to read from that file</span>
                             <span class="n">offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+                            <span class="c1"># new titles to generate for each part read</span>
+                            <span class="n">new_titles_and_charges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_titles_and_charges_for_copy</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
 
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">offsets</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">offsets</span><span class="p">):</span>
+                        <span class="c1"># move to the part of the file where the spectrum is stored</span>
                         <span class="n">t</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="n">new_title_and_charge</span> <span class="o">=</span> <span class="n">new_titles_and_charges</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
                         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                             <span class="c1"># loop through the lines of the spectrum until end-signa</span>
                             <span class="n">line</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
@@ -405,6 +445,12 @@
                                 <span class="c1"># leave loop if the current spectrum ends</span>
                                 <span class="n">mgf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                                 <span class="k">break</span>
+                            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">):</span>
+                                <span class="c1"># change the title line</span>
+                                <span class="n">mgf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;TITLE=</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_title_and_charge</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;CHARGE&#39;</span><span class="p">):</span>
+                                <span class="c1"># change the charge line</span>
+                                <span class="n">mgf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;CHARGE=</span><span class="si">{}</span><span class="s1">+</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_title_and_charge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>                                
                             <span class="k">else</span><span class="p">:</span>
                                 <span class="n">mgf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span></div>
 
@@ -414,11 +460,11 @@
 
     <span class="kn">import</span> <span class="nn">croco</span>
 
-    <span class="n">infile</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel\test_xTable.xlsx&#39;</span>
+    <span class="n">infile</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable_intra.xlsx&#39;</span>
     <span class="n">xTable</span> <span class="o">=</span> <span class="n">croco</span><span class="o">.</span><span class="n">xTable</span><span class="o">.</span><span class="n">Read</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
 
-    <span class="n">outpath</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel\test_xTable&#39;</span>
-    <span class="n">mgfDir</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\pLabel&#39;</span>
+    <span class="n">outpath</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\xTable_to_vis\pLabel&#39;</span>
+    <span class="n">mgfDir</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\03_software\python\CroCo\testdata\final&#39;</span>
 
     <span class="n">Write</span><span class="p">(</span><span class="n">xTable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">mgfDir</span><span class="p">,</span> <span class="s1">&#39;BS3&#39;</span><span class="p">,</span> <span class="n">mergepLabel</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 </pre></div>

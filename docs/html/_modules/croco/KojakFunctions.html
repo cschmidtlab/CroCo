@@ -42,30 +42,41 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span> <span class="ow">or</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;KojakFunctions&#39;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
-    <span class="kn">import</span> <span class="nn">KojakFunctions</span> <span class="k">as</span> <span class="nn">kj</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
-    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">KojakFunctions</span> <span class="k">as</span> <span class="n">kj</span>
 
 <div class="viewcode-block" id="extract_peptide"><a class="viewcode-back" href="../../read.html#croco.KojakFunctions.extract_peptide">[docs]</a><span class="k">def</span> <span class="nf">extract_peptide</span><span class="p">(</span><span class="n">xtable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract peptide sequence, modification mass and position from the</span>
 <span class="sd">    Peptide #1 and Peptide #2 entries</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        xtable (pandas.DataFrame): xTable data structure with &quot;Peptide #1&quot; and &quot;Peptide #2&quot; columns</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        pandas.DataFrame: xTable with modmass, modpos, pepseq and mod</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">kj</span><span class="o">.</span><span class="n">process_kojak_peptide</span><span class="p">))]</span>
+    <span class="n">pep1notNull</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span>
+    <span class="n">pep2notNull</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span>
 
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modpos2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">]</span> <span class="o">=</span>\
-           <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">kj</span><span class="o">.</span><span class="n">process_kojak_peptide</span><span class="p">))]</span>
+    <span class="c1"># the index corresponds to the index of the slice of the dataframe</span>
+    <span class="c1"># as original row numbers are retained during conversion, values can directly</span>
+    <span class="c1"># be inserted at the right row</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;modmass1&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pepseq1&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pep1notNull</span><span class="p">,</span> <span class="s1">&#39;Peptide #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_kojak_peptide</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                     <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pep1notNull</span><span class="p">,</span> <span class="s1">&#39;Peptide #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pep2notNull</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">,</span> <span class="s1">&#39;modpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;pepseq2&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+            <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pep2notNull</span><span class="p">,</span> <span class="s1">&#39;Peptide #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_kojak_peptide</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                         <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pep2notNull</span><span class="p">,</span> <span class="s1">&#39;Peptide #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modpos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
     <span class="c1"># use the modification masses as labels</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;mod2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;modmass2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">xtable</span></div>
 
@@ -73,29 +84,31 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract protein name and relative cross-link position from the Protein #</span>
 <span class="sd">    entries</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        xtable (pandas.DataFrame): xTable data structure with &quot;Protein #1&quot;, &quot;Protein #2&quot;, xpos1, xlink1, and xlink2 columns</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        pandas.DataFrame: xTable with prot and xpos</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">=</span>\
-           <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">kj</span><span class="o">.</span><span class="n">process_kojak_protein</span><span class="p">))]</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein #1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(\w+)(?:\((.*?)\))?;$&#39;</span><span class="p">)</span>
 
-    <span class="c1"># calculate xpos2 as if both peptides are identical</span>
-    <span class="c1"># if the peptides are not, xpos2 is replaces below</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Int64Dtype</span><span class="p">())</span>
 
-    <span class="c1"># prot2 and xpos2 for inter and intra cross-links are derived from Protein #2</span>
-    <span class="c1"># select the lines that have a Protein #2 entry</span>
-    <span class="n">hasSecProtein</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein #2&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span>
-    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">hasSecProtein</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">prot2</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span>\
-            <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">hasSecProtein</span><span class="p">,</span> <span class="s1">&#39;Protein #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">kj</span><span class="o">.</span><span class="n">process_kojak_protein</span><span class="p">))]</span>
-        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">hasSecProtein</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prot2</span>
-        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">hasSecProtein</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xpos2</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;prot2&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Protein #2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(\w+)(?:\((.*?)\))?;$&#39;</span><span class="p">)</span>
 
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span>\
+        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Int64Dtype</span><span class="p">())</span>
+
+    <span class="c1"># xpos2 for loop links is not directly stored but can be inferred</span>
+    <span class="c1"># from xpos1 and xlink2</span>
+    <span class="n">isLoopLink</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">isLoopLink</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">isLoopLink</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Int64Dtype</span><span class="p">())</span> <span class="o">-</span> <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">isLoopLink</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">]</span>
+    
     <span class="k">return</span> <span class="n">xtable</span></div>
 
 <div class="viewcode-block" id="assign_ID_and_type"><a class="viewcode-back" href="../../read.html#croco.KojakFunctions.assign_ID_and_type">[docs]</a><span class="k">def</span> <span class="nf">assign_ID_and_type</span><span class="p">(</span><span class="n">xtable</span><span class="p">):</span>
@@ -109,35 +122,38 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        pandas.DataFrame: xTable with type and ID</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
     <span class="c1"># assign cateogries of cross-links based on identification of prot1 and prot2</span>
     <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;inter&#39;</span>
     <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">(),</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;loop&#39;</span>
-    <span class="c1"># TODO: Kojak does not generate monolinked peptides but peptides modified</span>
+    <span class="c1"># Kojak does not generate monolinked peptides but peptides modified</span>
     <span class="c1"># with the hydrolysed xlinker mass</span>
+    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">(),</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;linear or mono&#39;</span>
 
     <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
     <span class="n">isInterLink</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span>
     <span class="c1"># only perform if the selection is not all false</span>
     <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">isInterLink</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
-            <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
-                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
-                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
-                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
-                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
-                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">])</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorize_inter_peptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                       <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                       <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                       <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                       <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                       <span class="n">xtable</span><span class="p">[</span><span class="n">isInterLink</span><span class="p">][</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">])</span>
 
     <span class="c1"># only apply the operation requiring at least prot1 and xpos1 to those</span>
     <span class="c1"># lines that are loop, intra or interlinks</span>
     <span class="n">type_identified</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
     <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
     <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">],</span>
-                                    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
-                                    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">],</span>
-                                    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
-                                    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">type_identified</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generate_id</span><span class="p">,</span>
+                               <span class="n">otypes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">])(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]),</span>
+                 <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">xtable</span></div>
 
@@ -160,19 +176,19 @@
         <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;decoy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">decoy_string</span><span class="p">)</span> <span class="o">|</span>\
                                      <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">decoy_string</span><span class="p">),</span>
                                      <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        
+
     <span class="k">return</span> <span class="n">xtable</span></div>
 
 <div class="viewcode-block" id="process_kojak_peptide"><a class="viewcode-back" href="../../read.html#croco.KojakFunctions.process_kojak_peptide">[docs]</a><span class="k">def</span> <span class="nf">process_kojak_peptide</span><span class="p">(</span><span class="n">peptide_string</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return Modifications, their localisation and the peptide sequence</span>
 <span class="sd">    from a Kojak sequence string such as M[15.99]TDSKYFTTNK.</span>
-<span class="sd">    </span>
+
 <span class="sd">    If modifications are found, two lists with modification masses, positions</span>
 <span class="sd">    and the raw peptide sequence are returned.</span>
 <span class="sd">    If no modififications are found within a peptide string, the function</span>
 <span class="sd">    returns np.nan, np.nan and the sequence.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        peptide_string (str): a Kojak peptide string</span>
 <span class="sd">    Returns:</span>
@@ -207,31 +223,31 @@
 
     <span class="k">return</span> <span class="n">modmasses</span><span class="p">,</span> <span class="n">modposns</span><span class="p">,</span> <span class="n">sequence</span></div>
 
-<div class="viewcode-block" id="process_kojak_protein"><a class="viewcode-back" href="../../read.html#croco.KojakFunctions.process_kojak_protein">[docs]</a><span class="k">def</span> <span class="nf">process_kojak_protein</span><span class="p">(</span><span class="n">protein_string</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return protein name and absolute cross-link position from</span>
-<span class="sd">    a kojak string such as</span>
-<span class="sd">    sp|P07340|AT1B1_RAT Sodium/potassium-transporting ATPase subunit beta-1 OS=Rattus norvegicus GN=Atp1(13);</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        protein_string(str): a kojak protein string</span>
-<span class="sd">    </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        str or np.nan: protein name</span>
-<span class="sd">        int or np.nan: position</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># RE: group1: everything until the first (lazy) brackets</span>
-    <span class="c1"># group2 (optional) everything inside the brackets</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;^([^\(]+?)(?:\((\d*)\))?;&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">protein_string</span><span class="p">):</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">protein_string</span><span class="p">)</span>
-        <span class="n">prot</span><span class="p">,</span> <span class="n">xpos</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">xpos</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># re.match returns None (not NaN) if a substring doesnt match</span>
-            <span class="k">return</span> <span class="n">prot</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">prot</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+<span class="c1">#def process_kojak_protein(protein_string):</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    Return protein name and absolute cross-link position from</span>
+<span class="c1">#    a kojak string such as</span>
+<span class="c1">#    sp|P07340|AT1B1_RAT Sodium/potassium-transporting ATPase subunit beta-1 OS=Rattus norvegicus GN=Atp1(13);</span>
+<span class="c1">#</span>
+<span class="c1">#    Args:</span>
+<span class="c1">#        protein_string(str): a kojak protein string</span>
+<span class="c1">#</span>
+<span class="c1">#    Returns:</span>
+<span class="c1">#        str or np.nan: protein name</span>
+<span class="c1">#        int or np.nan: position</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    # RE: group1: everything until the first (lazy) brackets</span>
+<span class="c1">#    # group2 (optional) everything inside the brackets</span>
+<span class="c1">#    pattern = re.compile(&#39;^([^\(]+?)(?:\((\d*)\))?;&#39;)</span>
+<span class="c1">#    if pattern.match(protein_string):</span>
+<span class="c1">#        match = pattern.match(protein_string)</span>
+<span class="c1">#        prot, xpos = match.groups()</span>
+<span class="c1">#        if xpos == None: # re.match returns None (not NaN) if a substring doesnt match</span>
+<span class="c1">#            return prot, np.nan</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            return prot, int(xpos)</span>
+<span class="c1">#    else:</span>
+<span class="c1">#        return np.nan, np.nan</span>
 </pre></div>
 
           </div>
