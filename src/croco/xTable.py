@@ -80,9 +80,9 @@ def Write(xtable, outpath, group='ID, rawfile', scoring='score', n=None, directi
         col_order (list): List of xTable column titles that are used to sort and compress the resulting datatable
         compact (bool): Whether to compact the xTable to only those columns listed in col_order
     """
-    print('[xTable Write] Size before filtering:' + xtable.size)
+    print('[xTable Write] Size before filtering: {}'.format( xtable.size))
     xtable = _retain_topn(xtable, group, scoring, n, direction)
-    print('[xTable Write] Size after filtering:' + xtable.size)
+    print('[xTable Write] Size after filtering: {}'.format( xtable.size))
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
     #if not xtable.loc[:,xtable.dtypes == 'object'].empty:
@@ -135,5 +135,7 @@ def Read(xTable_files, col_order=None, compact=False):
     return xtable
 
 if __name__ == '__main__':
-    xtable = Read(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\pLink2_reports_xtable.xlsx')
+    # xtable = Read(r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\pLink2_reports_xtable.xlsx')
+    xtable = Read(r'C:\Users\User\Documents\02_experiments\10_ag_behrens\jb10a_p38\jb10a010_p38_bs2g_rep3\ingel\20190718_p38_bs2g_3reps_pLink2_intra.xlsx')
+
     Write(xtable, r'C:\Users\User\Documents\02_experiments\05_croco_dataset\002_20180425\crosslink_search\pLink2_reports_xtable_xTable_out.xlsx', n=2)

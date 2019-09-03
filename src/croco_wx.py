@@ -680,7 +680,7 @@ class CroCoMainFrame(wx.Frame):
                 self.display_warning('[croco_write] Writing to {} was '.format(outpath) +
                                    'not successfull:{}'.format(str(e)))
 
-        def generate_outname(listOfFilepaths, maxNameLength=50):
+        def generate_outname(listOfFilepaths, maxNameLength=255):
             """
             Generate a single namestring form the names of the input file(s)
             

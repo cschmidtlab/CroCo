@@ -2,7 +2,6 @@
 
 """
 Functions to write pLabel data.
-
 """
 
 import pandas as pd
@@ -428,10 +427,10 @@ if __name__ == '__main__':
 
     import croco
 
-    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\all_merged_xTable_intra.xlsx'
+    infile = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData\output\all_merged_xTable_intra.xlsx'
     xTable = croco.xTable.Read(infile)
 
-    outpath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final\output\xTable_to_vis\pLabel'
-    mgfDir = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\final'
+    outpath = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData\output\xTable_to_vis\pLabel'
+    mgfDir = r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData'
 
     Write(xTable, outpath, mgfDir, 'BS3', mergepLabel = True)
