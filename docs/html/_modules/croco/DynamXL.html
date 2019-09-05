@@ -46,11 +46,59 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">HelperFunctions</span> <span class="k">as</span> <span class="nn">hf</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
+
+<span class="k">def</span> <span class="nf">_aa_and_pos</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the amino acid and the absolute position</span>
+<span class="sd">    of a crosslink based on the sequence of an xl-peptide,</span>
+<span class="sd">    the relative and the absolute position of the cross-link</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        row (object): xTable row containing pepseq, xlink, and xpos</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        id1 (str)</span>
+<span class="sd">        id2 (str)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># prevent error from calculation of AA from entries without xlink</span>
+    <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">]):</span>
+        <span class="n">id1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">aa1</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">id1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">]):</span>
+        <span class="n">id2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">aa2</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">id2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span>
+
+<span class="k">def</span> <span class="nf">_xlink_atom_from_aminoacid</span><span class="p">(</span><span class="n">ID</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the typical cross-linked atom in PDB code</span>
+<span class="sd">    for a specific amino-acid</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        ID (str): DynamXL ID e.g. K27</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PDB code of cross-linked atom</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ID</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ID</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;NZ&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;CA&#39;</span>
+
 
 <div class="viewcode-block" id="Write"><a class="viewcode-back" href="../../write.html#croco.DynamXL.Write">[docs]</a><span class="k">def</span> <span class="nf">Write</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">outpath</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -60,57 +108,22 @@
 <span class="sd">        xtable: data table structure</span>
 <span class="sd">        outpath: path to write file</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">aa_and_pos</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Calculate tne amino acid and the absolute position</span>
-<span class="sd">        of a crosslink based on the sequence of an xl-peptide,</span>
-<span class="sd">        the relative and the absolute position of the cross-link</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            row (object): xTable row containing pepseq, xlin, and xpos</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            str: id1</span>
-<span class="sd">            str: id2</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">aa1</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">id1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">])</span>
-
-        <span class="n">aa2</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">id2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aa2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span>
-
-    <span class="k">def</span> <span class="nf">xlink_atom_from_AA</span><span class="p">(</span><span class="n">AA</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the typical cross-linked atom in PDB code</span>
-<span class="sd">        for a specific amino-acid</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            AA(str): Amino acid in 1-letter code</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            PDB code of cross-linked atom</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="n">AA</span> <span class="o">==</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;NZ&#39;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;CA&#39;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Converting to dynamXL input file format&#39;</span><span class="p">)</span>
 
     <span class="c1"># init xtable with column containing lists of rawfile, scanno, prec_ch</span>
     <span class="n">dynamxl</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">])</span>
 
-    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">],</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">aa_and_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">],</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_aa_and_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">xlink_atom_from_AA</span><span class="p">)</span>
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_xlink_atom_from_aminoacid</span><span class="p">)</span>
 
-    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">xlink_atom_from_AA</span><span class="p">)</span>
+    <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;atom2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[</span><span class="s1">&#39;ID2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_xlink_atom_from_aminoacid</span><span class="p">)</span>
 
     <span class="c1"># reorder df</span>
     <span class="n">dynamxl</span> <span class="o">=</span> <span class="n">dynamxl</span><span class="p">[[</span><span class="s1">&#39;ID1&#39;</span><span class="p">,</span> <span class="s1">&#39;atom1&#39;</span><span class="p">,</span> <span class="s1">&#39;ID2&#39;</span><span class="p">,</span> <span class="s1">&#39;atom2&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">]]</span>
 
-    <span class="n">dynamxl</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">),</span>
+    <span class="n">dynamxl</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">outpath</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">),</span>
                    <span class="n">sep</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
                    <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                    <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.3f</span><span class="s1">&#39;</span><span class="p">,</span>

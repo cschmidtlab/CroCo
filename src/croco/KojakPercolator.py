@@ -103,7 +103,7 @@ def Read(perc_files, rawfile=None, validated_string='.validated', percolator_str
         
         allData.append(s)
 
-    xtable = pd.concat(allData, sort=False)
+    xtable = pd.concat(allData, sort=False, ignore_index=True)
 
     # split ambiguous concatenated protein names
     xtable = hf.split_concatenated_lists(xtable, where=['Protein #1', 'Protein #2'])

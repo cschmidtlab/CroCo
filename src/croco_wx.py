@@ -142,7 +142,26 @@ class CroCoMainFrame(wx.Frame):
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 
-        self.availWrites =  {'xTable': [croco.xTable.Write, []],
+        self.availWrites =  {'xTable': [croco.xTable.Write, [('Filter the xTable',
+                                                              'check',
+                                                              'Tick to filter the xTable according to the criteria below'
+                                                             ),
+                                                             ('Group by',
+                                                              'input',
+                                                              'Group by this column during top-scoring filtering',
+                                                              'ID'),
+                                                             ('Score by',
+                                                              'input',
+                                                              'Score by this column during top-scoring filtering',
+                                                              'score'),
+                                                             ('Best N',
+                                                              'input',
+                                                              'Number of rows retained after filtering',
+                                                              '0'),
+                                                             ('Direction',
+                                                              'input',
+                                                              'Use the "lowest" or "highest" scoring rows',
+                                                              'lowest')]],
                              'xVis': [croco.xVis.Write, []],
                              'xiNet': [croco.xiNET.Write, []],
                              'DynamXL': [croco.DynamXL.Write, []],
@@ -415,22 +434,36 @@ class CroCoMainFrame(wx.Frame):
         """
         Open a dir dialog and set the paths
         """
-        # replacement for DirDialog to allow multiple input dirs
-        import wx.lib.agw.multidirdialog as MDD
-        
-        # In standard wx there is no dialog to select multiple dirs at once
-        # The MDD MultiDirDialog is a bit outdated but with a few path corrections
-        # should allow the user to select multiple dirs on windows
-        dlg = MDD.MultiDirDialog(self,
-                                 title="Choose one or multiple directories for Input:",
-                                 defaultPath=self.currentPath,
-                                 agwStyle=MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST)
+#        # replacement for DirDialog to allow multiple input dirs
+#        import wx.lib.agw.multidirdialog as MDD
+#        
+#        # In standard wx there is no dialog to select multiple dirs at once
+#        # The MDD MultiDirDialog is a bit outdated but with a few path corrections
+#        # should allow the user to select multiple dirs on windows
+#        dlg = MDD.MultiDirDialog(self,
+#                                 title="Choose one or multiple directories for Input:",
+#                                 defaultPath=self.currentPath,
+#                                 agwStyle=MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST)
+#
+#        if dlg.ShowModal() == wx.ID_OK:
+#            # self.theInput is always a list of paths
+#            self.theInput = [clear_multidirdialog_path(x) for x in dlg.GetPaths()]
+#            self.currentPath = os.path.dirname(self.theInput[0])
+#            print('[on_input_dir] Loaded {}'.format(', '.join(self.theInput)))
 
+        # MDD MultidirDialog is terribly slow when compiled --> use standard
+        # input dilaog
+        dlg = wx.DirDialog(self,
+                           message="Choose a directory:",
+                           defaultPath=self.currentPath,
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
-            # self.theInput is always a list of paths
-            self.theInput = [clear_multidirdialog_path(x) for x in dlg.GetPaths()]
-            self.currentPath = os.path.dirname(self.theInput[0])
-            print('[on_input_dir] Loaded {}'.format(', '.join(self.theInput)))
+            self.currentPath = dlg.GetPath()
+            # requried to provide a list as other dialogs can return lists of
+            # input elements
+            self.theInput = [dlg.GetPath()]
+            print('[on_output_dir] Loaded {}'.format(self.currentPath))
+
 
         dlg.Destroy()
 
@@ -478,11 +511,11 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.6.3')
+        aboutInfo.SetVersion('0.6.6')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
-        aboutInfo.SetCopyright("(C) 2018")
+        aboutInfo.SetCopyright("(C) 2019")
         aboutInfo.SetWebSite("www.halomem.de")
         aboutInfo.AddDeveloper("Julian Bender (jub@halomem.de)")
 
@@ -538,10 +571,6 @@ class CroCoMainFrame(wx.Frame):
             OptionsFrame.Show()
 
         else:
-            # reset args dicts
-            self.inputOptionsToUserInput = dict()
-            self.outputOptionsToUserInput = dict()
-
             self.on_run(event)
 
     def on_run(self, event):
@@ -651,7 +680,7 @@ class CroCoMainFrame(wx.Frame):
                 self.display_warning('[croco_write] Writing to {} was '.format(outpath) +
                                    'not successfull:{}'.format(str(e)))
 
-        def generate_outname(listOfFilepaths, maxNameLength=50):
+        def generate_outname(listOfFilepaths, maxNameLength=200):
             """
             Generate a single namestring form the names of the input file(s)
             
@@ -701,6 +730,11 @@ class CroCoMainFrame(wx.Frame):
         self.display_info('File(s) successfully written ' +
                  'to {}!'.format(outpath),
                  caption='Success!')
+
+        # reset args dicts
+        self.inputOptionsToUserInput = dict()
+        self.outputOptionsToUserInput = dict()
+
 
 class CroCoOptionsFrame(wx.Frame):
     """
@@ -1018,7 +1052,7 @@ class CroCoOptionsFrame(wx.Frame):
         if len(self.parent.outputOptionsToUserInput) > 0:
             print('[on_okay] Options for Output')
             for key in self.parent.outputOptionsToUserInput:
-                print('\t{}: {}'.format(key, self.parent.outputOptionsToUserInput[key]))
+                print('\t{}: "{}"'.format(key, self.parent.outputOptionsToUserInput[key]))
 
 
         self.parent.on_run(event)

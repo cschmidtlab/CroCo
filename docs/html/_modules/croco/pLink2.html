@@ -45,6 +45,239 @@
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">HelperFunctions</span> <span class="k">as</span> <span class="n">hf</span>
 
+<span class="k">def</span> <span class="nf">_plink2_peptide2pandas</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read a pLink peptide results file and return a pandas dictionary</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filepath (str): Path to a pLink results file e.g. filtered_cross-linked_peptides.csv</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+
+        <span class="c1"># read the first header-line into list</span>
+        <span class="n">headers1</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c1"># remove potential empty strings due to trailing comma in plink csv file</span>
+        <span class="n">headers1</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">headers1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+        <span class="c1"># read the second header-line and remove it from list</span>
+        <span class="c1"># avoid the first entry as it is only the line-indicator</span>
+        <span class="n">headers2</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># init of data dict for pandas</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers1</span> <span class="o">+</span> <span class="n">headers2</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># read the first line</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
+
+            <span class="c1"># avoid reading in an empty line</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span> <span class="c1"># indicates a headers1 line</span>
+                <span class="c1"># save the line and use it when printing all following lines</span>
+                <span class="c1"># corresponding to that title-line</span>
+                <span class="n">line1_data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># the first element of line2_data is empty</span>
+                <span class="n">line2_data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+                <span class="c1"># raise Ecception if e.g. the protein name contains a comma</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1_data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers1</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2_data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers2</span><span class="p">)):</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Opening </span><span class="si">{:s}</span><span class="s1"> element </span><span class="si">{:s}</span><span class="s1">: Number of elements in line does not correspond to number of header elements!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">line1_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+                <span class="c1"># once the second line is reached, all elements are appended</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1_data</span><span class="p">)):</span>
+                    <span class="c1"># iterate through the data and link them to their resp</span>
+                    <span class="c1"># header by index</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">headers1</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1_data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2_data</span><span class="p">)):</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">headers2</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2_data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="c1"># read the next line</span>
+            <span class="n">line</span><span class="o">=</span><span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+        <span class="c1"># remove empty keys from dict</span>
+        <span class="k">if</span> <span class="s1">&#39;&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Generated xtable had a length of 0!&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not generate xtable. Please check file at: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">))</span>  
+    
+<span class="k">def</span> <span class="nf">_plink2_process_title</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract rawfile name, precursor charge and scan no from pLink sequence</span>
+<span class="sd">    string such as 20180518_JB_jb05a_u50.11998.11998.3.dta</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        spec_string: pLink2 spectrum string</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: [rawfile, scanno, prec_ch]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2</span>
+    <span class="c1"># in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1</span>
+    <span class="n">mgfTITLE_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">regexDict</span><span class="p">[</span><span class="s1">&#39;mgfTITLE&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">mgfTITLE_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">mgfTITLE_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">)</span>
+        <span class="n">rawfile</span><span class="p">,</span> <span class="n">scanno</span><span class="p">,</span> <span class="n">prec_ch</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">rawfile</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">scanno</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">prec_ch</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    
+<span class="k">def</span> <span class="nf">_plink2_process_sequence</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract peptide sequences and cross-link positions from</span>
+<span class="sd">    pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1</span>
+<span class="sd">    Can differentiate between mono, loop and cross-link information</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        row (object): a row of a dataframe with headers &#39;Peptide&#39; and &#39;type&#39;</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: [pepseq1, pepseq2, xpos1, xpos2, xtype]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#TODO: How to recognize heavy labels?</span>
+
+    <span class="n">xtype</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># all cross-links are light</span>
+
+    <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d+)\)-(\w*)\((\d*)\)&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
+        <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">pepseq1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">pepseq2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink2</span><span class="p">),</span> <span class="n">xtype</span>
+
+    <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d+)\)\((\d*)\)&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
+        <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">pepseq1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink2</span><span class="p">),</span> <span class="n">xtype</span>
+
+    <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d*)\)&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
+        <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">pepseq1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xlink1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">xtype</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">xtype</span>
+    
+<span class="k">def</span> <span class="nf">_plink2_process_protname</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract protein name and absolute cross-link position from</span>
+<span class="sd">    pLink protein string e.g.</span>
+<span class="sd">    sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/</span>
+<span class="sd">    or (worst-case)</span>
+<span class="sd">    Stx1A(1-262)(259)-Stx1A(1-262)(259)/</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        row (object): a row of a dataframe with headers &#39;Proteins&#39;</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: [prot1, xpos1, pepseq2, xpos2]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(.+?)\((\d+)\)-(.+?)\((\d*)\)/&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
+        <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+
+        <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
+        <span class="n">xpos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos2</span><span class="p">)</span>
+        <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">prot2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot2</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.+?)\((\d+)\)\((\d*)\)/&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
+        <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
+        <span class="n">xpos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos2</span><span class="p">)</span>
+        <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">prot2</span> <span class="o">=</span> <span class="n">prot1</span>
+
+    <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.+?)\((\d+)\)/&#39;</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
+        <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
+        <span class="n">xpos2</span><span class="p">,</span> <span class="n">prot2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
+
+    <span class="k">return</span> <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xpos2</span>
+    
+<span class="k">def</span> <span class="nf">_plink2_assign_type</span><span class="p">(</span><span class="n">plinkType</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Cross-Linked&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;inter&#39;</span>
+    <span class="k">elif</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Loop-Linked&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;loop&#39;</span>
+    <span class="k">elif</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Mono-Linked&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;mono&#39;</span>
+    
+<span class="k">def</span> <span class="nf">_calculate_abs_pos</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the absolute position of the first AA of both peptides.</span>
+<span class="sd">    If only one peptide present (mono-link) return NaN for the second position</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        row (object): a row of a dataframe with headers xlink(1/2) and xpos(1/2)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: [pos1, pos2] </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])):</span>
+        <span class="n">pos2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">pos1</span><span class="p">,</span> <span class="n">pos2</span>
+    
+<span class="k">def</span> <span class="nf">_plink2_read_modifications</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Open a pLink modification.ini file and extract all modifications with</span>
+<span class="sd">    their names as dict.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filepath (str): Path to modifications.ini</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: mod_dict mapping pLink modification names to masses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+&#39;</span><span class="p">)</span>
+    <span class="n">mod_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">mass</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                <span class="n">mod_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mass</span>
+
+    <span class="k">return</span> <span class="n">mod_dict</span>
+
+
+
 <div class="viewcode-block" id="Read"><a class="viewcode-back" href="../../read.html#croco.pLink2.Read">[docs]</a><span class="k">def</span> <span class="nf">Read</span><span class="p">(</span><span class="n">plinkdirs</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read pLink2 report dir and return an xtabel data array.</span>
@@ -57,244 +290,6 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        pandas.DataFrame: data table</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">plink2peptide2pandas</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Read a pLink peptide results file and return a pandas dictionary</span>
-<span class="sd">    </span>
-<span class="sd">        Args:</span>
-<span class="sd">            filepath (str): Path to a pLink results file e.g. filtered_cross-linked_peptides.csv</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            pandas.DataFrame</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-    
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-    
-            <span class="c1"># read the first header-line into list</span>
-            <span class="n">headers1</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-            <span class="c1"># remove potential empty strings due to trailing comma in plink csv file</span>
-            <span class="n">headers1</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">headers1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
-            <span class="c1"># read the second header-line and remove it from list</span>
-            <span class="c1"># avoid the first entry as it is only the line-indicator</span>
-            <span class="n">headers2</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
-    
-            <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># init of data dict for pandas</span>
-            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers1</span> <span class="o">+</span> <span class="n">headers2</span><span class="p">:</span>
-                <span class="n">data</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    
-            <span class="c1"># read the first line</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-            <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
-    
-                <span class="c1"># avoid reading in an empty line</span>
-                <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-                    <span class="k">continue</span>
-    
-                <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span> <span class="c1"># indicates a headers1 line</span>
-                    <span class="c1"># save the line and use it when printing all following lines</span>
-                    <span class="c1"># corresponding to that title-line</span>
-                    <span class="n">line1_data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-    
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># the first element of line2_data is empty</span>
-                    <span class="n">line2_data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
-    
-                    <span class="c1"># raise Ecception if e.g. the protein name contains a comma</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1_data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers1</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2_data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers2</span><span class="p">)):</span>
-                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Opening </span><span class="si">{:s}</span><span class="s1"> element </span><span class="si">{:s}</span><span class="s1">: Number of elements in line does not correspond to number of header elements!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">line1_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-    
-                    <span class="c1"># once the second line is reached, all elements are appended</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1_data</span><span class="p">)):</span>
-                        <span class="c1"># iterate through the data and link them to their resp</span>
-                        <span class="c1"># header by index</span>
-                        <span class="n">data</span><span class="p">[</span><span class="n">headers1</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1_data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2_data</span><span class="p">)):</span>
-                        <span class="n">data</span><span class="p">[</span><span class="n">headers2</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2_data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-    
-                <span class="c1"># read the next line</span>
-                <span class="n">line</span><span class="o">=</span><span class="n">fh</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-    
-            <span class="c1"># remove empty keys from dict</span>
-            <span class="k">if</span> <span class="s1">&#39;&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-                <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
-    
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">data</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Generated xtable had a length of 0!&#39;</span><span class="p">)</span>
-            <span class="k">except</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not generate xtable. Please check file at: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">))</span>  
-    
-    <span class="k">def</span> <span class="nf">process_plink2_title</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extract rawfile name, precursor charge and scan no from pLink sequence</span>
-<span class="sd">        string such as 20180518_JB_jb05a_u50.11998.11998.3.dta</span>
-<span class="sd">    </span>
-<span class="sd">        Args:</span>
-<span class="sd">            spec_string: pLink2 spectrum string</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            list: [rawfile, scanno, prec_ch]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2</span>
-        <span class="c1"># in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1</span>
-        <span class="n">pextract_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">pextract_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">):</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pextract_pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">spec_string</span><span class="p">)</span>
-            <span class="c1"># rawfile, scanno, prec_ch</span>
-            <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-    
-    <span class="k">def</span> <span class="nf">process_plink2_sequence</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extract peptide sequences and cross-link positions from</span>
-<span class="sd">        pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1</span>
-<span class="sd">        Can differentiate between mono, loop and cross-link information</span>
-<span class="sd">    </span>
-<span class="sd">        Args:</span>
-<span class="sd">            row (object): a row of a dataframe with headers &#39;Peptide&#39; and &#39;type&#39;</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            list: [pepseq1, pepseq2, xpos1, xpos2, xtype]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-    
-        <span class="c1">#TODO: How to recognize heavy labels?</span>
-    
-        <span class="n">xtype</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># all cross-links are light</span>
-    
-        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d+)\)-(\w*)\((\d*)\)&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
-            <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-    
-        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d+)\)\((\d*)\)&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
-            <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-            <span class="n">pepseq2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-    
-        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+)\((\d*)\)&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Peptide&#39;</span><span class="p">])</span>
-            <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-            <span class="n">xlink2</span><span class="p">,</span> <span class="n">pepseq2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
-    
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xlink2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
-    
-        <span class="k">return</span> <span class="n">pepseq1</span><span class="p">,</span> <span class="n">xlink1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xlink2</span><span class="p">,</span> <span class="n">xtype</span>
-    
-    <span class="k">def</span> <span class="nf">process_plink2_proteins</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extract protein name and absolute cross-link position from</span>
-<span class="sd">        pLink protein string e.g.</span>
-<span class="sd">        sp|P63045|VAMP2_RAT(79)-sp|P63045|VAMP2_RAT(59)/</span>
-<span class="sd">        or (worst-case)</span>
-<span class="sd">        Stx1A(1-262)(259)-Stx1A(1-262)(259)/</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            row (object): a row of a dataframe with headers &#39;Proteins&#39;</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            list: [prot1, xpos1, pepseq2, xpos2]</span>
-<span class="sd">    </span>
-<span class="sd">        &quot;&quot;&quot;</span>
-    
-        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(.+?)\((\d+)\)-(.+?)\((\d*)\)/&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
-            <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-    
-            <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
-            <span class="n">xpos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos2</span><span class="p">)</span>
-            <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-            <span class="n">prot2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot2</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-    
-        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.+?)\((\d+)\)\((\d*)\)/&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
-            <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-            <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
-            <span class="n">xpos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos2</span><span class="p">)</span>
-            <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-            <span class="n">prot2</span> <span class="o">=</span> <span class="n">prot1</span>
-    
-        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mono&#39;</span><span class="p">:</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.+?)\((\d+)\)/&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Proteins&#39;</span><span class="p">])</span>
-            <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-            <span class="n">xpos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xpos1</span><span class="p">)</span>
-            <span class="n">xpos2</span><span class="p">,</span> <span class="n">prot2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
-            <span class="n">prot1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prot1</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-    
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">pepseq2</span><span class="p">,</span> <span class="n">xpos2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
-    
-        <span class="k">return</span> <span class="n">prot1</span><span class="p">,</span> <span class="n">xpos1</span><span class="p">,</span> <span class="n">prot2</span><span class="p">,</span> <span class="n">xpos2</span>
-    
-    <span class="k">def</span> <span class="nf">assignType</span><span class="p">(</span><span class="n">plinkType</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Cross-Linked&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;inter&#39;</span>
-        <span class="k">elif</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Loop-Linked&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;loop&#39;</span>
-        <span class="k">elif</span> <span class="n">plinkType</span> <span class="o">==</span> <span class="s1">&#39;Mono-Linked&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;mono&#39;</span>
-    
-    <span class="k">def</span> <span class="nf">calculate_abs_pos</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the absolute position of the first AA of both peptides.</span>
-<span class="sd">        If only one peptide present (mono-link) return NaN for the second position</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            row (object): a row of a dataframe with headers xlink(1/2) and xpos(1/2)</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            list: [pos1, pos2] </span>
-<span class="sd">        </span>
-<span class="sd">        &quot;&quot;&quot;</span>
-    
-        <span class="n">pos1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
-    
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])):</span>
-            <span class="n">pos2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pos2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
-    
-        <span class="k">return</span> <span class="n">pos1</span><span class="p">,</span> <span class="n">pos2</span>
-    
-    <span class="k">def</span> <span class="nf">read_plink_modifications</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Open a pLink modification.ini file and extract all modifications with</span>
-<span class="sd">        their names as dict.</span>
-<span class="sd">    </span>
-<span class="sd">        Args:</span>
-<span class="sd">            filepath (str): Path to modifications.ini</span>
-<span class="sd">    </span>
-<span class="sd">        Returns:</span>
-<span class="sd">            dict: mod_dict mapping pLink modification names to masses</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-    
-        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(.*)=\w+ \w+ (-?[0-9]\d*\.\d+)? -?[0-9]\d*\.\d+&#39;</span><span class="p">)</span>
-        <span class="n">mod_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-                    <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-                    <span class="n">name</span><span class="p">,</span> <span class="n">mass</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-                    <span class="n">mod_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mass</span>
-    
-        <span class="k">return</span> <span class="n">mod_dict</span>
-
-
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    pLink Read continues HERE</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[pLink2 Read] This is pLink2 Reader&#39;</span><span class="p">)</span>
 
 
@@ -304,10 +299,19 @@
     
     <span class="n">allData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
+    <span class="n">plink_dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Title&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="s1">&#39;Peptide_Type&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="s1">&#39;Peptide&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="s1">&#39;Proteins&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="s1">&#39;Score&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                    <span class="s1">&#39;Linker&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="s1">&#39;Peptide_Order&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                    <span class="s1">&#39;Spectrum_Order&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">}</span>
+
     <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">plinkdirs</span><span class="p">:</span>
 
         <span class="c1">### Collect data, convert to pandas format and merge</span>
-        <span class="n">plinkResultFiles</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+        <span class="n">plinkResultFiles</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
     
         <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
     
@@ -321,13 +325,14 @@
                     <span class="n">foundPeptidesFile</span> <span class="o">=</span> <span class="kc">True</span>
                     
                     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading pLink peptide file: &#39;</span> <span class="o">+</span> <span class="n">peptidesFile</span><span class="p">)</span>
-                    <span class="n">peptide_df</span> <span class="o">=</span> <span class="n">plink2peptide2pandas</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">peptidesFile</span><span class="p">)))</span>
+                    <span class="n">peptide_df</span> <span class="o">=</span> <span class="n">_plink2_peptide2pandas</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">peptidesFile</span><span class="p">)))</span>
+                    
                 <span class="k">if</span> <span class="s1">&#39;_spectra.csv&#39;</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
                     <span class="n">spectraFile</span> <span class="o">=</span> <span class="n">f</span>
                     <span class="n">foundSpectraFile</span> <span class="o">=</span> <span class="kc">True</span>               
      
                     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading pLink spectra file: &#39;</span> <span class="o">+</span> <span class="n">spectraFile</span><span class="p">)</span>
-                    <span class="n">spectra_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">FSCompatiblePath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">spectraFile</span><span class="p">)))</span>
+                    <span class="n">spectra_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">compatible_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">spectraFile</span><span class="p">)))</span>
     
             <span class="k">if</span> <span class="n">foundPeptidesFile</span> <span class="ow">and</span> <span class="n">foundSpectraFile</span><span class="p">:</span>
                 <span class="n">merge_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">peptide_df</span><span class="p">[[</span><span class="s1">&#39;Title&#39;</span><span class="p">,</span> <span class="s1">&#39;Spectrum_Order&#39;</span><span class="p">,</span> <span class="s1">&#39;Peptide_Order&#39;</span><span class="p">]],</span>
@@ -347,25 +352,25 @@
     
         <span class="n">allData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span>
+    <span class="c1"># establish a read-csv like behaviour of dtype argument for astype</span>
+    <span class="c1"># astype does not accept if there are more columns supplied than found in</span>
+    <span class="c1"># the data</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">allData</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">plink_dtypes</span><span class="p">)</span>
     <span class="c1">### Convert data inside pandas df</span>
 
     <span class="c1"># split title column into three</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;scanno&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prec_ch&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_plink2_title</span><span class="p">))</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;rawfile&#39;</span><span class="p">,</span> <span class="s1">&#39;scanno&#39;</span><span class="p">,</span> <span class="s1">&#39;prec_ch&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_plink2_process_title</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
     <span class="c1"># assign the type</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide_Type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">assignType</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Peptide_Type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_plink2_assign_type</span><span class="p">)</span>
 
     <span class="c1"># Directly assign the re group matches into new columns</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">],</span>\
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xlink2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xtype&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_plink2_sequence</span><span class="p">,</span>
-                          <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink1&#39;</span><span class="p">,</span> <span class="s1">&#39;pepseq2&#39;</span><span class="p">,</span> <span class="s1">&#39;xlink2&#39;</span><span class="p">,</span> <span class="s1">&#39;xtype&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_plink2_process_sequence</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]</span> <span class="o">=</span>\
-            <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_plink2_proteins</span><span class="p">,</span>
-                              <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos2&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_plink2_process_protname</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Score&#39;</span><span class="p">]</span>
     
@@ -373,13 +378,20 @@
 
     <span class="c1"># generate an ID for every crosslink position within the protein(s)</span>
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generateID</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">])</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">generate_id</span><span class="p">,</span>
+                               <span class="n">otypes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">])(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos1&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                  <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;xpos2&#39;</span><span class="p">]),</span>
+                 <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="c1"># calculate absolute position of first AA of peptide</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span> <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;pos2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">calculate_abs_pos</span><span class="p">,</span>
-                                                       <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">]]</span> <span class="o">=</span>\
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_calculate_abs_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">xtable</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
     <span class="c1"># add a label referring to the ordering in the pLink results table</span>
-    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Order&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;Peptide_Order&#39;</span><span class="p">,</span> <span class="s1">&#39;Spectrum_Order&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;Order&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[[</span><span class="s1">&#39;Peptide_Order&#39;</span><span class="p">,</span> <span class="s1">&#39;Spectrum_Order&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># set the sequence of loop links to be the same as the corresponding pepseq1</span>
     <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">,</span> <span class="s1">&#39;pepseq2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;loop&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">]</span>
@@ -388,19 +400,19 @@
     <span class="c1"># algorithm</span>
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;decoy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="c1"># Reassign the type for inter xlink to inter/intra/homomultimeric</span>
-    <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
-        <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorizeInterPeptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
-                                                 <span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">][</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">])</span>
-
-    <span class="c1"># reassign dtypes for every element in the df</span>
-    <span class="c1"># errors ignore leaves the dtype as object for every</span>
-    <span class="c1"># non-numeric element</span>
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Reassign the type for intra and inter xlink to inter/intra/homomultimeric</span>
+        <span class="n">intraAndInter</span> <span class="o">=</span> <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inter&#39;</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;intra&#39;</span><span class="p">)</span>
+        <span class="n">xtable</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span>\
+            <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">categorize_inter_peptides</span><span class="p">)(</span><span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;prot1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;pos1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;pepseq1&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;prot2&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;pos2&#39;</span><span class="p">],</span>
+                                                     <span class="n">xtable</span><span class="p">[</span><span class="n">intraAndInter</span><span class="p">][</span><span class="s1">&#39;pepseq2&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[pLink2 Read] categorized inter peptides&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[pLink2 Read] skipped inter peptide categorization&#39;</span><span class="p">)</span>
 
     <span class="c1">## generate the mod_dict linking pLink modification names to masses</span>
     <span class="c1"># in case of calling croco from the source folder structure...</span>
@@ -422,7 +434,7 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Modifications.ini not found&#39;</span><span class="p">)</span>
 
     <span class="c1"># load pLink modifications.ini from data-folder</span>
-    <span class="n">mod_dict</span> <span class="o">=</span> <span class="n">read_plink_modifications</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">modifi_dir</span><span class="p">))</span>
+    <span class="n">mod_dict</span> <span class="o">=</span> <span class="n">_plink2_read_modifications</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">modifi_dir</span><span class="p">))</span>
 
     <span class="c1"># extract modification information</span>
     <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.*)\((\d+)\)&#39;</span><span class="p">)</span>
@@ -453,7 +465,7 @@
         <span class="n">this_modpos2</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># unmodified peptides</span>
-        <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isNaN</span><span class="p">(</span><span class="n">modstr</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">hf</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">modstr</span><span class="p">):</span>
             <span class="n">this_modmass1</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
             <span class="n">this_mod1</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
             <span class="n">this_modpos1</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -519,12 +531,7 @@
 
     <span class="n">xtable</span><span class="p">[</span><span class="s1">&#39;search_engine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pLink2&#39;</span>
 
-    <span class="c1"># reassign dtypes for every element in the df</span>
-    <span class="c1"># errors ignore leaves the dtype as object for every</span>
-    <span class="c1"># non-numeric element</span>
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">xtable</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">applyColOrder</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">order_columns</span><span class="p">(</span><span class="n">xtable</span><span class="p">,</span> <span class="n">col_order</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
 
     <span class="c1">### return xtable df</span>
     <span class="k">return</span> <span class="n">xtable</span></div>
@@ -542,9 +549,7 @@
                   <span class="s1">&#39;prot1&#39;</span><span class="p">,</span> <span class="s1">&#39;xpos1&#39;</span><span class="p">,</span> <span class="s1">&#39;prot2&#39;</span><span class="p">,</span>
                   <span class="s1">&#39;xpos2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;pos1&#39;</span><span class="p">,</span> <span class="s1">&#39;pos2&#39;</span><span class="p">,</span> <span class="s1">&#39;decoy&#39;</span><span class="p">]</span>
 
-    <span class="n">init</span><span class="p">(</span><span class="n">col_order</span><span class="p">)</span>
-
-    <span class="n">xtable</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;H:\pLink_task_2018.08.13.16.45.46\reports&#39;</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="n">col_order</span><span class="p">)</span>
+    <span class="n">xtable</span> <span class="o">=</span> <span class="n">Read</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\User\Documents\02_experiments\10_p38_ag_behrens\20190415_p38_bs2g_insolution01\20190415_p38_bs2g_insolution&#39;</span><span class="p">,</span> <span class="n">col_order</span><span class="o">=</span><span class="n">col_order</span><span class="p">)</span>
 </pre></div>
 
           </div>
