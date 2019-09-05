@@ -142,7 +142,11 @@ class CroCoMainFrame(wx.Frame):
                            'xQuest': [croco.xQuest.Read, []],
                            'xTable': [croco.xTable.Read, []]}
 
-        self.availWrites =  {'xTable': [croco.xTable.Write, [('Group by',
+        self.availWrites =  {'xTable': [croco.xTable.Write, [('Filter the xTable',
+                                                              'check',
+                                                              'Tick to filter the xTable according to the criteria below'
+                                                             ),
+                                                             ('Group by',
                                                               'input',
                                                               'Group by this column during top-scoring filtering',
                                                               'ID'),
@@ -507,7 +511,7 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.6.5')
+        aboutInfo.SetVersion('0.6.6')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
@@ -567,10 +571,6 @@ class CroCoMainFrame(wx.Frame):
             OptionsFrame.Show()
 
         else:
-            # reset args dicts
-            self.inputOptionsToUserInput = dict()
-            self.outputOptionsToUserInput = dict()
-
             self.on_run(event)
 
     def on_run(self, event):
@@ -680,7 +680,7 @@ class CroCoMainFrame(wx.Frame):
                 self.display_warning('[croco_write] Writing to {} was '.format(outpath) +
                                    'not successfull:{}'.format(str(e)))
 
-        def generate_outname(listOfFilepaths, maxNameLength=255):
+        def generate_outname(listOfFilepaths, maxNameLength=200):
             """
             Generate a single namestring form the names of the input file(s)
             
@@ -730,6 +730,11 @@ class CroCoMainFrame(wx.Frame):
         self.display_info('File(s) successfully written ' +
                  'to {}!'.format(outpath),
                  caption='Success!')
+
+        # reset args dicts
+        self.inputOptionsToUserInput = dict()
+        self.outputOptionsToUserInput = dict()
+
 
 class CroCoOptionsFrame(wx.Frame):
     """
