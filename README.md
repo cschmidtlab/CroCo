@@ -1,6 +1,16 @@
 # CroCo
 
 **CroCo** converts multiple data format from cross-linking mass spectrometry software tools to xTable format (in csv format).
+
+
+## Important links
+
+You can find the **latest release** including compiled versions at https://github.com/cschmidtlab/CroCo/releases/latest/.
+
+The full documentation for Croco is available at https://cschmidtlab.github.io/CroCo/.
+
+## Supported formats
+
 Currently the following input formats are supported:
 
   - [Kojak](http://www.kojak-ms.org/)
