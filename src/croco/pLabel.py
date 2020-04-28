@@ -20,24 +20,28 @@ def _unique_mods(modlist):
     modifications or NaN and extract all occuring unique mod-strings
 
     Args:
-        modlist: list of modifications form xtable
+        modlist: list of modifications from xtable
     Returns:
-        Lisr of unique modifications
+        List of unique modifications
     """
     alist = []
     for element in modlist:
+        # When multiple modifications occur on a peptide, the element is
+        # a list
         if isinstance(element, list):
             for e in element:
                 if e not in alist:
-                    alist.append(e)
+                    alist.append(str(e))
 
+        # If only a single modification occurs, the element can be directly
+        # added to the unique list if it is not NaN
         elif isinstance(element, float):
-            if not np.isnan(element):
-                if element not in alist:
-                    alist.append(str(element))
+            if np.isnan(element):
+                continue
+
         else:
             if element not in alist:
-                alist.append(element)
+                alist.append(str(element))
 
     return list(set(alist))
 
@@ -103,7 +107,8 @@ def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, m
 
     pepStringElements.extend(modlabels)
 
-    return ' '.join(pepStringElements)
+    # There is one space at the end of pLabel pepstrins
+    return ' '.join(pepStringElements) + ' '
 
 def _parse_mgf(filenames, mgfDir):
     """
@@ -275,7 +280,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
                     # Generate the spectrum title as used by pLabel from
                     # rawfile name, scanno and precursor charge
-                    out.write('name={}\n'.format(title))
+                    out.write('name={}.DTA\n'.format(title.upper()))
 
                     out.write('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
                                                                          row['xlink1'],
@@ -343,11 +348,11 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                         # matching of substrings e.g. 2516 to 25164
                         # the charge is not considered here as charge assignment
                         # can vary between different prorgammes
-                        if '.'.join([rf, scanno, scanno]).upper() in t:     
+                        if '.'.join([rf, scanno, scanno]).upper() in t:
                             # generate a new mgf-spectrum title unique for this
                             # entry (pLabel cannot take a spectrum twice)
                             counter = 0
-                            while '.'.join([rf, scanno, scanno, prec_ch, str(counter)]) in new_titles_and_charges_for_copy:
+                            while '.'.join([rf, scanno, scanno, prec_ch, str(counter), '.dta']) in new_titles_and_charges_for_copy:
                                 counter +=1
                             title = '.'.join([rf, scanno, scanno, prec_ch, str(counter)])
                             new_titles_and_charges_for_copy.append((title, prec_ch))
@@ -367,7 +372,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
                     # Generate the spectrum title as used by pLabel from
                     # rawfile name, scanno and precursor charge
-                    toWrite += ('name={}\n'.format(title))
+                    toWrite += ('name={}.DTA\n'.format(title.upper()))
 
                     toWrite += ('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
                                                                          row['xlink1'],
@@ -414,10 +419,10 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                                 break
                             elif line.startswith('TITLE'):
                                 # change the title line
-                                mgf.write('TITLE={}\n'.format(new_title_and_charge[0]))
+                                mgf.write('TITLE={}.DTA\n'.format(new_title_and_charge[0].upper()))
                             elif line.startswith('CHARGE'):
                                 # change the charge line
-                                mgf.write('CHARGE={}+\n'.format(new_title_and_charge[1]))                                
+                                mgf.write('CHARGE={}+\n'.format(new_title_and_charge[1]))
                             else:
                                 mgf.write(line)
 

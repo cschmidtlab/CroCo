@@ -248,7 +248,7 @@ def _plink2_read_modifications(filepath):
 
 def Read(plinkdirs, col_order=None, compact=False):
     """
-    Read pLink2 report dir and return an xtabel data array.
+    Read pLink2 report dir and return an xtable data array.
 
     Args:
         plinkdirs: plink2 reports subdir (reports)
@@ -433,15 +433,16 @@ def Read(plinkdirs, col_order=None, compact=False):
         this_modpos2 = []
 
         # unmodified peptides
-        if hf.isnan(modstr):
-            this_modmass1 = ''
-            this_mod1 = ''
-            this_modpos1 = ''
-            
-            this_modmass2 = ''
-            this_mod2 = ''
-            this_modpos2 = ''
-        else:
+        if not hf.isnan(modstr):
+#            this_modmass1 = ''
+#            this_mod1 = ''
+#            this_modpos1 = ''
+#            
+#            this_modmass2 = ''
+#            this_mod2 = ''
+##            this_modpos2 = ''
+#            pass
+#        else:
             # Extract annotations from every item in the modstring
             for mod in modstr.split(';'):
     

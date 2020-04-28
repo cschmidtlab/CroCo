@@ -107,3 +107,6 @@ doctrees/
 testdata
 *.log
 archive
+
+# old stuff
+archive/
