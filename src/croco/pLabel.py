@@ -226,7 +226,6 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         # separate by rawfile
         for rf in rawfiles:
             xtablePerRawfile = xtable[xtable['rawfile'] == rf].copy()
-            # separate per type within rawfile
             outfile = os.path.join(outpath + '_' + rf + '.pLabel')
             print('Opening {} to write'.format(outfile))
             with open(hf.compatible_path(outfile), 'w') as out:
