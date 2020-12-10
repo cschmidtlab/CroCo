@@ -511,11 +511,11 @@ class CroCoMainFrame(wx.Frame):
 
         aboutInfo = wx.adv.AboutDialogInfo()
         aboutInfo.SetName("The CroCo cross-link converter")
-        aboutInfo.SetVersion('0.6.6')
+        aboutInfo.SetVersion('0.7.1')
         aboutInfo.SetDescription("Graphical interface to convert results from "+\
                                  "data analysis of chemical cross-linking "+\
                                  "mass-spectrometry experiments.")
-        aboutInfo.SetCopyright("(C) 2019")
+        aboutInfo.SetCopyright("(C) 2021")
         aboutInfo.SetWebSite("www.halomem.de")
         aboutInfo.AddDeveloper("Julian Bender (jub@halomem.de)")
 

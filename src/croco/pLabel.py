@@ -248,13 +248,13 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                 out.write('total={}\n'.format(len(xtablePerRawfile.index)))
 
                 idx = 1
-                for _, row in xtablePerRawfile.iterrows():
+                for row in xtablePerRawfile.itertuples():
 
                     out.write('[Spectrum{}]\n'.format(idx))
                     idx += 1
 
-                    scanno = str(int(row['scanno']))
-                    prec_ch = str(int(row['prec_ch']))
+                    scanno = str(int(getattr(row, 'scanno')))
+                    prec_ch = str(int(getattr(row, 'prec_ch')))
 
                     title = ''
                     nothingFound = True
@@ -281,16 +281,16 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     # rawfile name, scanno and precursor charge
                     out.write('name={}.DTA\n'.format(title.upper()))
 
-                    out.write('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
-                                                                         row['xlink1'],
-                                                                         row['xlink2'],
-                                                                         row['pepseq1'],
-                                                                         row['pepseq2'],
-                                                                         row['score'],
-                                                                         row['mod1'],
-                                                                         row['mod2'],
-                                                                         row['modpos1'],
-                                                                         row['modpos2'],
+                    out.write('pep1={}\n'.format(_generate_plabel_pepstring(getattr(row, 'type'),
+                                                                         getattr(row, 'xlink1'),
+                                                                         getattr(row, 'xlink2'),
+                                                                         getattr(row, 'pepseq1'),
+                                                                         getattr(row, 'pepseq2'),
+                                                                         getattr(row, 'score'),
+                                                                         getattr(row, 'mod1'),
+                                                                         getattr(row, 'mod2'),
+                                                                         getattr(row, 'modpos1'),
+                                                                         getattr(row, 'modpos2'),
                                                                          mods2num)))
 
     elif mergepLabel:
@@ -330,15 +330,15 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
                 xtablePerRawfile = xtable[xtable['rawfile'] == rf].copy()
 
-                for _, row in xtablePerRawfile.iterrows():
+                for row in xtablePerRawfile.itertuples():
 
                     toWrite = ''
 
                     toWrite += ('[Spectrum{}]\n'.format(plabel_specno))
                     plabel_specno += 1
 
-                    scanno = str(int(row['scanno']))
-                    prec_ch = str(int(row['prec_ch']))
+                    scanno = str(int(getattr(row, 'scanno')))
+                    prec_ch = str(int(getattr(row, 'prec_ch')))
 
                     nothingFound = True
                     title = ''
@@ -373,16 +373,16 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                     # rawfile name, scanno and precursor charge
                     toWrite += ('name={}.DTA\n'.format(title.upper()))
 
-                    toWrite += ('pep1={}\n'.format(_generate_plabel_pepstring(row['type'],
-                                                                         row['xlink1'],
-                                                                         row['xlink2'],
-                                                                         row['pepseq1'],
-                                                                         row['pepseq2'],
-                                                                         row['score'],
-                                                                         row['mod1'],
-                                                                         row['mod2'],
-                                                                         row['modpos1'],
-                                                                         row['modpos2'],
+                    toWrite += ('pep1={}\n'.format(_generate_plabel_pepstring(getattr(row, 'type'),
+                                                                         getattr(row, 'xlink1'),
+                                                                         getattr(row, 'xlink2'),
+                                                                         getattr(row, 'pepseq1'),
+                                                                         getattr(row, 'pepseq2'),
+                                                                         getattr(row, 'score'),
+                                                                         getattr(row, 'mod1'),
+                                                                         getattr(row, 'mod2'),
+                                                                         getattr(row, 'modpos1'),
+                                                                         getattr(row, 'modpos2'),
                                                                          mods2num)))
                     plabel.write(toWrite)
 

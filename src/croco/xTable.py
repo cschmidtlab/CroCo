@@ -89,11 +89,14 @@ def Write(xtable, outpath, do_filter=False, group='ID, rawfile', scoring='score'
         xtable = _retain_topn(xtable, group, scoring, n, direction)
         print('[xTable Write] Size after filtering: {}'.format( xtable.size))
     
+    # only edit the copy of the original table
+    outtable = xtable.copy()
+    
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
-    xtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(_join_list_by_semicolon)
+    outtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(_join_list_by_semicolon)
 
-    xtable.to_csv(hf.compatible_path(outpath) + '.csv',
+    outtable.to_csv(hf.compatible_path(outpath) + '.csv',
                   index=False)
 
 def Read(xTable_files, col_order=None, compact=False):
