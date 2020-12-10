@@ -6,6 +6,7 @@ Functions to write data for the xiNET data
 """
 
 import pandas as pd
+import numpy as np
 
 if __name__ == '__main__':
     import HelperFunctions as hf
@@ -43,6 +44,8 @@ def Write(xtable, outpath):
     xinet.drop_duplicates(inplace=True,
                           keep='first',
                           subset=['prot1','prot2', 'pos1', 'pos2', 'xlink1', 'xlink2'])
+
+    xinet['score'] = -np.log10(xinet['score'])
 
     rename_dict = {'prot1':'Protein1',
                    'prot2':'Protein2',
