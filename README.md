@@ -1,5 +1,9 @@
 # CroCo
 
+[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![GitHub tag](https://img.shields.io/github/tag/cschmidtlab/croco.svg)](https://GitHub.com/cschmidtlab/croco/tags/)
+[![Github all releases](https://img.shields.io/github/downloads/cschmidtlab/croco/total.svg)](https://GitHub.com/cschmidtl/releases)
+
 **CroCo** converts multiple data format from cross-linking mass spectrometry software tools to xTable format (in csv format).
 
 
