@@ -30,7 +30,8 @@ def compatible_path(raw_path, encoding=None):
 
 def categorize_inter_peptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
     """
-    Categorizes cross-linked peptides into inter, intra, homomultimeric
+    Categorizes cross-linked peptides into inter, intra, homomultimeric and 
+    sequential peptides
     """
     pepend1 = int(pos1) + len(pepseq1) - 1
     pepend2 = int(pos2) + len(pepseq2) - 1
@@ -43,6 +44,8 @@ def categorize_inter_peptides(prot1, pos1, pepseq1, prot2, pos2, pepseq2):
             return 'homomultimeric'
         elif (pos1 <= pepend2) and (pepend2 <= pepend1):
             return 'homomultimeric'
+        elif (pepend1+1 == pos2) or (pepend2+1 == pos1):
+            return 'sequential'
         else:
             return 'intra'
             
