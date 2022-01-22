@@ -56,7 +56,6 @@ def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, m
     6: pep2
     7: unknown, mostly 1
     8: modification (e.g. 4,1 = modification 1 at position 4)
-
     """
 
     if xtype == 'inter':
@@ -65,10 +64,14 @@ def _generate_plabel_pepstring(xtype, xlink1, xlink2, pepseq1, pepseq2, score, m
         typeno = 3
     elif xtype == 'homomultimeric':
         typeno = 3
+    elif xtype == 'sequential':
+        typeno = 3
     elif xtype == 'loop':
         typeno = 2
     elif xtype == 'mono':
         typeno = 1
+    else:
+        raise Exception('[pLabel Write] Couldnt determine xtype')
 
     if typeno > 1:
         pepStringElements = [typeno, _cast_if_not_nan(xlink1, int),
