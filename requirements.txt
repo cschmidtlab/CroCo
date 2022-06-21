@@ -1,4 +1,4 @@
 Python==3.6.5
-numpy==1.14.2
+numpy==1.22.0
 wxPython==4.0.2a1.dev3717+d4bd2fe
 pandas==0.22.0
