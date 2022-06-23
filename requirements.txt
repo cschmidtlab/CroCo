@@ -1,4 +1,4 @@
-Python==3.6.5
-numpy==1.14.2
-wxPython==4.0.2a1.dev3717+d4bd2fe
-pandas==0.22.0
+numpy==1.18.5
+pandas==1.0.5
+PyQt5==5.15.7
+setuptools==49.2.0.post20200714
