@@ -13,14 +13,21 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
-def Write(xtable, outpath):
+def Write(xtable, outpath, log_score: bool =True):
     """
     Convert xtable data structure to xiNET
     data file 
 
     Args:
-        xtable: data table structure
-        outpath: path to write file
+        log_score: bool
+            if True, the score is converted to -log10(score)
+        xtable: pd.DataFrame
+            data table structure
+        outpath: str
+            path to write file
+
+    Returns:
+        None
     """
     xinet = xtable.loc[:,['prot1',
                           'pos1',
@@ -45,7 +52,8 @@ def Write(xtable, outpath):
                           keep='first',
                           subset=['prot1','prot2', 'pos1', 'pos2', 'xlink1', 'xlink2'])
 
-    xinet['score'] = -np.log10(xinet['score'])
+    if log_score:
+        xinet['score'] = -np.log10(xinet['score'])
 
     rename_dict = {'prot1':'Protein1',
                    'prot2':'Protein2',

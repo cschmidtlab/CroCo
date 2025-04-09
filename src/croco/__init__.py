@@ -45,7 +45,7 @@ from . import HelperFunctions
 
 from . import DynamXL
 
-from . import xiNET
+from . import xiview
 
 from . import xTable
 
