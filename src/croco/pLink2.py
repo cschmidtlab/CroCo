@@ -159,7 +159,7 @@ def _plink2_process_protname(row):
     """
 
     if row['type'] == 'inter':
-        pattern = re.compile('(.+?)\((\d+)\)-(.+?)\((\d*)\)/')
+        pattern = re.compile(r'(.+?)\((\d+)\)-(.+?)\((\d*)\)/')
         match = pattern.match(row['Proteins'])
         prot1, xpos1, prot2, xpos2 = match.groups()
 

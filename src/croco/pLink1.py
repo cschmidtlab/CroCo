@@ -122,7 +122,7 @@ def _process_plink_sequence(seq_string):
     Returns:
         list or np.nan: [pepseq1, pepseq2, xpos1, xpos2, xtype]
     """
-    pattern = re.compile('(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
+    pattern = re.compile(r'(\w+)\((\d+)\)-(\w+)\((\d+)\):(\d+)')
     try:
         match = pattern.match(seq_string)
         pepseq1, xpos1, pepseq2, xpos2, xtype = match.groups()
@@ -145,7 +145,7 @@ def _process_plink_spectrum(spec_string):
     """
     # the pattern of the title string is 20171215_JB04_Sec06.10959.10959.2
     # in pLink 2.3 and 20171215_JB04_Sec06.10959.10959.2.0 in pLink 2.1
-    pextract_pattern = re.compile('(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
+    pextract_pattern = re.compile(r'(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*')
     if pextract_pattern.match(spec_string):
         match = pextract_pattern.match(spec_string)
         rawfile, scanno, prec_ch = match.groups()
@@ -165,7 +165,7 @@ def _process_plink_proteins(prot_string):
     Returns:
         list or np.nan: [prot1, xpos1, prot2, xpos2]
     """
-    pattern = re.compile('(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
+    pattern = re.compile(r'(.+?)\((\d+)\)-?([^\(]*)\(?(\d*)\)?')
     match = pattern.match(prot_string)
     prot1, xpos1, prot2, xpos2 = match.groups()
     return str(prot1), int(xpos1), str(prot2), int(xpos2)

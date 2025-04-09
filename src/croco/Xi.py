@@ -44,7 +44,7 @@ def _assign_type(row):
     return t
 
 def _rawfile_from_source(source_str):
-    """
+    r"""
     Exctracts filename from string like
     E:\julian\20180612_croco_testfiles\mgf_msconvert\20180518_JB_jb05a_l100.mgf
 
