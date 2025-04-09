@@ -1,8 +1,0 @@
-<RCC>
-  <qresource prefix="images">
-    <file>data/images/logo.png</file>
-  </qresource>
-  <qresource prefix="config">
-    <file>data/config/aa_masses.txt</file>
-  </qresource>
-</RCC>
