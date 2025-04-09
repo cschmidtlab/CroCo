@@ -7,41 +7,13 @@ Functions to read Xi processed crosslink data.
 
 import numpy as np
 import pandas as pd
+import re
 
 if __name__ in ['__main__', 'Xi']:
-    import HelperFunctions as hf
+    import HelperFunctions as Help
 else:
-    from . import HelperFunctions as hf
+    from . import HelperFunctions as Help
 
-
-def _assign_type(row):
-    """
-    Assign mono, loop, inter and intra link
-    based on prot1, prot2, xlink1 and xlink2 entries
-
-    Args:
-        row (Series): a series or list containing prot1, prot2, xlink1, xlink2
-    Returns:
-        str or np.nan: type of cross-link (inter, intra, loop, mono)
-    """
-    prot1, prot2, xlink1, xlink2 = row
-
-    prot1 = str(prot1)
-    prot2 = str(prot2)
-    xlink1 = str(xlink1)
-    xlink2 = str(xlink2)
-
-    if prot2 != 'nan' and prot1 == prot2:
-        t = 'intra'
-    elif prot2 != 'nan':
-        t = 'inter'
-    elif prot2 == 'nan' and xlink2 != 'nan':
-        t = 'loop'
-    elif prot1 != 'nan' and prot2 == 'nan' and xlink1 != 'nan':
-        t = 'mono'
-    else:
-        t = np.nan
-    return t
 
 def _rawfile_from_source(source_str):
     r"""
@@ -98,7 +70,7 @@ def Read(xi_files, col_order=None, compact=False):
 
         print('Reading xi-file: {}'.format(file))
         try:
-            s = pd.read_csv(hf.compatible_path(file), delimiter=',', dtype=xi_dtypes)
+            s = pd.read_csv(Help.compatible_path(file), delimiter=',', dtype=xi_dtypes)
             allData.append(s)
         except:
             raise Exception('[xTable Read] Failed opening file: {}'.format(file))
@@ -131,11 +103,11 @@ def Read(xi_files, col_order=None, compact=False):
 
     # assign cateogries of cross-links based on identification of prot1 and prot2
     xtable['type'] = xtable[['prot1', 'prot2', 'xlink1', 'xlink2']].apply(\
-        _assign_type, axis=1)
+        Help.assign_type, axis=1)
 
     # generate an ID for every crosslink position within the protein(s)
     xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generate_id,
+        pd.Series(np.vectorize(Help.generate_id,
                                otypes=['object'])(xtable['type'],
                                                   xtable['prot1'],
                                                   xtable['xpos1'],
@@ -147,12 +119,12 @@ def Read(xi_files, col_order=None, compact=False):
         # Reassign the type for inter xlink to inter/intra/homomultimeric
         onlyInter = xtable['type'] == 'inter'
         xtable.loc[onlyInter, 'type'] =\
-            np.vectorize(hf.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
-                                                     xtable[onlyInter]['pos1'],
-                                                     xtable[onlyInter]['pepseq1'],
-                                                     xtable[onlyInter]['prot2'],
-                                                     xtable[onlyInter]['pos2'],
-                                                     xtable[onlyInter]['pepseq1'])
+            np.vectorize(Help.categorize_inter_peptides)(xtable[onlyInter]['prot1'],
+                                                         xtable[onlyInter]['pos1'],
+                                                         xtable[onlyInter]['pepseq1'],
+                                                         xtable[onlyInter]['prot2'],
+                                                         xtable[onlyInter]['pos2'],
+                                                         xtable[onlyInter]['pepseq1'])
         print('[Xi Read] categorized inter peptides')
     else:
         print('[Xi Read] skipped inter peptide categorization')
@@ -161,9 +133,62 @@ def Read(xi_files, col_order=None, compact=False):
 
     xtable['search_engine'] = 'XiSearch'
 
-    xtable = hf.order_columns(xtable, col_order, compact)
+    xtable = Help.order_columns(xtable, col_order, compact)
 
     return xtable
+
+class XiConfig:
+    def __init__(self, config_file):
+        self.filepath = config_file
+        self.config = {}
+        self.load_config()
+
+    def load_config(self):
+        with open(self.filepath, 'r') as f:
+            lines = f.readlines()
+
+        p_col = re.compile(":")  # matches ':' not preceded or followed by ':'
+        p_semicol = re.compile(";")  # matches ';'
+
+        for line in lines:
+            if line.startswith('#'):
+                continue
+            if line.strip() == '':  # skip empty lines
+                continue
+
+            colon_pos = [m.start() for m in p_col.finditer(line)]
+            semicolon_pos = [m.start() for m in p_semicol.finditer(line)]
+
+            if len(semicolon_pos) == 0 and len(colon_pos) == 1:  # e.g. topmgchits:150
+                # split on colon pos
+                key = line[:colon_pos[0]].strip()
+                value = line[colon_pos[0] + 1:].strip()
+                self.config[key] = value
+
+            elif len(semicolon_pos) == 0 and len(colon_pos) > 1:  # e.g. crosslinker:NonCovalentBound:Name:NonCovalent
+                split_colon = colon_pos[1] if len(colon_pos) % 2 == 1 else colon_pos[0]
+                key = line[:split_colon].strip()
+                value = dict([list(map(str.strip, line[split_colon + 1:].split(':', 1)))])
+                if key in self.config:
+                    self.config[key].append(value)
+                else:
+                    self.config[key] = [value]
+
+            elif len(semicolon_pos) > 0 and len(
+                    colon_pos) > 1:  # e.g. modification:variable::SYMBOLEXT:bs3_hyd;MODIFIED:S,T,Y;DELTAMASS:156.0786347
+                first_semicolon_pos = semicolon_pos[0]
+                last_colon_before_semicolon_pos = [pos for pos in colon_pos if pos < first_semicolon_pos][-2]
+                key = line[:last_colon_before_semicolon_pos].strip(' :')  # strip leading and trailing spaces and colons
+                value = {x.split(':')[0].strip(): x.split(':')[1].strip() if ':' in x else True for x in
+                         line[last_colon_before_semicolon_pos + 1:].split(';')}
+                if key in self.config:
+                    self.config[key].append(value)
+                else:
+                    self.config[key] = [value]
+
+            else:
+                raise ValueError(f"Invalid line format: {line.strip()}")
+
 
 if __name__ == '__main__':
 
