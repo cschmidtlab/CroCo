@@ -11,7 +11,7 @@ import os
 regexDict = {'mgfTITLE': r'(.+?)\.\d+\.(\d+)\.(\d+)\.*\d*'}
 default_col_order = ['rawfile', 'scanno', 'prec_ch',
                      'pepseq1', 'xlink1',
-                     'pepseq2', 'xlink2', 'xtype',
+                     'pepseq2', 'xlink2',
                      'modmass1', 'modpos1', 'mod1',
                      'modmass2', 'modpos2', 'mod2',
                      'prot1', 'xpos1', 'prot2',

@@ -74,8 +74,8 @@ For this script to work, the unpercolated Kojak file (e.g. `FILENAME.kojak.txt`)
   * **Load file(s)**: Path to Xi results file (e.g. `FILENAME_XiVersion1.6.739.csv`)
 
 #### Xi & XiFDR
-  * **Load file(s)**: Path to xiFDR file (e.g. `FILENAME_5_FDR_PSM_xiFDR1.0.22.csv`)
-  * Provide: Path to corresponding Xi results file (e.g. `FILENAME_XiVersion1.6.739.csv`)
+  * **Load file(s)**: Path to xiFDR file (e.g. `results_Xi1.8.7_CSM_xiFDR2.3.5.csv`)
+  * Provide: Path to corresponding Xi config file (e.g. `results_Xi1.8.7.config`)
 
 #### pLink1
   * **Load file(s)** (folder): sample folder within the pLink results dir (e.g. `2.report\sample1`)

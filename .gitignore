@@ -110,3 +110,5 @@ archive
 
 # old stuff
 archive/
+
+/test/
