@@ -163,7 +163,7 @@ class CroCoMainFrame(wx.Frame):
                                                               'Use the "lowest" or "highest" scoring rows',
                                                               'lowest')]],
                              'xVis': [croco.xVis.Write, []],
-                             'xiNet': [croco.xiNET.Write, []],
+                             'xiNet': [croco.xiview.write, []],
                              'DynamXL': [croco.DynamXL.Write, []],
                              'xWalk': [croco.xWalk.Write, [('PDB to map xlinks to',
                                                             'file',

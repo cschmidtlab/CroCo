@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
 """
-Functions to write data for the xiNET data
-    visualisation tool (http://crosslinkviewer.org)
+Functions to write data for the viView visualisation tool (https://xiview.org)
 """
 
 import pandas as pd
 import numpy as np
 
 if __name__ == '__main__':
-    import HelperFunctions as hf
+    import HelperFunctions as Help
 else:
-    from . import HelperFunctions as hf
+    from . import HelperFunctions as Help
 
-def Write(xtable, outpath, log_score: bool =True):
+
+def write(xtable, outpath, log_score: bool = True):
     """
-    Convert xtable data structure to xiNET
+    Convert xtable data structure to xiView
     data file 
 
     Args:
@@ -29,16 +29,16 @@ def Write(xtable, outpath, log_score: bool =True):
     Returns:
         None
     """
-    xinet = xtable.loc[:,['prot1',
-                          'pos1',
-                          'pepseq1',
-                          'xlink1',
-                          'prot2',
-                          'pos2',
-                          'pepseq2',
-                          'xlink2',
-                          'score',
-                          'ID']]
+    xinet = xtable.loc[:, ['prot1',
+                           'pos1',
+                           'pepseq1',
+                           'xlink1',
+                           'prot2',
+                           'pos2',
+                           'pepseq2',
+                           'xlink2',
+                           'score',
+                           'ID']]
 
     # remove mono-links
     xinet = xinet[xinet['xlink2'].notnull()]
@@ -50,13 +50,13 @@ def Write(xtable, outpath, log_score: bool =True):
     # drop duplicates
     xinet.drop_duplicates(inplace=True,
                           keep='first',
-                          subset=['prot1','prot2', 'pos1', 'pos2', 'xlink1', 'xlink2'])
+                          subset=['prot1', 'prot2', 'pos1', 'pos2', 'xlink1', 'xlink2'])
 
     if log_score:
         xinet['score'] = -np.log10(xinet['score'])
 
-    rename_dict = {'prot1':'Protein1',
-                   'prot2':'Protein2',
+    rename_dict = {'prot1': 'Protein1',
+                   'prot2': 'Protein2',
                    'pos1': 'PepPos1',
                    'pos2': 'PepPos2',
                    'pepseq1': 'PepSeq1',
@@ -71,7 +71,7 @@ def Write(xtable, outpath, log_score: bool =True):
                  inplace=True)
 
     if outpath.endswith('.csv'):
-        xinet.to_csv(hf.compatible_path(outpath), index=False)
+        xinet.to_csv(Help.compatible_path(outpath), index=False)
     else:
-        xinet.to_csv(hf.compatible_path(outpath) + '.csv',
-                    index=False)
+        xinet.to_csv(Help.compatible_path(outpath) + '.csv',
+                     index=False)
