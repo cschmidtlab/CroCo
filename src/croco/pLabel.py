@@ -153,14 +153,14 @@ def _parse_mgf(filenames, mgfDir):
         raise Exception('The following mgf files were not found at the ' +
                         'specified directory: {}'.format(', '.join(mgfNotFound)))
 
-    pattern = re.compile(r'TITLE=([^\.]+\.\d+\.\d+\.\d+\.\d+.*$)')
+    pattern = re.compile(r'TITLE=([^\.]+\.\d+\.\d+\.\d+.*$)')
 
     # parse the mgf files for titles
     for f in mgfToOpen:
         mgfFile = os.path.join(mgfDir, f)
         with open(hf.compatible_path(mgfFile)) as inf:
-            offset_last = 0
-            offset_before_last = 0
+            offset = 0
+            offset_before = 0  # offset of the line before the title line
             for line in inf.readlines():
                 if line.startswith('TITLE='):
                     # in case of pXtract:
@@ -169,16 +169,16 @@ def _parse_mgf(filenames, mgfDir):
                     # TITLE=2017_08_18_SK_3.1093.1093.2 File:"2017_08_18_SK_3.raw", NativeID:"controllerType=0 controllerNumber=1 scan=1093"
                     # MSConvert w/o TPP:
                     # TITLE=2017_08_18_SK_3.1093.1093.2
-                    if pattern.match(line):
-                        m = pattern.match(line)
+                    # xiSearch recommended mgf settings:
+                    # TITLE=Ascend001430.1581.1581.3
+                    m = pattern.match(line)
+                    if m:
                         title = m.group(1)
+                        titles2mgfoffset[title.upper()] = mgfFile, offset_before
                     else:
-                        raise(Exception('Title not found'))
-
-                    titles2mgfoffset[title.upper()] = mgfFile, offset_before_last
-                offset_before_last = offset_last
-                offset_last += len(line) + 1
-
+                        raise(Exception(f'Title not found: {line} in {mgfFile}'))
+                offset_before = offset
+                offset += len(line.encode(inf.encoding or "utf-8"))
     return titles2mgfoffset
 
 
@@ -203,7 +203,7 @@ def _cast_if_not_nan(input, typefunc):
         return input
 
 
-def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
+def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False, debug = False, plabel_relative_path = None):
     """
     Converts xtable data structure to (multiple) input file(s)
     for the pLabel cross-link annotation tool
@@ -213,7 +213,8 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         outpath: path to write file (w/o file extension!)
         xlinker: xlinker as given to pLabel
         mergepLabel (bool): Whether to generate a new MGF and single pLabel file
-
+        debug (bool): Whether to print debug information
+        plabel_relative_path (str): Add this to the File_Path in the pLabel file.
     """
 
     rawfiles = xtable['rawfile'].unique().tolist()
@@ -231,9 +232,13 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
             xtablePerRawfile = xtable[xtable['rawfile'] == rf].copy()
             outfile = os.path.join(outpath + '_' + rf + '.pLabel')
             print('Opening {} to write'.format(outfile))
-            with open(hf.compatible_path(outfile), 'w') as out:
+            with open(hf.compatible_path(outfile),  'w', encoding='latin-1', errors='replace') as out:
                 out.write('[FilePath]\n')
-                out.write('File_Path=' + os.path.join(mgfDir, rf + '.mgf\n'))
+                if plabel_relative_path is not None:
+                    # generate relative path to MGF file using windows separator
+                    out.write('File_Path=' + '\\'.join([plabel_relative_path, mgfDir, rf + '.mgf\n']))
+                else:
+                    out.write('File_Path=' + '\\'.join(mgfDir, rf + '.mgf\n'))
 
                 modifications = _unique_mods(xtablePerRawfile['mod2'].tolist() +\
                                            xtablePerRawfile['mod1'].tolist())
@@ -300,7 +305,7 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
         # Write only one pLabel file
         outfile = outpath + '.pLabel'
-        outMGF = outpath + '.mgf'
+        out_mgf = outpath + '.mgf'
 
         filesWithOffsetToCopy = []
         # a list with new mgf spectrum titles to integrate non-pLink results
@@ -308,10 +313,14 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
         new_titles_and_charges_for_copy = []
 
         print('[pLabel] Opening {} to write'.format(outfile))
-        with open(hf.compatible_path(outfile), 'w') as plabel:
+        with open(hf.compatible_path(outfile), 'w', encoding='latin-1', errors="replace") as plabel:
 
             plabel.write('[FilePath]\n')
-            plabel.write('File_Path=' + outMGF + '\n')
+            if plabel_relative_path is not None:
+                # generate relative path to MGF file using windows separator
+                plabel.write('File_Path=' + '\\'.join([plabel_relative_path, out_mgf]) + '\n')
+            else:
+                plabel.write('File_Path=' + out_mgf + '\n')
 
             modifications = _unique_mods(xtable['mod2'].tolist() +\
                                        xtable['mod1'].tolist())
@@ -391,10 +400,10 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
 
         print('[pLabel] Merging MGF files')
         # Generate merged MGF file containing only the matching spectra
-        print('Opening {} to write'.format(outMGF))
-        with open(hf.compatible_path(outMGF), 'w') as mgf:
+        print('Opening {} to write'.format(out_mgf))
+        with open(hf.compatible_path(out_mgf), 'w') as mgf:
             # sequentially open all MGF-files to copy from
-            templates = set([file for file, offset in filesWithOffsetToCopy])
+            templates = sorted(list(set([file for file, offset in filesWithOffsetToCopy])))
             for template in templates:
                 with open(hf.compatible_path(template), 'r') as t:
                     print('Opening {} to read'.format(template))
@@ -409,12 +418,19 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                             new_titles_and_charges.append(new_titles_and_charges_for_copy[idx])
 
                     for idx, o in enumerate(offsets):
+                        if debug:
+                            print(f"Copying spectrum {idx+1} of {len(offsets)} from {template} to {out_mgf}")
                         # move to the part of the file where the spectrum is stored
                         t.seek(o, 0)
                         new_title_and_charge = new_titles_and_charges[idx]
-                        while True:
-                            # loop through the lines of the spectrum until end-signa
-                            line = t.readline()
+                        line_count = 0
+
+                        line = t.readline()
+                        if debug:
+                            print(f'[Initial line] {line.strip()}')
+                        while True: # loop through the lines of the spectrum until end-signa
+                            if not line:
+                                break  # End of file
                             if line.startswith('END IONS'):
                                 # leave loop if the current spectrum ends
                                 mgf.write(line)
@@ -427,6 +443,12 @@ def Write(xtable, outpath, mgfDir, xlinker, mergepLabel = False):
                                 mgf.write('CHARGE={}+\n'.format(new_title_and_charge[1]))
                             else:
                                 mgf.write(line)
+                            line_count += 1
+                            if line_count > 10000:
+                                print(f"Aborting: too many lines without END IONS at offset {o} in {template}")
+                                break
+
+                            line = t.readline()  # read next line
 
 if __name__ == '__main__':
     import sys
