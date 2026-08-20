@@ -31,12 +31,16 @@ def _modifications_from_sequence(sequence, moddict):
         str: sequence without the modification characters
         list of str: modification names
         list of int: modification positions within the peptide
+        list of float: modification masses
     """
+    if pd.isna(sequence):  # if the sequence is NaN, return NaNs
+        return '', [], [], []
+
     mods = []
     modposns = []
     modmasses = []
 
-    # list containign the symbal, start position, end position of the
+    # list containing the symbal, start position, end position of the
     # symbol in the original sequence
     found = list()
     for symbol in moddict.keys():

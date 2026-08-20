@@ -66,7 +66,7 @@ def _clear_xlink(xlink_string):
     Returns:
         int: the xlink position without the amino acid label
     """
-    xlink_string = re.sub('\D+', '', xlink_string)
+    xlink_string = re.sub(r'\D+', '', xlink_string)
 
     return int(xlink_string)
 

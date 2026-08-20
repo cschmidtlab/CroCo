@@ -29,7 +29,7 @@ def _process_xquest_spectrum(spec_string):
         int or np.nan: scan number
         int or np.nan: precursor charge
     """
-    spectrum_pattern = re.compile('(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
+    spectrum_pattern = re.compile(r'(.+)\.(\d+)\.\d+\..+\.\d+\.\d+\.(\d+)')
     if spectrum_pattern.match(spec_string):
         match = spectrum_pattern.match(spec_string)
         rawfile, scanno, prec_ch = match.groups()
@@ -52,9 +52,9 @@ def _process_xquest_id(Id_string):
         int or np.nan: xlink1
         int or np.nan: xlink2
     """
-    xlink_pattern = re.compile('^(\w+)-(\w+)-a(\d+)-b(\d+)')
-    intralink_pattern = re.compile('^(\w+)-\D{1}(\d+)-\D{1}(\d+)')
-    monolink_pattern = re.compile('^(\w+)-\D{1}(\d+)-\d+')
+    xlink_pattern = re.compile(r'^(\w+)-(\w+)-a(\d+)-b(\d+)')
+    intralink_pattern = re.compile(r'^(\w+)-\D{1}(\d+)-\D{1}(\d+)')
+    monolink_pattern = re.compile(r'^(\w+)-\D{1}(\d+)-\d+')
 
     if xlink_pattern.match(Id_string):
         match = xlink_pattern.match(Id_string)

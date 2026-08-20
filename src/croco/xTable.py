@@ -7,16 +7,18 @@ Functions to read and write xTable data.
 
 import pandas as pd
 
-if __name__ == '__main__' or __name__ =='xTable':
+if __name__ == '__main__' or __name__ == 'xTable':
     import HelperFunctions as hf
 else:
     from . import HelperFunctions as hf
+
 
 def _join_list_by_semicolon(entry):
     if isinstance(entry, list):
         return ';'.join([str(x) for x in entry])
     else:
         return entry
+
 
 def _retain_topn(xtable, group, scoring, n, direction):
     """
@@ -83,21 +85,22 @@ def Write(xtable, outpath, do_filter=False, group='ID, rawfile', scoring='score'
         n(int): Number of rows retained if filtering is active
         direction(str): 'lowest' or 'highest'. Return the lowest or highest scoring rows
     """
-    
+
     if do_filter:
-        print('[xTable Write] Size before filtering: {}'.format( xtable.size))
+        print('[xTable Write] Size before filtering: {}'.format(xtable.size))
         xtable = _retain_topn(xtable, group, scoring, n, direction)
-        print('[xTable Write] Size after filtering: {}'.format( xtable.size))
-    
+        print('[xTable Write] Size after filtering: {}'.format(xtable.size))
+
     # only edit the copy of the original table
     outtable = xtable.copy()
-    
+
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
-    outtable.loc[:,xtable.dtypes == 'object'] = xtable.loc[:,xtable.dtypes == 'object'].applymap(_join_list_by_semicolon)
+    cols = outtable.select_dtypes(include='object').columns
+    for c in cols:
+        outtable[c] = outtable[c].apply(_join_list_by_semicolon)
+    outtable.to_csv(hf.compatible_path(outpath) + '.csv', index=False)
 
-    outtable.to_csv(hf.compatible_path(outpath) + '.csv',
-                  index=False)
 
 def Read(xTable_files, col_order=None, compact=False):
     """
@@ -129,22 +132,24 @@ def Read(xTable_files, col_order=None, compact=False):
 
     xtable.dropna(axis=0, how='all', inplace=True)
     # convert only those columns to lists where lists are expected
-    xtable[['modmass1','modmass2']] = xtable[['modmass1', 'modmass2']]\
+    xtable[['modmass1', 'modmass2']] = xtable[['modmass1', 'modmass2']] \
         .applymap(lambda x: hf.convert_to_list_of(x, float))
 
-    xtable[['modpos1', 'modpos2']] = xtable[['modpos1' ,'modpos2']]\
+    xtable[['modpos1', 'modpos2']] = xtable[['modpos1', 'modpos2']] \
         .applymap(lambda x: hf.convert_to_list_of(x, int))
 
-    xtable[['mod1', 'mod2']] = xtable[['mod1', 'mod2']]\
+    xtable[['mod1', 'mod2']] = xtable[['mod1', 'mod2']] \
         .applymap(lambda x: hf.convert_to_list_of(x, str))
 
     xtable = hf.order_columns(xtable, col_order, compact)
 
-    xtable = xtable.apply(pd.to_numeric, errors = 'ignore')
+    xtable = xtable.apply(pd.to_numeric, errors='ignore')
 
     return xtable
+
 
 if __name__ == '__main__':
     xtable = Read(r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData\output\all_merged_xTable.csv')
 
-    Write(xtable, r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData\output\all_merged_xTable2', do_filter=True, n=2)
+    Write(xtable, r'C:\Users\User\Documents\03_software\python\CroCo\testdata\ExampleData\output\all_merged_xTable2',
+          do_filter=True, n=2)
