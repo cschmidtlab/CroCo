@@ -23,7 +23,8 @@ Currently the following input formats are supported:
   - [Xi](https://github.com/Rappsilber-Laboratory/XiSearch)
   - Xi + XiFDR
   - pLink1 (discontinued)
-  - [pLink2](http://pfind.ict.ac.cn/software/pLink/index.html)
+  - pLink2 (discontinued)
+  - [pLink3](https://pfind.ict.ac.cn/se/plink/) (via the pLink2 module)
   - [xQuest](http://proteomics.ethz.ch/cgi-bin/xquest2_cgi/)
   - xTable
 

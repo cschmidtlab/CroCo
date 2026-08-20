@@ -97,8 +97,7 @@ def Write(xtable, outpath, do_filter=False, group='ID, rawfile', scoring='score'
     # select only object dtypes as lists will anyways be found only in those
     # and applymap struggles with nullable int64 dtype
     cols = outtable.select_dtypes(include='object').columns
-    for c in cols:
-        outtable[c] = outtable[c].apply(_join_list_by_semicolon)
+    outtable[cols] = outtable[cols].map(_join_list_by_semicolon)
     outtable.to_csv(hf.compatible_path(outpath) + '.csv', index=False)
 
 

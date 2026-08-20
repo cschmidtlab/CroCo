@@ -13,6 +13,7 @@ if __name__ == '__main__':
 else:
     from . import HelperFunctions as hf
 
+
 def _plink2_peptide2pandas(filepath):
     """
     Read a pLink peptide results file and return a pandas dictionary
@@ -34,7 +35,7 @@ def _plink2_peptide2pandas(filepath):
         # avoid the first entry as it is only the line-indicator
         headers2 = fh.readline().strip().split(',')[1:]
 
-        data = {} # init of data dict for pandas
+        data = {}  # init of data dict for pandas
         for h in headers1 + headers2:
             data[h] = []
 
@@ -46,7 +47,7 @@ def _plink2_peptide2pandas(filepath):
             if line == '':
                 continue
 
-            if line[0].isdigit(): # indicates a headers1 line
+            if line[0].isdigit():  # indicates a headers1 line
                 # save the line and use it when printing all following lines
                 # corresponding to that title-line
                 line1_data = line.strip().split(',')
@@ -57,7 +58,9 @@ def _plink2_peptide2pandas(filepath):
 
                 # raise Ecception if e.g. the protein name contains a comma
                 if (len(line1_data) != len(headers1)) or (len(line2_data) != len(headers2)):
-                    raise Exception('Opening {:s} element {:s}: Number of elements in line does not correspond to number of header elements!'.format(filepath, line1_data[0]))
+                    raise Exception(
+                        'Opening {:s} element {:s}: Number of elements in line does not correspond to number of header elements!'.format(
+                            filepath, line1_data[0]))
 
                 # once the second line is reached, all elements are appended
                 for i in range(len(line1_data)):
@@ -68,7 +71,7 @@ def _plink2_peptide2pandas(filepath):
                     data[headers2[i]].append(line2_data[i])
 
             # read the next line
-            line=fh.readline()
+            line = fh.readline()
 
         # remove empty keys from dict
         if '' in data:
@@ -81,8 +84,9 @@ def _plink2_peptide2pandas(filepath):
             else:
                 raise Exception('Generated xtable had a length of 0!')
         except:
-            raise Exception('Could not generate xtable. Please check file at: {}'.format(filepath))  
-    
+            raise Exception('Could not generate xtable. Please check file at: {}'.format(filepath))
+
+
 def _plink2_process_title(spec_string):
     """
     Extract rawfile name, precursor charge and scan no from pLink sequence
@@ -103,8 +107,9 @@ def _plink2_process_title(spec_string):
         return str(rawfile), int(scanno), int(prec_ch)
     else:
         return np.nan
-    
-def _plink2_process_sequence(row):
+
+
+def _plink2_process_sequence(row) -> tuple:
     """
     Extract peptide sequences and cross-link positions from
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
@@ -117,9 +122,9 @@ def _plink2_process_sequence(row):
         list: [pepseq1, pepseq2, xpos1, xpos2, xtype]
     """
 
-    #TODO: How to recognize heavy labels?
+    # TODO: How to recognize heavy labels?
 
-    xtype = 0 # all cross-links are light
+    xtype = 0  # all cross-links are light
 
     if row['type'] == 'inter':
         pattern = re.compile(r'(\w+)\((\d+)\)-(\w*)\((\d*)\)')
@@ -141,7 +146,8 @@ def _plink2_process_sequence(row):
 
     else:
         return np.nan, np.nan, np.nan, np.nan, xtype
-    
+
+
 def _plink2_process_protname(row):
     """
     Extract protein name and absolute cross-link position from
@@ -189,7 +195,8 @@ def _plink2_process_protname(row):
         prot1, xpos1, pepseq2, xpos2 = [np.nan] * 4
 
     return prot1, xpos1, prot2, xpos2
-    
+
+
 def _plink2_assign_type(plinkType):
     if plinkType == 'Cross-Linked':
         return 'inter'
@@ -197,7 +204,8 @@ def _plink2_assign_type(plinkType):
         return 'loop'
     elif plinkType == 'Mono-Linked':
         return 'mono'
-    
+
+
 def _calculate_abs_pos(row):
     """
     Return the absolute position of the first AA of both peptides.
@@ -219,7 +227,8 @@ def _calculate_abs_pos(row):
         pos2 = int(row['xpos2']) - int(row['xlink2']) + 1
 
     return pos1, pos2
-    
+
+
 def _plink2_read_modifications(filepath):
     """
     Open a pLink modification.ini file and extract all modifications with
@@ -245,7 +254,6 @@ def _plink2_read_modifications(filepath):
     return mod_dict
 
 
-
 def Read(plinkdirs, col_order=None, compact=False):
     """
     Read pLink2 report dir and return an xtable data array.
@@ -260,11 +268,10 @@ def Read(plinkdirs, col_order=None, compact=False):
     """
     print('[pLink2 Read] This is pLink2 Reader')
 
-
     # convert to list if the input is only a single path
     if not isinstance(plinkdirs, list):
         plinkdirs = [plinkdirs]
-    
+
     allData = list()
 
     plink_dtypes = {'Title': str,
@@ -280,9 +287,9 @@ def Read(plinkdirs, col_order=None, compact=False):
 
         ### Collect data, convert to pandas format and merge
         plinkResultFiles = os.listdir(hf.compatible_path(file))
-    
+
         frames = []
-    
+
         foundPeptidesFile = False
         foundSpectraFile = False
         for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
@@ -291,17 +298,17 @@ def Read(plinkdirs, col_order=None, compact=False):
                 if '_peptides.csv' in f:
                     peptidesFile = f
                     foundPeptidesFile = True
-                    
+
                     print('Reading pLink peptide file: ' + peptidesFile)
                     peptide_df = _plink2_peptide2pandas(hf.compatible_path(os.path.join(file, peptidesFile)))
-                    
+
                 if '_spectra.csv' in f:
                     spectraFile = f
-                    foundSpectraFile = True               
-     
+                    foundSpectraFile = True
+
                     print('Reading pLink spectra file: ' + spectraFile)
                     spectra_df = pd.read_csv(hf.compatible_path(os.path.join(file, spectraFile)))
-    
+
             if foundPeptidesFile and foundSpectraFile:
                 merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
                                     spectra_df,
@@ -313,50 +320,58 @@ def Read(plinkdirs, col_order=None, compact=False):
                     raise Exception('[pLink2 Read] Could not find peptide file')
                 else:
                     raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
-                
+
             frames.append(merge_df)
-    
+
         s = pd.concat(frames)
-    
+
         allData.append(s)
 
     # establish a read-csv like behaviour of dtype argument for astype
     # astype does not accept if there are more columns supplied than found in
     # the data
-    xtable = pd.concat(allData).astype(dtype=plink_dtypes)
+    xtable = pd.concat(allData).astype(dtype=plink_dtypes).copy()
     ### Convert data inside pandas df
 
     # split title column into three
-    xtable[['rawfile', 'scanno', 'prec_ch']] =\
+    xtable.loc[:, ['rawfile', 'scanno', 'prec_ch']] = \
         pd.DataFrame(xtable['Title'].apply(_plink2_process_title).tolist(), index=xtable.index)
 
     # assign the type
-    xtable['type'] = xtable['Peptide_Type'].apply(_plink2_assign_type)
+    xtable.loc[:, 'type'] = xtable['Peptide_Type'].apply(_plink2_assign_type)
 
     # Directly assign the re group matches into new columns
-    xtable[['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype']] =\
-        pd.DataFrame(xtable.apply(_plink2_process_sequence, axis=1).tolist(), index=xtable.index)
+    xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_plink2_process_sequence, axis=1).tolist(),
+                                             index=xtable.index,
+                                             columns=['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype'])],
+                       axis=1)
 
-    xtable[['prot1', 'xpos1', 'prot2', 'xpos2']] =\
-        pd.DataFrame(xtable.apply(_plink2_process_protname, axis=1).tolist(), index=xtable.index)
+    xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_plink2_process_protname, axis=1).tolist(),
+                                             index=xtable.index,
+                                             columns=['prot1', 'xpos1', 'prot2', 'xpos2'])],
+                       axis=1)
 
-    xtable['score'] = xtable['Score']
-    
-    xtable['xlinker'] = xtable['Linker']
+    xtable.loc[:, 'score'] = xtable['Score']
+
+    xtable.loc[:, 'xlinker'] = xtable['Linker']
 
     # generate an ID for every crosslink position within the protein(s)
-    xtable['ID'] =\
-        pd.Series(np.vectorize(hf.generate_id,
-                               otypes=['object'])(xtable['type'],
-                                                  xtable['prot1'],
-                                                  xtable['xpos1'],
-                                                  xtable['prot2'],
-                                                  xtable['xpos2']),
-                 index=xtable.index).replace('nan', np.nan)
+    xtable.loc[:, 'ID'] = xtable.apply(
+        lambda row: hf.generate_id(
+            row['type'],
+            row['prot1'],
+            row['xpos1'],
+            row['prot2'],
+            row['xpos2']
+        ),
+        axis=1
+    )
 
     # calculate absolute position of first AA of peptide
-    xtable[['pos1', 'pos2']] =\
-        pd.DataFrame(xtable.apply(_calculate_abs_pos, axis=1).tolist(), index=xtable.index)
+    xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_calculate_abs_pos, axis=1).tolist(),
+                                             index=xtable.index,
+                                             columns=['pos1', 'pos2'])],
+                       axis=1)
 
     # add a label referring to the ordering in the pLink results table
     xtable['Order'] = xtable[['Peptide_Order', 'Spectrum_Order']].astype(str).apply(lambda x: ','.join(x), axis=1)
@@ -371,13 +386,13 @@ def Read(plinkdirs, col_order=None, compact=False):
     if len(xtable[xtable['type'] == 'inter']) > 0:
         # Reassign the type for intra and inter xlink to inter/intra/homomultimeric
         intraAndInter = (xtable['type'] == 'inter') | (xtable['type'] == 'intra')
-        xtable.loc[intraAndInter, 'type'] =\
+        xtable.loc[intraAndInter, 'type'] = \
             np.vectorize(hf.categorize_inter_peptides)(xtable[intraAndInter]['prot1'],
-                                                     xtable[intraAndInter]['pos1'],
-                                                     xtable[intraAndInter]['pepseq1'],
-                                                     xtable[intraAndInter]['prot2'],
-                                                     xtable[intraAndInter]['pos2'],
-                                                     xtable[intraAndInter]['pepseq2'])
+                                                       xtable[intraAndInter]['pos1'],
+                                                       xtable[intraAndInter]['pepseq1'],
+                                                       xtable[intraAndInter]['prot2'],
+                                                       xtable[intraAndInter]['pos2'],
+                                                       xtable[intraAndInter]['pepseq2'])
         print('[pLink2 Read] categorized inter peptides')
     else:
         print('[pLink2 Read] skipped inter peptide categorization')
@@ -395,9 +410,9 @@ def Read(plinkdirs, col_order=None, compact=False):
         try:
             # PyInstaller creates a temp folder and stores its path in _MEIPASS
             base_path = sys._MEIPASS
-            modifi_dir =  os.path.abspath(\
+            modifi_dir = os.path.abspath( \
                 os.path.join(base_path, './data/modification.ini'))
-        # ... or something went wrong
+            # ... or something went wrong
         except:
             raise Exception('Modifications.ini not found')
 
@@ -434,29 +449,20 @@ def Read(plinkdirs, col_order=None, compact=False):
 
         # unmodified peptides
         if not hf.isnan(modstr):
-#            this_modmass1 = ''
-#            this_mod1 = ''
-#            this_modpos1 = ''
-#            
-#            this_modmass2 = ''
-#            this_mod2 = ''
-##            this_modpos2 = ''
-#            pass
-#        else:
             # Extract annotations from every item in the modstring
             for mod in modstr.split(';'):
-    
+
                 if pattern.match(mod):
                     match = pattern.match(mod)
                     mod, modpos = match.groups()
-    
+
                     # transform modification names to masses
                     try:
                         mass = mod_dict[mod]
                     except:
                         # use the input string if no subsitution found
                         mass = mod
-    
+
                     seqlen1 = len(pepseq1[idx])
                     # pLink assigns additional modification position to the C-term
                     # of the first peptide, the xlinker and the N-term of the
@@ -491,14 +497,14 @@ def Read(plinkdirs, col_order=None, compact=False):
         mod2.append(this_mod2)
         modpos2.append(this_modpos2)
 
-    xtable['modmass1'] = modmass1
-    xtable['mod1'] = mod1
-    xtable['modpos1'] = modpos1
-    xtable['modmass2'] = modmass2
-    xtable['mod2'] = mod2
-    xtable['modpos2'] = modpos2
+    xtable.loc[:, 'modmass1'] = modmass1
+    xtable.loc[:, 'mod1'] = mod1
+    xtable.loc[:, 'modpos1'] = modpos1
+    xtable.loc[:, 'modmass2'] = modmass2
+    xtable.loc[:, 'mod2'] = mod2
+    xtable.loc[:, 'modpos2'] = modpos2
 
-    xtable['search_engine'] = 'pLink2'
+    xtable.loc[:, 'search_engine'] = 'pLink2/3'
 
     # Define columns that should be nullable integers
     nullable_int_cols = [
@@ -508,6 +514,8 @@ def Read(plinkdirs, col_order=None, compact=False):
         'pos1', 'pos2'
     ]
 
+    # Create a dictionary of updated columns to avoid repeated .loc calls and warnings
+    updates = {}
     for col in nullable_int_cols:
         if col in xtable.columns:
             updates[col] = pd.to_numeric(xtable[col], errors='coerce').astype('Int64')
@@ -518,20 +526,22 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable = hf.order_columns(xtable, col_order, compact)
 
-    ### return xtable df
     return xtable
+
 
 if __name__ == '__main__':
     """
     For testing purposes only
     """
 
-    col_order = [ 'rawfile', 'scanno', 'prec_ch',
-                  'pepseq1', 'xlink1',
-                  'pepseq2', 'xlink2', 'xtype',
-                  'modmass1', 'modpos1', 'mod1',
-                  'modmass2', 'modpos2', 'mod2',
-                  'prot1', 'xpos1', 'prot2',
-                  'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
+    col_order = ['rawfile', 'scanno', 'prec_ch',
+                 'pepseq1', 'xlink1',
+                 'pepseq2', 'xlink2', 'xtype',
+                 'modmass1', 'modpos1', 'mod1',
+                 'modmass2', 'modpos2', 'mod2',
+                 'prot1', 'xpos1', 'prot2',
+                 'xpos2', 'type', 'score', 'ID', 'pos1', 'pos2', 'decoy']
 
-    xtable = Read(r'C:\Users\User\Documents\02_experiments\10_p38_ag_behrens\20190415_p38_bs2g_insolution01\20190415_p38_bs2g_insolution', col_order=col_order)
+    xtable = Read(
+        r'C:\Users\User\Documents\02_experiments\10_p38_ag_behrens\20190415_p38_bs2g_insolution01\20190415_p38_bs2g_insolution',
+        col_order=col_order)
