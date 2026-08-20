@@ -510,8 +510,11 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     for col in nullable_int_cols:
         if col in xtable.columns:
-            # Pandas nullable integer dtype
-            xtable.loc[:, col] = pd.to_numeric(xtable[col], errors='coerce').astype('Int64')
+            updates[col] = pd.to_numeric(xtable[col], errors='coerce').astype('Int64')
+
+    # Assign all updated columns at once using assign()
+    # This creates a new DataFrame with the updated types, bypassing the dtype incompatibility warnings
+    xtable = xtable.assign(**updates)
 
     xtable = hf.order_columns(xtable, col_order, compact)
 
