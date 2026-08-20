@@ -500,6 +500,19 @@ def Read(plinkdirs, col_order=None, compact=False):
 
     xtable['search_engine'] = 'pLink2'
 
+    # Define columns that should be nullable integers
+    nullable_int_cols = [
+        'xlink1', 'xlink2',
+        'xpos1', 'xpos2',
+        'modpos1', 'modpos2',
+        'pos1', 'pos2'
+    ]
+
+    for col in nullable_int_cols:
+        if col in xtable.columns:
+            # Pandas nullable integer dtype
+            xtable.loc[:, col] = pd.to_numeric(xtable[col], errors='coerce').astype('Int64')
+
     xtable = hf.order_columns(xtable, col_order, compact)
 
     ### return xtable df
