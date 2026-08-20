@@ -334,9 +334,10 @@ def Read(plinkdirs, col_order=None, compact=False):
     ### Convert data inside pandas df
 
     # split title column into three
-    xtable.loc[:, ['rawfile', 'scanno', 'prec_ch']] = \
-        pd.DataFrame(xtable['Title'].apply(_plink2_process_title).tolist(), index=xtable.index)
-
+    xtable = pd.concat([xtable, pd.DataFrame(xtable['Title'].apply(_plink2_process_title).tolist(),
+                                             index=xtable.index,
+                                             columns=['rawfile', 'scanno', 'prec_ch'])],
+                       axis=1)
     # assign the type
     xtable.loc[:, 'type'] = xtable['Peptide_Type'].apply(_plink2_assign_type)
 
