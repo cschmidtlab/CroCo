@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Functions to read pLink2 files
+Functions to read pLink2 and pLink3 files
 """
 
-import pandas as pd
-import os, sys
+import os
 import re
+import sys
+
 import numpy as np
+import pandas as pd
 
 if __name__ == '__main__':
     import HelperFunctions as hf
@@ -14,7 +16,7 @@ else:
     from . import HelperFunctions as hf
 
 
-def _plink2_peptide2pandas(filepath):
+def _plink2_peptide2pandas(filepath: str) -> pd.DataFrame:
     """
     Read a pLink peptide results file and return a pandas dictionary
 
@@ -59,8 +61,8 @@ def _plink2_peptide2pandas(filepath):
                 # raise Ecception if e.g. the protein name contains a comma
                 if (len(line1_data) != len(headers1)) or (len(line2_data) != len(headers2)):
                     raise Exception(
-                        'Opening {:s} element {:s}: Number of elements in line does not correspond to number of header elements!'.format(
-                            filepath, line1_data[0]))
+                        'Opening {:s} element {:s}: Number of elements in line does not correspond to number of '
+                        'header elements!'.format(filepath, line1_data[0]))
 
                 # once the second line is reached, all elements are appended
                 for i in range(len(line1_data)):
@@ -87,7 +89,7 @@ def _plink2_peptide2pandas(filepath):
             raise Exception('Could not generate xtable. Please check file at: {}'.format(filepath))
 
 
-def _plink2_process_title(spec_string):
+def _plink2_process_title(spec_string: str) -> tuple[str, int, int] | float:
     """
     Extract rawfile name, precursor charge and scan no from pLink sequence
     string such as 20180518_JB_jb05a_u50.11998.11998.3.dta
@@ -109,14 +111,14 @@ def _plink2_process_title(spec_string):
         return np.nan
 
 
-def _plink2_process_sequence(row) -> tuple:
+def _plink2_process_sequence(row: pd.Series) -> tuple:
     """
     Extract peptide sequences and cross-link positions from
     pLink sequence string e.g. YVPTAGKLTVVILEAK(7)-LTVVILEAK(2):1
     Can differentiate between mono, loop and cross-link information
 
     Args:
-        row (object): a row of a dataframe with headers 'Peptide' and 'type'
+        row (pandas.Series): a row of a dataframe with headers 'Peptide' and 'type'
 
     Returns:
         list: [pepseq1, pepseq2, xpos1, xpos2, xtype]
@@ -148,7 +150,7 @@ def _plink2_process_sequence(row) -> tuple:
         return np.nan, np.nan, np.nan, np.nan, xtype
 
 
-def _plink2_process_protname(row):
+def _plink2_process_protname(row: pd.Series) -> tuple:
     """
     Extract protein name and absolute cross-link position from
     pLink protein string e.g.
@@ -157,7 +159,7 @@ def _plink2_process_protname(row):
     Stx1A(1-262)(259)-Stx1A(1-262)(259)/
     
     Args:
-        row (object): a row of a dataframe with headers 'Proteins'
+        row (pandas.Series): a row of a dataframe with headers 'Proteins'
 
     Returns:
         list: [prot1, xpos1, pepseq2, xpos2]
@@ -192,12 +194,12 @@ def _plink2_process_protname(row):
         prot1 = str(prot1.strip())
 
     else:
-        prot1, xpos1, pepseq2, xpos2 = [np.nan] * 4
+        prot1 = xpos1 = prot2 = xpos2 = np.nan
 
     return prot1, xpos1, prot2, xpos2
 
 
-def _plink2_assign_type(plinkType):
+def _plink2_assign_type(plinkType: str) -> str | None:
     if plinkType == 'Cross-Linked':
         return 'inter'
     elif plinkType == 'Loop-Linked':
@@ -206,13 +208,13 @@ def _plink2_assign_type(plinkType):
         return 'mono'
 
 
-def _calculate_abs_pos(row):
+def _calculate_abs_pos(row: pd.Series) -> tuple[int, float]:
     """
     Return the absolute position of the first AA of both peptides.
     If only one peptide present (mono-link) return NaN for the second position
     
     Args:
-        row (object): a row of a dataframe with headers xlink(1/2) and xpos(1/2)
+        row (pandas.Series): a row of a dataframe with headers xlink(1/2) and xpos(1/2)
 
     Returns:
         list: [pos1, pos2] 
@@ -229,7 +231,7 @@ def _calculate_abs_pos(row):
     return pos1, pos2
 
 
-def _plink2_read_modifications(filepath):
+def _plink2_read_modifications(filepath: str) -> dict[str, str]:
     """
     Open a pLink modification.ini file and extract all modifications with
     their names as dict.
@@ -254,7 +256,7 @@ def _plink2_read_modifications(filepath):
     return mod_dict
 
 
-def Read(plinkdirs, col_order=None, compact=False):
+def Read(plinkdirs: str | list, col_order: list | None = None, compact: bool = False) -> pd.DataFrame:
     """
     Read pLink2 report dir and return an xtable data array.
 
@@ -289,47 +291,44 @@ def Read(plinkdirs, col_order=None, compact=False):
         plinkResultFiles = os.listdir(hf.compatible_path(file))
 
         frames = []
+        f = None
 
-        foundPeptidesFile = False
-        foundSpectraFile = False
         for xTypeStr in ['filtered_cross-linked', 'filtered_loop-linked', 'filtered_mono-linked']:
             dataFiles = [x for x in plinkResultFiles if xTypeStr in x]
+            peptide_df = None
+            spectra_df = None
             for f in dataFiles:
                 if '_peptides.csv' in f:
                     peptidesFile = f
-                    foundPeptidesFile = True
-
                     print('Reading pLink peptide file: ' + peptidesFile)
                     peptide_df = _plink2_peptide2pandas(hf.compatible_path(os.path.join(file, peptidesFile)))
 
                 if '_spectra.csv' in f:
                     spectraFile = f
-                    foundSpectraFile = True
-
                     print('Reading pLink spectra file: ' + spectraFile)
                     spectra_df = pd.read_csv(hf.compatible_path(os.path.join(file, spectraFile)))
 
-            if foundPeptidesFile and foundSpectraFile:
+            if peptide_df is None:
+                raise Exception('[pLink2 Read] Could not find spectra file.')
+            elif spectra_df is None:
+                raise Exception('[pLink2 Read] Could not find peptide file')
+            else:
+                assert isinstance(peptide_df, pd.DataFrame) and isinstance(spectra_df, pd.DataFrame)
                 merge_df = pd.merge(peptide_df[['Title', 'Spectrum_Order', 'Peptide_Order']],
                                     spectra_df,
                                     on='Title')
-            else:
-                if foundPeptidesFile:
-                    raise Exception('[pLink2 Read] Could not find spectra file.')
-                elif foundSpectraFile:
-                    raise Exception('[pLink2 Read] Could not find peptide file')
-                else:
-                    raise Exception('[pLink2 Read] Couldnt find a pLink file. Did you provide the right path?')
 
-            frames.append(merge_df)
+                frames.append(merge_df)
 
-        s = pd.concat(frames)
+        s: pd.DataFrame = pd.concat(frames)
 
         # add annotation from the main csv file
+        assert f is not None
         fname = f.split('.filtered')[0] + '.csv'
         if os.path.exists(hf.compatible_path(os.path.join(file, fname))):
             print('Reading pLink main file: ' + fname)
             main_df = pd.read_csv(hf.compatible_path(os.path.join(file, fname)))
+            assert isinstance(main_df, pd.DataFrame)
             # join on Title column
             s = pd.merge(s, main_df, on='Title', suffixes=('', '_main'), how='left')
             # drop the duplicate columns (i.e. those contain "_main" suffix
@@ -346,7 +345,7 @@ def Read(plinkdirs, col_order=None, compact=False):
     # split title column into three
     xtable = pd.concat([xtable, pd.DataFrame(xtable['Title'].apply(_plink2_process_title).tolist(),
                                              index=xtable.index,
-                                             columns=['rawfile', 'scanno', 'prec_ch'])],
+                                             columns=pd.Index(['rawfile', 'scanno', 'prec_ch']))],
                        axis=1)
     # assign the type
     xtable.loc[:, 'type'] = xtable['Peptide_Type'].apply(_plink2_assign_type)
@@ -354,12 +353,12 @@ def Read(plinkdirs, col_order=None, compact=False):
     # Directly assign the re group matches into new columns
     xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_plink2_process_sequence, axis=1).tolist(),
                                              index=xtable.index,
-                                             columns=['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype'])],
+                                             columns=pd.Index(['pepseq1', 'xlink1', 'pepseq2', 'xlink2', 'xtype']))],
                        axis=1)
 
     xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_plink2_process_protname, axis=1).tolist(),
                                              index=xtable.index,
-                                             columns=['prot1', 'xpos1', 'prot2', 'xpos2'])],
+                                             columns=pd.Index(['prot1', 'xpos1', 'prot2', 'xpos2']))],
                        axis=1)
 
     xtable.loc[:, 'score'] = xtable['Score']
@@ -381,7 +380,7 @@ def Read(plinkdirs, col_order=None, compact=False):
     # calculate absolute position of first AA of peptide
     xtable = pd.concat([xtable, pd.DataFrame(xtable.apply(_calculate_abs_pos, axis=1).tolist(),
                                              index=xtable.index,
-                                             columns=['pos1', 'pos2'])],
+                                             columns=pd.Index(['pos1', 'pos2']))],
                        axis=1)
 
     # add a label referring to the ordering in the pLink results table
@@ -420,8 +419,8 @@ def Read(plinkdirs, col_order=None, compact=False):
     else:
         try:
             # PyInstaller creates a temp folder and stores its path in _MEIPASS
-            base_path = sys._MEIPASS
-            modifi_dir = os.path.abspath( \
+            base_path = getattr(sys, '_MEIPASS')
+            modifi_dir = os.path.abspath(
                 os.path.join(base_path, './data/modification.ini'))
             # ... or something went wrong
         except:
