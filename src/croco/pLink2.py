@@ -511,7 +511,6 @@ def Read(plinkdirs, col_order=None, compact=False):
     nullable_int_cols = [
         'xlink1', 'xlink2',
         'xpos1', 'xpos2',
-        'modpos1', 'modpos2',
         'pos1', 'pos2'
     ]
 
