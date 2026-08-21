@@ -325,6 +325,16 @@ def Read(plinkdirs, col_order=None, compact=False):
 
         s = pd.concat(frames)
 
+        # add annotation from the main csv file
+        fname = f.split('.filtered')[0] + '.csv'
+        if os.path.exists(hf.compatible_path(os.path.join(file, fname))):
+            print('Reading pLink main file: ' + fname)
+            main_df = pd.read_csv(hf.compatible_path(os.path.join(file, fname)))
+            # join on Title column
+            s = pd.merge(s, main_df, on='Title', suffixes=('', '_main'), how='left')
+            # drop the duplicate columns (i.e. those contain "_main" suffix
+            s = s.drop(columns=[x for x in s.columns if '_main' in x])
+
         allData.append(s)
 
     # establish a read-csv like behaviour of dtype argument for astype
