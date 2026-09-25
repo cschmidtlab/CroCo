@@ -108,6 +108,13 @@ absolute paths of a single developer machine. The current procedure:
   ``build``) as the single source of truth; ``environment.yaml`` is still
   available for conda users, and ``build_windows.bat`` provides a
   one-command build.
+* Derives the version from the git tags with ``hatch-vcs`` and exposes it as
+  ``croco.__version__``; the GUI About dialog and the Sphinx documentation
+  read this value, so the version is not hard-coded anywhere.
+* ``compile_win.ps1`` extracts the version from the source checkout with
+  ``setuptools-scm`` (via ``uv``) and passes it to the build, which stages its
+  files outside the git checkout. If the version cannot be extracted the
+  script stops with an error.
 
 Troubleshooting
 ---------------

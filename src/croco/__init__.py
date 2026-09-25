@@ -1,5 +1,14 @@
 import timeit
 
+try:
+    from ._version import __version__
+except ImportError:
+    try:
+        from importlib.metadata import version as _get_version
+        __version__ = _get_version("croco")
+    except Exception:
+        __version__ = "unknown"
+
 print('Welcome to CroCo')
 
 starttime = timeit.default_timer()

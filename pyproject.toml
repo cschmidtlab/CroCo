@@ -1,6 +1,6 @@
 [project]
 name = "croco"
-version = "0.8.0"
+dynamic = ["version"]
 description = "Cross-link mass spectrometry file conversion software"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,11 +19,19 @@ build = ["PyInstaller>=6.0"]
 dev = ["ipykernel>=7.3.0"]
 
 [build-system]
-requires = ["setuptools>=76.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# The version is derived automatically from the git tags (hatch-vcs) and
+# written to src/croco/_version.py, which the code imports at runtime.
+[tool.hatch.version]
+source = "vcs"
 
-[tool.setuptools.package-data]
-croco = ["data/*"]
+[tool.hatch.build.hooks.vcs]
+version-file = "src/croco/_version.py"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/croco"]

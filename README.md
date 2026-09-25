@@ -63,6 +63,11 @@ The build must be performed **on Windows** (wxPython does not ship wheels for ot
   - **Quick build:** run `build_windows.bat` in the repository root. It creates a virtual environment, installs the `gui` and `build` extras declared in `pyproject.toml` and produces `dist/croco_wx.exe`.
   - **Manual build:** see [docs/build_windows.rst](docs/build_windows.rst), e.g. `pip install ".[gui,build]"` followed by `pyinstaller croco_wx_single.spec`; a reproducible conda environment is provided in `environment.yaml`.
 
+## Versioning
+The version is derived automatically from the git tags with [hatch-vcs](https://github.com/ofek/hatch-vcs); there is no version number to maintain by hand.
+Builds between tags get a development version such as `0.7.2.dev25` (the tag `0.7.1` plus 25 commits). To release a new version, create a tag, e.g. `git tag 0.8.0`.
+The GUI About dialog and the documentation read the version from the package (`croco.__version__`), so it stays consistent everywhere.
+
 ### Input formats
 
 #### Kojak

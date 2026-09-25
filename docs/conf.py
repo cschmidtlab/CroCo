@@ -23,10 +23,28 @@ project = 'CroCo'
 copyright = '2019, Julian Bender'
 author = 'Julian Bender'
 
+# The version is taken from the installed package metadata; when building the
+# docs from a source checkout, fall back to the generated version file.
+def _croco_version():
+    try:
+        from importlib.metadata import version
+        return version("croco")
+    except Exception:
+        pass
+    try:
+        namespace = {}
+        version_file = os.path.join(os.path.dirname(__file__), "..", "src",
+                                    "croco", "_version.py")
+        with open(version_file, encoding="utf-8") as handle:
+            exec(handle.read(), namespace)
+        return namespace["__version__"]
+    except Exception:
+        return ""
+
 # The short X.Y version
-version = ''
+version = _croco_version()
 # The full version, including alpha/beta/rc tags
-release = ''
+release = version
 
 
 # -- General configuration ---------------------------------------------------

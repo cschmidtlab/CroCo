@@ -164,7 +164,6 @@ wheels = [
 
 [[package]]
 name = "croco"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -191,7 +190,7 @@ requires-dist = [
     { name = "pyinstaller", marker = "extra == 'build'", specifier = ">=6.0" },
     { name = "wxpython", marker = "extra == 'gui'", specifier = ">=4.2.1" },
 ]
-provides-extras = ["gui", "build", "dev"]
+provides-extras = ["build", "dev", "gui"]
 
 [[package]]
 name = "debugpy"

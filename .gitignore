@@ -112,3 +112,6 @@ archive
 archive/
 
 /test/
+
+# hatch-vcs generated version file
+/src/croco/_version.py
