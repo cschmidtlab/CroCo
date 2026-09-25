@@ -181,4 +181,4 @@ texinfo_documents = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-sys.path.insert(0,os.path.abspath(r'C:\Users\User\Documents\03_software\python\CroCo\src'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))

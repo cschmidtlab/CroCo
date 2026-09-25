@@ -13,7 +13,13 @@ For the GUI:
 For the Python module: 
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../requirements.txt
+The CroCo Python module requires Python 3 and the following packages:
+
+-  ``numpy``
+-  ``pandas``
+
+The authoritative dependency list, including the ``gui`` and ``build``
+extras used for the Windows executable, is declared in ``pyproject.toml``.
 
 Usage of the GUI
 ----------------

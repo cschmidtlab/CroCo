@@ -18,6 +18,7 @@ CroCo Documentation contents
    write
    GUI_intro
    crocowx
+   build_windows
 
 
 Indices and tables

@@ -314,7 +314,7 @@ class CroCoMainFrame(wx.Frame):
 
         # Set start and quit buttons
         controlSizer.Add(self.controlStart, 1, wx.RIGHT, 5)
-        controlSizer.Add(controlQuit, 0, wx.LEFT | wx.ALIGN_RIGHT, 5)
+        controlSizer.Add(controlQuit, 0, wx.LEFT, 5)
         controlSizer.Add(helpButton, 0, wx.LEFT | wx.ALL | wx.EXPAND, 5)
 
         # assign lower sizers to the top-level sizer

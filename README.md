@@ -50,10 +50,18 @@ CroCo is distributed as graphical program to be run from an executable and as a 
     * pandas
     * numpy
     * re
+  * Install the dependencies declared in [`pyproject.toml`](pyproject.toml), e.g. `pip install .`
 
 ## Usage
 For the conversion of data of every input program, a slightly different usage is required for gathering all data that are required for xTable.
 In general, information that is not present in the input files will be asked from the user.
+
+## Compiling the Windows binaries
+The standalone Windows GUI executable (`croco_wx.exe`) is built from `src/croco_wx.py` with [PyInstaller](https://pyinstaller.org/).
+The build must be performed **on Windows** (wxPython does not ship wheels for other platforms).
+
+  - **Quick build:** run `build_windows.bat` in the repository root. It creates a virtual environment, installs the `gui` and `build` extras declared in `pyproject.toml` and produces `dist/croco_wx.exe`.
+  - **Manual build:** see [docs/build_windows.rst](docs/build_windows.rst), e.g. `pip install ".[gui,build]"` followed by `pyinstaller croco_wx_single.spec`; a reproducible conda environment is provided in `environment.yaml`.
 
 ### Input formats
 

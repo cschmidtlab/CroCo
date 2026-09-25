@@ -37,8 +37,9 @@ Starting the CroCo GUI from Python
     - If you're not familiar with github, download and extract the latest version of the CroCo source code from https://github.com/cschmidtlab/CroCo/archive/master.zip
  - Install Python 3+
     - The easiest way is usually to use anaconda Python (https://www.anaconda.com/distribution/)
-    - Install the required python packages for CroCo (see requirements.txt in the CroCo root directory) either via ``pip install PACKAGE`` or via ``conda install PACKAGE``
+    - Install CroCo and its dependencies (declared in ``pyproject.toml``) either via ``pip install ".[gui]"`` from the repository root or via ``conda install PACKAGE``
  - Open a Python-aware command-line
     - On Windows, use Anaconda Prompt or cmd.exe if you exported Python to your OS PATH-Variable
  - Navigate to ``CroCo/src``
  - Start the GUI by typing ``python croco_wx.py``
+ - To compile a standalone Windows executable instead, see :ref:`buildwindows`

@@ -1,0 +1,29 @@
+[project]
+name = "croco"
+version = "0.8.0"
+description = "Cross-link mass spectrometry file conversion software"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=1.5.0",
+]
+
+[project.optional-dependencies]
+# Run the graphical user interface from source.
+gui = ["wxPython>=4.2.1"]
+# Build the standalone Windows executable (see docs/build_windows.rst).
+# The GUI extra is required as well:  pip install ".[gui,build]"
+build = ["PyInstaller>=6.0"]
+# Packages used by the notebooks in test/.
+dev = ["ipykernel>=7.3.0"]
+
+[build-system]
+requires = ["setuptools>=76.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+croco = ["data/*"]
